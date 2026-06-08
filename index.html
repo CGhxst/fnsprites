@@ -417,7 +417,7 @@
             top: 0; left: 0; right: 0; bottom: 0;
             opacity: 0.28;
             background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
-            background-size: 300% 300%;
+            background-size: 200% 200%;
             background-position: 0% 0%;
             animation: fluidPan 7s infinite linear;
             pointer-events: none;
@@ -427,7 +427,7 @@
 
         .sprite-card.rarity-Special .card-inner-display::before {
             background: linear-gradient(135deg, rgba(81,247,204,0) 0%, rgba(227,116,238,0.5) 50%, rgba(181,246,158,0) 100%);
-            background-size: 300% 300%;
+            background-size: 200% 200%;
             opacity: 0.45;
         }
 
@@ -681,7 +681,7 @@
                 </div>
 
                 <div class="switch-row">
-                    <span class="switch-label">COMPRESSED MODE</span>
+                    <span class="switch-label">COMPRESSED GRID MODE</span>
                     <input type="checkbox" id="compressed-grid-switch" class="switch-input">
                 </div>
 
@@ -699,11 +699,12 @@
             <div class="panel-box creator-card">
                 <div class="creator-title">Made by Rick</div>
                 <a href="https://youtube.com/@rickventure" class="creator-link" target="_blank">
-                    <img src="rickpfpfpeak.png" class="creator-img" alt="Rickventure Channel">
+                    <img src="sprites/rickpfpfpeak.png" class="creator-img" alt="Rickventure Channel" onerror="this.src='sprites/rickpfpfpeak.png'">
                 </a>
                 <a href="https://youtube.com/@rickventure" class="sub-btn" target="_blank">sub 2 me</a>
                 <div class="creator-subtext">
-                    Help me reach 1,000 subscribers so I can put a creator code here.
+                    Help me reach 1,000 subscribers so I can put a creator code here.<br>
+                    This project was only 50% vibe coded btw.
                 </div>
             </div>
         </div>
