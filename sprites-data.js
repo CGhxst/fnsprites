@@ -42,5 +42,25 @@ const baseSprites = [
     { id: "demon_candy", name: "Candy Demon Sprite", theme: "Candy", rarity: "Special", unreleased: true },
     { id: "demon_gem", name: "Gem Demon Sprite", theme: "Gem", rarity: "Special", unreleased: true },
 
+	{ id: "punk_basic", name: "Punk Sprite", theme: "Basic", rarity: "XXXXXXX", unreleased: false },
+    { id: "punk_gold", name: "Gold Punk Sprite", theme: "Gold", rarity: "Special", unreleased: false },
+    { id: "punk_candy", name: "Candy Punk Sprite", theme: "Candy", rarity: "Special", unreleased: true },
+    { id: "punk_galaxy", name: "Galaxy Punk Sprite", theme: "Galaxy", rarity: "Special", unreleased: true },
+    { id: "punk_gem", name: "Gem Punk Sprite", theme: "Gem", rarity: "Special", unreleased: true },
+    { id: "punk_rift", name: "Rift Punk Sprite", theme: "Rift", rarity: "Special", unreleased: true },
+
+	{ id: "king_basic", name: "King Sprite", theme: "Basic", rarity: "XXXXXXX", unreleased: false },
+    { id: "king_gold", name: "Gold King Sprite", theme: "Gold", rarity: "Special", unreleased: false },
+    { id: "king_candy", name: "Candy King Sprite", theme: "Candy", rarity: "Special", unreleased: true },
+    { id: "king_galaxy", name: "Galaxy King Sprite", theme: "Galaxy", rarity: "Special", unreleased: true },
+    { id: "king_holofoil", name: "Holofoil King Sprite", theme: "Holofoil", rarity: "Special", unreleased: true },
+
+    { id: "zeropoint_basic", name: "Zero Point Sprite", theme: "Basic", rarity: "Mythic", unreleased: false },
+    { id: "zeropoint_gold", name: "Gold Zero Point Sprite", theme: "Gold", rarity: "Special", unreleased: false },
+    { id: "zeropoint_candy", name: "Candy Zero Point Sprite", theme: "Candy", rarity: "Special", unreleased: true },
+    { id: "zeropoint_galaxy", name: "Galaxy Zero Point Sprite", theme: "Galaxy", rarity: "Special", unreleased: true },
+    { id: "zeropoint_gem", name: "Gem Zero Point Sprite", theme: "Gem", rarity: "Special", unreleased: true },
+    { id: "zeropoint_holofoil", name: "Holofoil Zero Point Sprite", theme: "Holofoil", rarity: "Special", unreleased: true },
+	
     { id: "theburntpeanut_basic", name: "TheBurntPeanut Sprite", theme: "Basic", rarity: "Mythic", unreleased: true },
 ];
