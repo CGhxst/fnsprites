@@ -275,7 +275,6 @@
 </div>
 
 <script>
-    // Pulls data directly from the newly created 'baseSprites' array in sprites-data.js
     let obtainedSprites = JSON.parse(localStorage.getItem('fn_obtained_sprites')) || [];
 
     const spriteGrid = document.getElementById('spriteGrid');
@@ -286,7 +285,6 @@
     function renderGrid() {
         spriteGrid.innerHTML = '';
         
-        // Safety fallback check if data file hasn't finished downloading over the network
         if (typeof baseSprites === 'undefined') {
             spriteGrid.innerHTML = '<div style="padding:20px; color:var(--fn-unreleased);">Error: sprites-data.js file missing or incorrect layout.</div>';
             return;
@@ -307,11 +305,14 @@
                 card.className = `sprite-card theme-${sprite.theme} ${isObtained ? 'obtained' : ''}`;
                 
                 const badgeHTML = sprite.unreleased ? `<div class="status-badge unreleased">UNRELEASED</div>` : '';
+                
+                // AUTOMATICALLY INFER FILE PATH: sets path based on id
+                const inferredImagePath = `sprites/${sprite.id}.png`;
 
                 card.innerHTML = `
                     <div class="crown-indicator">👑</div>
                     <div class="card-inner-display">
-                        <img src="${sprite.image}" class="sprite-img" alt="${sprite.name}" onerror="this.src='https://placehold.co/150?text=Missing+File'">
+                        <img src="${inferredImagePath}" class="sprite-img" alt="${sprite.name}" onerror="this.src='https://placehold.co/150?text=Missing+File'">
                         ${badgeHTML}
                     </div>
                     <div class="card-title-footer">${sprite.name}</div>
