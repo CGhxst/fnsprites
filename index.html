@@ -42,8 +42,16 @@
             --bg-Rare: linear-gradient(180deg, #104273 0%, #081a35 100%);
             --bg-Epic: linear-gradient(180deg, #4d1566 0%, #1e052c 100%);
             --bg-Legendary: linear-gradient(180deg, #743e0a 0%, #301702 100%);
-            --bg-Mythic: linear-gradient(180deg, #6c1212 0%, #2b0606 100%);
-            --bg-Special: linear-gradient(180deg, #134641 0%, #061d1b 100%);
+            --bg-Mythic: linear-gradient(180deg, #70531c 0%, #2e2107 100%);
+            
+            /* Fallback dynamic base theme gradients */
+            --theme-bg-Basic: linear-gradient(180deg, #1c2436 0%, #0c0f17 100%);
+            --theme-bg-Gold: linear-gradient(180deg, #61460b 0%, #241a02 100%);
+            --theme-bg-Candy: linear-gradient(180deg, #6b183f 0%, #260514 100%);
+            --theme-bg-Galaxy: linear-gradient(180deg, #1f1145 0%, #080314 100%);
+            --theme-bg-Gem: linear-gradient(180deg, #114c47 0%, #041a18 100%);
+            --theme-bg-Holofoil: linear-gradient(180deg, #204454 0%, #09171f 100%);
+            --theme-bg-Rift: linear-gradient(180deg, #154b5e 0%, #04161c 100%);
         }
 
         * {
@@ -71,7 +79,6 @@
             gap: 15px;
         }
 
-        /* Flex Layout Alignment for Brand Identity Container */
         .brand-container {
             display: flex;
             align-items: center;
@@ -79,7 +86,6 @@
             flex-shrink: 0;
         }
 
-        /* Inline Header Decorative Mascot Scaling Properties */
         .brand-mascot {
             width: 42px;
             height: 42px;
@@ -100,7 +106,6 @@
             gap: 15px;
         }
 
-        /* Live Progress Counter Box */
         .live-progress-box {
             background-color: var(--fn-panel-bg);
             border: 2px solid var(--fn-border);
@@ -274,12 +279,12 @@
             border-color: var(--fn-unreleased);
         }
 
-        .switch-input#low-fidelity-switch:checked {
+        .switch-input:checked#low-fidelity-switch {
             background: var(--fn-neon-cyan);
             border-color: var(--fn-neon-cyan);
         }
 
-        .switch-input#compressed-grid-switch:checked {
+        .switch-input:checked#compressed-grid-switch {
             background: var(--fn-yellow);
             border-color: var(--fn-yellow);
         }
@@ -302,6 +307,9 @@
 
         .creator-card {
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .creator-title {
@@ -320,6 +328,8 @@
             overflow: hidden;
             transition: border-color 0.15s;
             background: #0e1117;
+            max-width: 50%;
+            margin: 0 auto;
         }
 
         .creator-link:hover {
@@ -346,7 +356,6 @@
             gap: 15px;
         }
 
-        /* Sprite Card Core Styling */
         .sprite-card {
             border: 3px solid #1a2233;
             background-color: #0f141d;
@@ -373,9 +382,16 @@
         .sprite-card.rarity-Epic .card-inner-display { background: var(--bg-Epic); }
         .sprite-card.rarity-Legendary .card-inner-display { background: var(--bg-Legendary); }
         .sprite-card.rarity-Mythic .card-inner-display { background: var(--bg-Mythic); }
-        .sprite-card.rarity-Special .card-inner-display { background: var(--bg-Special); }
+        
+        /* Dynamic Class Mappings for Theme-Based Special Cards */
+        .sprite-card.rarity-Special.theme-Basic .card-inner-display { background: var(--theme-bg-Basic); }
+        .sprite-card.rarity-Special.theme-Gold .card-inner-display { background: var(--theme-bg-Gold); }
+        .sprite-card.rarity-Special.theme-Candy .card-inner-display { background: var(--theme-bg-Candy); }
+        .sprite-card.rarity-Special.theme-Galaxy .card-inner-display { background: var(--theme-bg-Galaxy); }
+        .sprite-card.rarity-Special.theme-Gem .card-inner-display { background: var(--theme-bg-Gem); }
+        .sprite-card.rarity-Special.theme-Holofoil .card-inner-display { background: var(--theme-bg-Holofoil); }
+        .sprite-card.rarity-Special.theme-Rift .card-inner-display { background: var(--theme-bg-Rift); }
 
-        /* Optimized, High-Performance Panning Aura Glow Effect */
         .card-inner-display::before {
             content: '';
             position: absolute;
@@ -390,9 +406,8 @@
             will-change: background-position;
         }
 
-        /* Custom high-performance background aura for Special rarity cards */
         .sprite-card.rarity-Special .card-inner-display::before {
-            background: linear-gradient(135deg, rgba(227,116,238,0) 0%, rgba(227,116,238,0.6) 50%, rgba(227,116,238,0) 100%);
+            background: linear-gradient(135deg, rgba(81,247,204,0) 0%, rgba(227,116,238,0.5) 50%, rgba(181,246,158,0) 100%);
             background-size: 300% 300%;
             opacity: 0.45;
         }
@@ -427,13 +442,11 @@
             z-index: 2;
         }
 
-        /* OWNED Tracking Layout: Lime green tracking indicator */
         .sprite-card.obtained {
             border-color: var(--fn-lime);
             box-shadow: 0 0 20px rgba(50, 205, 80, 0.45);
         }
 
-        /* VIEW MODE RECONSTRUCTION */
         body.viewing-shared-collection .sprite-card {
             border-color: #1a2233 !important;
             box-shadow: 0 6px 14px rgba(0,0,0,0.4) !important;
@@ -441,7 +454,6 @@
             transform: none !important;
         }
 
-        /* Status Badge Overlays (Top Left Corner Alignment) */
         .status-badge.unreleased {
             position: absolute;
             top: 6px;
@@ -474,7 +486,6 @@
             top: 26px;
         }
 
-        /* Fortnite Angular Polygon Slanted Rarity Badge (Bottom Left Alignment) */
         .fortnite-rarity-tag {
             position: absolute;
             bottom: 0px;
@@ -494,12 +505,12 @@
         .sprite-card.rarity-Mythic .fortnite-rarity-tag { background: var(--color-Mythic); color: var(--text-Mythic); }
         .sprite-card.rarity-Special .fortnite-rarity-tag { background: var(--color-Special); color: var(--text-Special); }
 
-        /* Footer Style Overhaul with Auto-scaling Typography layout */
+        /* Reconstructed Alignment Layout Footer Container */
         .card-title-footer {
-            font-size: 13px;
-            font-weight: 700;
-            text-align: center;
-            padding: 6px 4px;
+            height: 28px;
+            min-height: 28px;
+            max-height: 28px;
+            padding: 0px 4px;
             color: #ffffff;
             z-index: 3;
             position: relative;
@@ -509,7 +520,6 @@
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            white-space: nowrap;
         }
 
         .card-title-footer span {
@@ -517,9 +527,11 @@
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            line-height: 1;
+            text-align: center;
         }
 
-        /* Underlay colored base borders */
         .sprite-card::after {
             content: '';
             position: absolute;
@@ -550,7 +562,6 @@
             margin-left: 10px;
         }
 
-        /* Compressed Alternatives Variant Layout Modifications */
         .alt-variants-tray {
             position: absolute;
             top: 6px;
@@ -577,7 +588,6 @@
             box-shadow: 0 0 6px var(--fn-lime);
         }
 
-        /* Popout Layout Customizations for In-Place Scaling Expansion */
         .alt-preview-popout {
             position: absolute;
             top: 50%;
@@ -668,13 +678,13 @@
             </aside>
 
             <div class="panel-box creator-card">
-                <div class="creator-title">MADE BY RICK</div>
+                <div class="creator-title">Made by Rick</div>
                 <a href="https://youtube.com/@rickventure" class="creator-link" target="_blank">
                     <img src="sprites/rickpfp.png" class="creator-img" alt="Rickventure Channel" onerror="this.src='https://placehold.co/200?text=Rickventure'">
                 </a>
                 <div class="creator-subtext">
-                    SUBSCRIBE AND JOIN THE ADVENTURE!<br>
-                    HELP ME REACH 1,000 SUBS SO I CAN GET A CREATOR CODE!
+                    Help me reach 1,000 subscribers so I can put a creator code here.<br>
+                    This project was only 50% vibe coded btw.
                 </div>
             </div>
         </div>
@@ -800,7 +810,7 @@
             let currentSize = 13; 
             span.style.fontSize = currentSize + 'px';
             
-            while (span.scrollWidth > parent.clientWidth && currentSize > 8) {
+            while ((span.scrollWidth > parent.clientWidth || span.scrollHeight > parent.clientHeight) && currentSize > 7) {
                 currentSize -= 0.5;
                 span.style.fontSize = currentSize + 'px';
             }
@@ -901,7 +911,8 @@
             card.dataset.id = sprite.id;
             
             const itemRarity = sprite.rarity || 'Rare';
-            card.className = `sprite-card rarity-${itemRarity} ${isObtained ? 'obtained' : ''}`;
+            const itemTheme = sprite.theme || 'Basic';
+            card.className = `sprite-card rarity-${itemRarity} theme-${itemTheme} ${isObtained ? 'obtained' : ''}`;
             card.innerHTML = buildCardHTML(sprite, isObtained);
 
             if (item.isBase && item.variants.length > 0) {
@@ -918,7 +929,9 @@
                     pin.style.backgroundImage = `url('sprites/${variant.id}.png'), url('https://placehold.co/50?text=None')`;
                     
                     const popout = document.createElement('div');
-                    popout.className = `alt-preview-popout sprite-card rarity-${variant.rarity || 'Rare'} ${varObtained ? 'obtained' : ''}`;
+                    const varRarity = variant.rarity || 'Rare';
+                    const varTheme = variant.theme || 'Basic';
+                    popout.className = `alt-preview-popout sprite-card rarity-${varRarity} theme-${varTheme} ${varObtained ? 'obtained' : ''}`;
                     popout.innerHTML = buildCardHTML(variant, varObtained);
                     
                     pin.appendChild(popout);
@@ -1042,11 +1055,12 @@
                 const y = padding + c * (cardH + padding);
                 
                 const rarity = sprite.rarity || 'Rare';
+                const theme = sprite.theme || 'Basic';
                 
                 ctx.fillStyle = '#0f141d';
                 ctx.fillRect(x, y, cardW, cardH);
 
-                const innerH = cardH - 30;
+                const innerH = cardH - 28;
                 let bgGrad = ctx.createLinearGradient(x, y, x, y + innerH);
                 let accentColor = '#004A8E';
                 let tagTxtColor = '#00FFFB';
@@ -1061,10 +1075,16 @@
                     bgGrad.addColorStop(0, '#743e0a'); bgGrad.addColorStop(1, '#301702');
                     accentColor = '#8E4122'; tagTxtColor = '#FBC568';
                 } else if (rarity === 'Mythic') {
-                    bgGrad.addColorStop(0, '#6c1212'); bgGrad.addColorStop(1, '#2b0606');
+                    bgGrad.addColorStop(0, '#70531c'); bgGrad.addColorStop(1, '#2e2107');
                     accentColor = '#80622A'; tagTxtColor = '#FFF1A9';
                 } else if (rarity === 'Special') {
-                    bgGrad.addColorStop(0, '#134641'); bgGrad.addColorStop(1, '#061d1b');
+                    if (theme === 'Basic') { bgGrad.addColorStop(0, '#1c2436'); bgGrad.addColorStop(1, '#0c0f17'); }
+                    else if (theme === 'Gold') { bgGrad.addColorStop(0, '#61460b'); bgGrad.addColorStop(1, '#241a02'); }
+                    else if (theme === 'Candy') { bgGrad.addColorStop(0, '#6b183f'); bgGrad.addColorStop(1, '#260514'); }
+                    else if (theme === 'Galaxy') { bgGrad.addColorStop(0, '#1f1145'); bgGrad.addColorStop(1, '#080314'); }
+                    else if (theme === 'Gem') { bgGrad.addColorStop(0, '#114c47'); bgGrad.addColorStop(1, '#041a18'); }
+                    else if (theme === 'Holofoil') { bgGrad.addColorStop(0, '#204454'); bgGrad.addColorStop(1, '#09171f'); }
+                    else if (theme === 'Rift') { bgGrad.addColorStop(0, '#154b5e'); bgGrad.addColorStop(1, '#04161c'); }
                     accentColor = '#51f7cc'; tagTxtColor = '#000000';
                 }
                 ctx.fillStyle = bgGrad;
@@ -1072,11 +1092,9 @@
 
                 if (rarity === 'Special') {
                     let rainGrad = ctx.createLinearGradient(x, y, x + cardW, y + innerH);
-                    rainGrad.addColorStop(0, 'rgba(81, 247, 204, 0.35)');
-                    rainGrad.addColorStop(0.28, 'rgba(125, 169, 252, 0.35)');
-                    rainGrad.addColorStop(0.62, 'rgba(227, 116, 238, 0.35)');
-                    rainGrad.addColorStop(0.85, 'rgba(255, 182, 161, 0.35)');
-                    rainGrad.addColorStop(1, 'rgba(181, 246, 158, 0.35)');
+                    rainGrad.addColorStop(0, 'rgba(81, 247, 204, 0.25)');
+                    rainGrad.addColorStop(0.5, 'rgba(227, 116, 238, 0.35)');
+                    rainGrad.addColorStop(1, 'rgba(181, 246, 158, 0.25)');
                     ctx.fillStyle = rainGrad;
                     ctx.fillRect(x, y, cardW, innerH);
                 }
@@ -1094,9 +1112,7 @@
                 ctx.save();
                 if (rarity === 'Special') {
                     let badgeGrad = ctx.createLinearGradient(x, y + innerH - 18, x + 75, y + innerH - 18);
-                    badgeGrad.addColorStop(0, '#51f7cc'); badgeGrad.addColorStop(0.28, '#7da9fc');
-                    badgeGrad.addColorStop(0.62, '#e374ee'); badgeGrad.addColorStop(0.85, '#ffb6a1');
-                    badgeGrad.addColorStop(1, '#b5f69e');
+                    badgeGrad.addColorStop(0, '#51f7cc'); badgeGrad.addColorStop(0.5, '#e374ee'); badgeGrad.addColorStop(1, '#b5f69e');
                     ctx.fillStyle = badgeGrad;
                 } else {
                     ctx.fillStyle = accentColor;
@@ -1116,25 +1132,24 @@
                 ctx.fillText(rarity === 'Mythic' ? 'MYTHIC' : rarity, x + 6, y + innerH - 5);
 
                 ctx.fillStyle = 'rgba(15, 20, 29, 0.9)';
-                ctx.fillRect(x, y + innerH, cardW, 30);
+                ctx.fillRect(x, y + innerH, cardW, 28);
 
                 ctx.fillStyle = '#ffffff';
-                let calculatedFontSize = 12;
+                let calculatedFontSize = 13;
                 ctx.font = `700 ${calculatedFontSize}px Oswald`;
                 ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 
-                while(ctx.measureText(sprite.name).width > (cardW - 8) && calculatedFontSize > 8) {
+                while((ctx.measureText(sprite.name).width > (cardW - 8)) && calculatedFontSize > 7) {
                     calculatedFontSize -= 0.5;
                     ctx.font = `700 ${calculatedFontSize}px Oswald`;
                 }
-                ctx.fillText(sprite.name, x + (cardW / 2), y + innerH + 19);
+                ctx.fillText(sprite.name, x + (cardW / 2), y + innerH + 14);
 
                 ctx.fillStyle = accentColor;
                 if (rarity === 'Special') {
                     let baseGrad = ctx.createLinearGradient(x, y + cardH - 4, x + cardW, y + cardH - 4);
-                    baseGrad.addColorStop(0, '#51f7cc'); baseGrad.addColorStop(0.28, '#7da9fc');
-                    baseGrad.addColorStop(0.62, '#e374ee'); baseGrad.addColorStop(0.85, '#ffb6a1');
-                    baseGrad.addColorStop(1, '#b5f69e');
+                    baseGrad.addColorStop(0, '#51f7cc'); baseGrad.addColorStop(0.5, '#e374ee'); baseGrad.addColorStop(1, '#b5f69e');
                     ctx.fillStyle = baseGrad;
                 }
                 ctx.fillRect(x, y + cardH - 4, cardW, 4);
