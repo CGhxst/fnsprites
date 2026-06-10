@@ -501,3 +501,22 @@ body.low-fidelity .sprite-card.rarity-Epic .card-inner-display { background: #4d
 body.low-fidelity .sprite-card.rarity-Legendary .card-inner-display { background: #743e0a !important; }
 body.low-fidelity .sprite-card.rarity-Mythic .card-inner-display { background: #70531c !important; }
 body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: #1c2436 !important; }
+
+
+/* MOBILE RESPONSIVE FIX */
+@media (max-width: 768px) {
+    .app-layout {
+        grid-template-columns: 1fr; /* Stacks the sidebar above the grid */
+        gap: 20px;
+    }
+
+    .sprite-grid {
+        /* Lowers the minimum card size to allow 2+ columns on mobile screens */
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
+        gap: 10px;
+    }
+    
+    .creator-link {
+        max-width: 80%; /* Allows the creator image to look better on mobile */
+    }
+}
