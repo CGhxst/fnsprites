@@ -24,17 +24,36 @@ const searchInput = document.getElementById('search');
 const themeFilter = document.getElementById('theme-filter');
 const unreleasedSwitch = document.getElementById('unreleased-switch');
 const lowFidelitySwitch = document.getElementById('low-fidelity-switch');
-const compressedGridSwitch = document.getElementById('compressed-grid-switch');
 const shareBtn = document.getElementById('shareBtn');
 const imageBtn = document.getElementById('imageBtn');
 const missingImageBtn = document.getElementById('missingImageBtn');
+
+// New Switches
+const hideMasteredSwitch = document.getElementById('hide-mastered-switch');
+const groupThemeSwitch = document.getElementById('group-theme-switch');
 
 const liveRatio = document.getElementById('live-counter-ratio');
 const liveBarFill = document.getElementById('live-counter-bar');
 const masteryRatio = document.getElementById('mastery-counter-ratio');
 const masteryBarFill = document.getElementById('mastery-counter-bar');
 
-let currentStatusFilter = 'all'; 
+// RESTORE LAST SAVED STATES FROM LOCAL STORAGE
+if (!isViewMode) {
+    searchInput.value = localStorage.getItem('fn_state_search') || '';
+    themeFilter.value = localStorage.getItem('fn_state_theme') || 'all';
+    unreleasedSwitch.checked = localStorage.getItem('fn_state_unreleased') === 'true';
+    lowFidelitySwitch.checked = localStorage.getItem('fn_state_low_fidelity') === 'true';
+    hideMasteredSwitch.checked = localStorage.getItem('fn_state_hide_mastered') === 'true';
+	if (localStorage.getItem('fn_state_group_theme') === null) {
+		groupThemeSwitch.checked = true;
+	} else {
+		groupThemeSwitch.checked = localStorage.getItem('fn_state_group_theme') === 'true';
+	}
+    
+    if (lowFidelitySwitch.checked) document.body.classList.add('low-fidelity');
+}
+
+let currentStatusFilter = localStorage.getItem('fn_state_status_filter') || 'all'; 
 
 const toggleAll = document.getElementById('toggle-all');
 const toggleOwned = document.getElementById('toggle-owned');
@@ -43,21 +62,25 @@ const toggleUnowned = document.getElementById('toggle-unowned');
 function setStatusFilter(filterValue, activeButton) {
     if (isViewMode) return;
     currentStatusFilter = filterValue;
+    localStorage.setItem('fn_state_status_filter', filterValue);
     [toggleAll, toggleOwned, toggleUnowned].forEach(btn => btn.classList.remove('active'));
     activeButton.classList.add('active');
     renderGrid();
 }
 
+// Set active class on initial load
+if (currentStatusFilter === 'all') toggleAll.classList.add('active');
+else if (currentStatusFilter === 'obtained') toggleOwned.classList.add('active');
+else if (currentStatusFilter === 'missing') toggleUnowned.classList.add('active');
+
 // Hide Creator Card for the Session
 const creatorCard = document.querySelector('.creator-card');
 const closeCreatorBtn = document.getElementById('closeCreatorBtn');
 
-// Check if the user already closed it this session
 if (sessionStorage.getItem('hide_creator_card') === 'true' && creatorCard) {
     creatorCard.style.display = 'none';
 }
 
-// Add the click event listener to hide it and save the preference
 if (closeCreatorBtn && creatorCard) {
     closeCreatorBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -70,13 +93,29 @@ toggleAll.addEventListener('click', () => setStatusFilter('all', toggleAll));
 toggleOwned.addEventListener('click', () => setStatusFilter('obtained', toggleOwned));
 toggleUnowned.addEventListener('click', () => setStatusFilter('missing', toggleUnowned));
 
-compressedGridSwitch.addEventListener('change', () => { renderGrid(); });
-searchInput.addEventListener('input', renderGrid);
-themeFilter.addEventListener('change', renderGrid);
-unreleasedSwitch.addEventListener('change', renderGrid);
-
-// Low Fidelity Switch Event Handler
+// PERSISTENCE EVENT LISTENERS
+searchInput.addEventListener('input', () => {
+    localStorage.setItem('fn_state_search', searchInput.value);
+    renderGrid();
+});
+themeFilter.addEventListener('change', () => {
+    localStorage.setItem('fn_state_theme', themeFilter.value);
+    renderGrid();
+});
+unreleasedSwitch.addEventListener('change', () => {
+    localStorage.setItem('fn_state_unreleased', unreleasedSwitch.checked);
+    renderGrid();
+});
+hideMasteredSwitch.addEventListener('change', () => {
+    localStorage.setItem('fn_state_hide_mastered', hideMasteredSwitch.checked);
+    renderGrid();
+});
+groupThemeSwitch.addEventListener('change', () => {
+    localStorage.setItem('fn_state_group_theme', groupThemeSwitch.checked);
+    renderGrid();
+});
 lowFidelitySwitch.addEventListener('change', () => {
+    localStorage.setItem('fn_state_low_fidelity', lowFidelitySwitch.checked);
     if (lowFidelitySwitch.checked) {
         document.body.classList.add('low-fidelity');
     } else {
@@ -148,6 +187,15 @@ function buildCardHTML(sprite, isObtained, isMastered) {
     `;
 }
 
+function sortAndGroupSprites(itemsArray) {
+    const themeOrder = ["Basic", "Gold", "Candy", "Galaxy", "Gem", "Holofoil", "Rift"];
+    return [...itemsArray].sort((a, b) => {
+        let themeA = a.sprite ? a.sprite.theme : a.theme;
+        let themeB = b.sprite ? b.sprite.theme : b.theme;
+        return themeOrder.indexOf(themeA) - themeOrder.indexOf(themeB);
+    });
+}
+
 function renderGrid() {
     spriteGrid.innerHTML = '';
     if (typeof baseSprites === 'undefined') return;
@@ -157,34 +205,23 @@ function renderGrid() {
     const searchQuery = searchInput.value.toLowerCase();
     const selectedTheme = themeFilter.value;
     const showUnreleased = unreleasedSwitch.checked;
-    const isCompressedMode = compressedGridSwitch.checked;
+    const hideMastered = hideMasteredSwitch.checked;
+    const groupByThemeSetting = groupThemeSwitch.checked;
 
     let itemsToRender = [];
-    if (isCompressedMode) {
-        const basicSprites = baseSprites.filter(s => s.theme === 'Basic');
-        basicSprites.forEach(baseSprite => {
-            const baseNameRoot = baseSprite.name.replace(/\s*\(Basic\)\s*/i, '').trim();
-            let alternatives = baseSprites.filter(s => s.id !== baseSprite.id && s.name.toLowerCase().includes(baseNameRoot.toLowerCase()));
-            
-            if (!showUnreleased) alternatives = alternatives.filter(v => !v.unreleased);
-            
-            const matchesSearch = baseSprite.name.toLowerCase().includes(searchQuery);
-            const matchesTheme = selectedTheme === 'all' || selectedTheme === 'Basic';
-            
-            if (!showUnreleased && baseSprite.unreleased) return;
+    
+    // Completely standalone mapping grid rendering logic
+    baseSprites.forEach(sprite => {
+        if (hideMastered && masteredSprites.includes(sprite.id)) return;
+        const matchesSearch = sprite.name.toLowerCase().includes(searchQuery);
+        const matchesTheme = selectedTheme === 'all' || sprite.theme === selectedTheme;
+        if (matchesSearch && matchesTheme) {
+            itemsToRender.push({ sprite: sprite, isBase: false, variants: [] });
+        }
+    });
 
-            if (matchesSearch && matchesTheme) {
-                itemsToRender.push({ sprite: baseSprite, isBase: true, variants: alternatives });
-            }
-        });
-    } else {
-        baseSprites.forEach(sprite => {
-            const matchesSearch = sprite.name.toLowerCase().includes(searchQuery);
-            const matchesTheme = selectedTheme === 'all' || sprite.theme === selectedTheme;
-            if (matchesSearch && matchesTheme) {
-                itemsToRender.push({ sprite: sprite, isBase: false, variants: [] });
-            }
-        });
+    if (groupByThemeSetting) {
+        itemsToRender = sortAndGroupSprites(itemsToRender);
     }
 
     itemsToRender.forEach(item => {
@@ -220,52 +257,6 @@ function renderGrid() {
                     toggleMastery(sprite.id);
                 });
             }
-        }
-
-        if (item.isBase && item.variants.length > 0) {
-            const tray = document.createElement('div');
-            tray.className = 'alt-variants-tray';
-
-            item.variants.forEach(variant => {
-                const varObtained = obtainedSprites.includes(variant.id);
-                const varMastered = masteredSprites.includes(variant.id);
-                if (isViewMode && !varObtained) return;
-
-                const pin = document.createElement('div');
-                let pinMasteryClass = varMastered ? ' mastered-pin' : '';
-                pin.className = `alt-variant-pin ${varObtained ? 'obtained-pin' : ''}${pinMasteryClass}`;
-                pin.style.backgroundImage = `url('sprites/${variant.id}.png'), url('https://placehold.co/50?text=None')`;
-                
-                const popout = document.createElement('div');
-                const varRarity = variant.rarity || 'Rare';
-                const varTheme = variant.theme || 'Basic';
-                let popMasteryClass = varMastered ? ' mastered' : '';
-                popout.className = `alt-preview-popout sprite-card rarity-${varRarity} theme-${varTheme} ${varObtained ? 'obtained' : ''}${popMasteryClass}`;
-                popout.innerHTML = buildCardHTML(variant, varObtained, varMastered);
-                
-                if (!isViewMode && varObtained && !varMastered) {
-                    const subCrown = popout.querySelector('.crown-action-icon');
-                    if (subCrown) {
-                        subCrown.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            toggleMastery(variant.id);
-                        });
-                    }
-                }
-
-                pin.appendChild(popout);
-
-                if (!isViewMode) {
-                    pin.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        toggleObtained(variant.id, popout);
-                    });
-                }
-                tray.appendChild(pin);
-            });
-            if (tray.children.length > 0) card.appendChild(tray);
         }
 
         if (!isViewMode) {
@@ -310,7 +301,7 @@ shareBtn.addEventListener('click', () => {
 });
 
 // ==========================================
-// ADAPTIVE EXPORT GRAPHICS ENGINE V3 (UPDATED WITH SHINE)
+// ADAPTIVE EXPORT GRAPHICS ENGINE V3
 // ==========================================
 function exportCanvasImage(mode) {
     if (typeof baseSprites === 'undefined') return;
@@ -335,6 +326,10 @@ function exportCanvasImage(mode) {
         titleColor = "#ef4444"; 
         fileName = "fnsprites-missing";
         if (targetItems.length === 0) { alert("You aren't missing any released sprites!"); return; }
+    }
+
+    if (groupThemeSwitch.checked) {
+        targetItems = sortAndGroupSprites(targetItems);
     }
 
     const canvas = document.createElement('canvas');
@@ -402,7 +397,6 @@ function exportCanvasImage(mode) {
         let availableTextWidth = canvas.width - textLeftBoundary - borderThickness - padding;
         if (renderBars && inlineBarsPossible) availableTextWidth -= 260;
 
-        // CONDITIONAL HEADER BANNER TEXT RULE: One missing item means title strictly reads "MISSING"
         let fullCombinedText = `${titleL1} ${titleL2}`;
         if (mode === 'missing' && targetItems.length === 1) {
             fullCombinedText = "MISSING";
@@ -647,18 +641,17 @@ function exportCanvasImage(mode) {
                 ctx.fillStyle = 'rgba(15, 20, 29, 0.9)';
                 ctx.fillRect(x, y + innerH, cardW, 38);
 
-                // Sprite card name text stays exactly as its native value
                 ctx.fillStyle = '#ffffff';
                 let displayNameText = sprite.name.toUpperCase();
                 
                 let calculatedFontSize = 16.95; 
-                ctx.font = `${calculatedFontSize}px "Oswald", sans-serif`; // <--- Look for this line
+                ctx.font = `${calculatedFontSize}px "Oswald", sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 
                 while((ctx.measureText(displayNameText).width > (cardW - 8)) && calculatedFontSize > 6) {
                     calculatedFontSize -= 0.5;
-                    ctx.font = `${calculatedFontSize}px "Oswald", sans-serif`; // <--- And this line
+                    ctx.font = `${calculatedFontSize}px "Oswald", sans-serif`;
                 }
                 ctx.fillText(displayNameText, x + (cardW / 2), y + innerH + 19);
 

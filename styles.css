@@ -380,7 +380,7 @@ body {
 .status-badge.collected { position: absolute; top: 6px; left: 6px; background: var(--fn-collected); color: #fff; font-size: 10px; font-weight: 900; padding: 1px 6px; z-index: 4; transform: skewX(-10deg); }
 .status-badge.mastered-badge { position: absolute; top: 6px; left: 6px; background: linear-gradient(90deg, #b8860b, var(--fn-mastered)); color: #000; font-size: 10px; font-weight: 900; padding: 1px 6px; z-index: 4; transform: skewX(-10deg); }
 
-/* FLOATING HEAD CROWN (Visible on UI collection view only) */
+/* FLOATING HEAD CROWN (Animation stripped to remove lag) */
 .rendered-head-crown {
     position: absolute;
     top: 12%;
@@ -389,20 +389,13 @@ body {
     pointer-events: none;
     line-height: 1;
     filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));
-    animation: floatingCrown 3s ease-in-out infinite;
 }
 
-@keyframes floatingCrown {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-4px); }
-    100% { transform: translateY(0px); }
-}
-
-/* POSITIONED ACTION CROWN: Set entirely clear above the angled rarity badge text container background frame bounds */
+/* POSITIONED ACTION CROWN */
 .crown-action-icon {
     position: absolute;
-    bottom: 65px; /* Lowered by 6px from 42px */
-    left: 3px;    /* Margined nicely near the lower outer corner frame boundary edge */
+    bottom: 65px; 
+    left: 3px;    
     font-size: 19px;
     z-index: 9;
     cursor: pointer;
@@ -456,12 +449,10 @@ body {
     text-align: center;
 }
 
-/* Position the creator card so the button can anchor to its top-right corner */
 .creator-card {
     position: relative;
 }
 
-/* Style the close button to be invisible except for the emoji */
 .close-creator-btn {
     position: absolute;
     top: 8px;
@@ -488,14 +479,7 @@ body {
 .sprite-card.rarity-Special::after { background: var(--color-Special); }
 .sprite-card.mastered::after { background: var(--fn-mastered) !important; }
 
-.alt-variants-tray { position: absolute; top: 6px; right: 6px; display: flex; flex-direction: column; gap: 4px; z-index: 8; }
-.alt-variant-pin { width: 24px; height: 24px; border: 1.5px solid #1a2233; cursor: pointer; position: relative; background-size: cover; background-position: center; }
-.alt-variant-pin.obtained-pin { border-color: var(--fn-lime); box-shadow: 0 0 6px var(--fn-lime); }
-.alt-preview-popout { position: absolute; top: 50%; right: 0; transform: translateY(-50%) scale(0.1); transform-origin: right center; width: 154px; height: 191px; z-index: 15; pointer-events: none; opacity: 0; transition: opacity 0.15s ease, transform 0.15s ease; }
-.alt-variant-pin:hover .alt-preview-popout { opacity: 1; transform: translateY(-50%) scale(1); pointer-events: auto; }
-
 /* LOW FIDELITY OVERRIDES */
-/* Strips gradients strictly away from card backgrounds when toggled */
 body.low-fidelity .sprite-card.rarity-Rare .card-inner-display { background: #104273 !important; }
 body.low-fidelity .sprite-card.rarity-Epic .card-inner-display { background: #4d1566 !important; }
 body.low-fidelity .sprite-card.rarity-Legendary .card-inner-display { background: #743e0a !important; }
@@ -504,49 +488,41 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
 
 
 /* ==========================================
-   COMPLETE MOBILE UI OPTIMIZATION (<= 768px) ..
+   COMPLETE MOBILE UI OPTIMIZATION (<= 768px)
    ========================================== */
 @media (max-width: 768px) {
-    
-/* 1. Base Layout Overhaul */
     body {
-        padding: 12px; /* Extra breathing room on small screens */
+        padding: 12px; 
     }
 
-    /* Convert the entire app into a single column so we can reorder everything globally */
     .app-layout {
         display: flex;
         flex-direction: column;
         gap: 16px;
     }
 
-    /* Force the sidebar wrapper to act as transparent layout-wise */
     .sidebar {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        display: contents; /* Allows children (search & creator) to be reordered independently */
+        display: contents; 
     }
 
-    /* Place the Search/Filter panel box first */
     .sidebar .panel-box:not(.creator-card) {
         order: 1;
         width: 100%;
     }
 
-    /* Move the main sprite grid into the middle position */
     .sprite-grid {
         order: 2;
         width: 100%;
     }
 
-    /* Push the creator card to the absolute bottom below the grid */
     .creator-card {
         order: 3;
         width: 100%;
     }
 
-    /* 2. Compact & Flexible Navbar */
     .fn-navbar {
         flex-direction: column;
         align-items: stretch;
@@ -556,14 +532,13 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
     }
 
     .brand-container {
-        justify-content: center; /* Center title and mascot on mobile */
+        justify-content: center; 
     }
 
     .brand-title {
-        font-size: 28px; /* Slightly scaled down so it doesn't wrap awkwardly */
+        font-size: 28px; 
     }
 
-    /* 3. Stacked Progress Bars & Action Buttons */
     .nav-controls-right {
         flex-direction: column;
         align-items: stretch;
@@ -572,16 +547,15 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
     }
 
     .progress-wrapper {
-        flex-direction: column; /* Stack progress boxes vertically */
+        flex-direction: column; 
         gap: 8px;
         width: 100%;
     }
 
     .live-progress-box {
-        min-width: 100%; /* Force full width utilization */
+        min-width: 100%; 
     }
 
-    /* Group action buttons horizontally on mobile so they don't eat vertical screen space */
     .nav-controls-right > .share-btn,
     .nav-controls-right > .image-btn,
     .nav-controls-right > .missing-image-btn {
@@ -595,14 +569,12 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
         border-bottom: 3px solid transparent;
     }
 
-    /* Adjust the border accents to be horizontal lines at the bottom of buttons */
     .share-btn { border-bottom-color: var(--fn-yellow) !important; }
     .image-btn { border-bottom-color: var(--fn-lime) !important; }
     .missing-image-btn { border-bottom-color: var(--fn-unreleased) !important; }
 
-    /* 4. Streamlined Sidebar & Inputs */
     .panel-box {
-        padding: 14px; /* Compress inner padding */
+        padding: 14px; 
     }
 
     .fn-input, .fn-select, .toggle-container {
@@ -611,15 +583,13 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
         padding: 8px;
     }
 
-    /* 5. Fluid Responsive Sprite Grid */
     .sprite-grid {
-        /* Ensures exactly 2 clean columns on tiny phones, scaling up to 3 or 4 on tablets */
         grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); 
         gap: 8px;
     }
 
     .card-title-footer {
-        height: 32px; /* Slightly shorter footer for better proportions */
+        height: 32px; 
         font-size: 12px;
     }
 
@@ -629,24 +599,23 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
     }
 
     .crown-action-icon {
-        bottom: 40px; /* Adjust crown positioning for more compact cards */
+        bottom: 40px; 
         font-size: 16px;
     }
 
-/* 6. Mobile Optimized Creator Card */
     .creator-card {
         padding: 12px;
-        margin-top: 10px; /* Separation space from the bottom of the grid */
+        margin-top: 10px; 
     }
 
     .creator-link {
-        max-width: 120px; /* Restricts the structural link block width */
-        margin: 0 auto;   /* Centers the image container element */
+        max-width: 120px; 
+        margin: 0 auto;   
         display: block;
     }
 
     .creator-img {
-        width: 80px;      /* Drops the profile picture size directly */
+        width: 80px;      
         height: 80px;
         border-radius: 50%;
         object-fit: cover;
@@ -667,7 +636,6 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
    LANDSCAPE MOBILE OPTIMIZATION
    ========================================== */
 @media (max-width: 932px) and (orientation: landscape) {
-    /* 1. Reset layout behavior */
     .app-layout {
         display: flex;
         flex-direction: column;
@@ -679,27 +647,22 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
         display: contents; 
     }
 
-    /* 2. Center Search Box & Filters */
     .sidebar .panel-box:not(.creator-card) {
         order: 1;
         width: 100%;
-        max-width: 500px; /* Keeps search from stretching too wide horizontally */
+        max-width: 500px; 
         text-align: center;
         margin: 0 auto;
     }
 
-    /* 3. Fluid Grid Center & Extra Columns Expansion */
     .sprite-grid {
         order: 2;
         width: 100%;
-        justify-content: center; /* Centers items if a row isn't fully filled */
-        
-        /* Dynamically spans extra columns as width expands in landscape */
+        justify-content: center; 
         grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
         gap: 10px;
     }
 
-    /* 4. Center Creator Details perfectly at the bottom */
     .creator-card {
         order: 3;
         width: 100%;
@@ -707,4 +670,13 @@ body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: 
         margin: 15px auto 0 auto;
         text-align: center;
     }
+}
+
+/* ==========================================
+   SETTINGS BOX ACTIVE SWITCHES (GREEN)
+   ========================================== */
+.sidebar .switch-input:checked {
+    accent-color: #22c55e !important; 
+    background-color: #22c55e !important;
+    border-color: #32cd32 !important;
 }
