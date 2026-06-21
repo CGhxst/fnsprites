@@ -64,4 +64,13 @@ const baseSprites = [
     { id: "zeropoint_holofoil", name: "Holofoil Zero Point", theme: "Holofoil", rarity: "Special", unreleased: true },
 	
     { id: "theburntpeanut_basic", name: "Burnt Peanut", theme: "Basic", rarity: "Mythic", unreleased: false },
+
+	{ id: "boss_basic", name: "Boss", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "drifter_basic", name: "Drifter", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "fishstick_basic", name: "Fishtick", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "reaper_galaxy", name: "Reaper", theme: "Galaxy", rarity: "Rare", unreleased: true },
+	{ id: "seven_basic", name: "Seven", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "soccer_basic", name: "Soccer", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "wick_basic", name: "John Wick", theme: "Basic", rarity: "Rare", unreleased: true },
+	
 ];
