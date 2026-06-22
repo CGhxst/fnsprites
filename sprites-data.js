@@ -64,13 +64,18 @@ const baseSprites = [
     { id: "zeropoint_holofoil", name: "Holofoil Zero Point", theme: "Holofoil", rarity: "Special", unreleased: true },
 	
     { id: "theburntpeanut_basic", name: "Burnt Peanut", theme: "Basic", rarity: "Mythic", unreleased: false },
-
+	
+	{ id: "aura_basic", name: "Aura", theme: "Basic", rarity: "Rare", unreleased: true },
 	{ id: "boss_basic", name: "Boss", theme: "Basic", rarity: "Rare", unreleased: true },
-	{ id: "drifter_basic", name: "Drifter", theme: "Basic", rarity: "Rare", unreleased: true },
-	{ id: "fishstick_basic", name: "Fishstick", theme: "Basic", rarity: "Rare", unreleased: true },
-	{ id: "reaper_galaxy", name: "Reaper", theme: "Galaxy", rarity: "Rare", unreleased: true },
-	{ id: "seven_basic", name: "Seven", theme: "Basic", rarity: "Rare", unreleased: true },
-	{ id: "soccer_basic", name: "Soccer", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "fishy_basic", name: "Fishy", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "striker_basic", name: "Striker", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "reaper_basic", name: "Grim Reaper", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "reaper_galaxy", name: "Galaxy Grim Reaper", theme: "Galaxy", rarity: "Special", unreleased: true },
+
 	{ id: "wick_basic", name: "John Wick", theme: "Basic", rarity: "Rare", unreleased: true },
 	
+	{ id: "drifter_basic", name: "Drifter", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "ice_basic", name: "Ice", theme: "Basic", rarity: "Rare", unreleased: true },
+	{ id: "seven_basic", name: "Seven", theme: "Basic", rarity: "Rare", unreleased: true },
+
 ];
