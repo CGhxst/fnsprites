@@ -205,6 +205,7 @@ a { color: var(--mastered); }
     align-items: center;
     gap: var(--gap);
     flex-wrap: wrap;
+    min-width: 0;
 }
 
 /* ── Input & Select ── */
@@ -324,12 +325,13 @@ a { color: var(--mastered); }
 
 .actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-left: auto;
 }
 
 .btn {
-    height: 36px;
+    min-height: 36px;
     padding: 0 16px;
     font-size: 13px;
     font-weight: 600;
@@ -704,6 +706,12 @@ body.low-fidelity .rarity-Special .card-rarity { background: #51f7cc; }
     .actions .dropdown .btn { width: 100%; }
 
     .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+}
+
+@media (max-width: 640px) {
+    .toolbar-row { align-items: stretch; }
+    .switch { min-height: 34px; }
+    .btn, .input, .select { min-height: 44px; }
 }
 
 @media (max-width: 480px) {
