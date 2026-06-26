@@ -50,11 +50,18 @@ const dom = {
     lowFidelity: document.getElementById('lowFidelity'),
     exportDropdown: document.getElementById('exportDropdown'),
     exportToggle: document.getElementById('exportToggle'),
+    copyDropdown: document.getElementById('copyDropdown'),
+    copyToggle: document.getElementById('copyToggle'),
     shareBtn: document.getElementById('shareBtn'),
+    copyTradeTextBtn: document.getElementById('copyTradeTextBtn'),
+    copyTradeGridBtn: document.getElementById('copyTradeGridBtn'),
     collectionRatio: document.getElementById('collectionRatio'),
     collectionFill: document.getElementById('collectionFill'),
     masteryRatio: document.getElementById('masteryRatio'),
     masteryFill: document.getElementById('masteryFill'),
+    exportBackupBtn: document.getElementById('exportBackupBtn'),
+    importBtn: document.getElementById('importBtn'),
+    importInput: document.getElementById('importInput'),
 };
 
 /* ===================================================
@@ -110,16 +117,16 @@ function applyStateToDOM() {
    Share Encoding / Decoding
    =================================================== */
 
-const B32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
 function encodeBits(bits) {
-    while (bits.length % 5 !== 0) {
+    while (bits.length % 6 !== 0) {
         bits += '0';
     }
     let code = '';
-    for (let i = 0; i < bits.length; i += 5) {
-        const val = parseInt(bits.substring(i, i + 5), 2);
-        code += B32_CHARS[val];
+    for (let i = 0; i < bits.length; i += 6) {
+        const val = parseInt(bits.substring(i, i + 6), 2);
+        code += B64_CHARS[val];
     }
     return code.replace(/A+$/, '');
 }
@@ -128,9 +135,9 @@ function decodeBits(code) {
     if (!code) return '';
     let bits = '';
     for (let i = 0; i < code.length; i++) {
-        const val = B32_CHARS.indexOf(code[i]);
+        const val = B64_CHARS.indexOf(code[i]);
         if (val === -1) return '';
-        bits += val.toString(2).padStart(5, '0');
+        bits += val.toString(2).padStart(6, '0');
     }
     return bits;
 }
@@ -150,13 +157,13 @@ function compressCollection(sprites, obtained, mastered) {
     if (!masteredCode) {
         return obtainedCode;
     }
-    return `${obtainedCode}-${masteredCode}`;
+    return `${obtainedCode}~${masteredCode}`;
 }
 
 function decompressCollection(sprites, code) {
     if (!code) return { obtained: [], mastered: [] };
     
-    const parts = code.toUpperCase().split('-');
+    const parts = code.split('~');
     if (parts.length > 2) {
         return { obtained: [], mastered: [] };
     }
@@ -164,7 +171,7 @@ function decompressCollection(sprites, code) {
     const obtainedCode = parts[0];
     const masteredCode = parts[1] || '';
 
-    if (!/^[A-Z2-7]*$/.test(obtainedCode) || !/^[A-Z2-7]*$/.test(masteredCode)) {
+    if (!/^[A-Za-z0-9\-_]*$/.test(obtainedCode) || !/^[A-Za-z0-9\-_]*$/.test(masteredCode)) {
         return { obtained: [], mastered: [] };
     }
 
@@ -411,16 +418,6 @@ function getRarityGradient(rarity, theme) {
     return themes[theme] || themes.Basic;
 }
 
-function getFlatRarityColor(rarity, theme) {
-    const map = { Rare: '#104273', Epic: '#4d1566', Legendary: '#743e0a', Mythic: '#70531c' };
-    if (rarity !== 'Special') return map[rarity] || map.Rare;
-    const themes = {
-        Basic: '#1c2436', Gold: '#61460b', Candy: '#6b183f', Galaxy: '#1f1145',
-        Gem: '#114c47', Holofoil: '#204454', Rift: '#154b5e',
-    };
-    return themes[theme] || themes.Basic;
-}
-
 function getRarityTagColors(rarity) {
     const map = {
         Rare: ['#004A8E', '#00FFFB'], Epic: ['#511D7F', '#ED2BFF'],
@@ -460,6 +457,13 @@ function getExportConfig(mode) {
             filename: 'fnsprites-mastered', emptyMsg: "You don't have any mastered sprites!",
             showBars: false,
         },
+        trade: {
+            items: baseSprites.filter(s => !s.unreleased),
+            titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'TRADE CARD',
+            fallback: 'TRADE CARD', color: '#ffd700',
+            filename: 'fnsprites-trade-card', emptyMsg: 'No sprites to export!',
+            showBars: true,
+        },
     };
 
     const config = configs[mode];
@@ -470,76 +474,149 @@ function getExportConfig(mode) {
     return config;
 }
 
-/* ===================================================
-   Canvas Export - Card Renderer
-   =================================================== */
+function drawCrown(ctx, cx, cy) {
+    ctx.save();
+    ctx.fillStyle = '#ffd700';
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1.2;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - 7, cy + 5);
+    ctx.lineTo(cx + 7, cy + 5);
+    ctx.lineTo(cx + 7, cy - 2);
+    ctx.lineTo(cx + 3, cy + 1.5);
+    ctx.lineTo(cx, cy - 4.5);
+    ctx.lineTo(cx - 3, cy + 1.5);
+    ctx.lineTo(cx - 7, cy - 2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+}
 
-function drawExportCard(ctx, sprite, x, y, w, h, img, mode) {
+function drawMiniCard(ctx, sprite, x, y, w, h, cardState, imageMap) {
+    if (cardState === 'empty') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        drawRoundRect(ctx, x, y, w, h, 8);
+        ctx.stroke();
+        ctx.restore();
+        return;
+    }
+
     const rarity = sprite.rarity || 'Rare';
     const theme = sprite.theme || 'Basic';
-    const isMastered = state.mastered.includes(sprite.id);
-    const isLowFi = state.settings.lowFidelity;
-    const innerH = h - 38;
+    const innerH = h - 22; // 100 - 22 = 78
 
-    /* Card base */
+    const isMastered = cardState === 'mastered';
+    const isGrayed = cardState === 'missing_gray';
+    const isMissing = cardState === 'missing_gray' || cardState === 'missing_color';
+
+    /* Card base background */
     ctx.fillStyle = '#0f141d';
-    ctx.fillRect(x, y, w, h);
+    ctx.beginPath();
+    drawRoundRect(ctx, x, y, w, h, 8);
+    ctx.fill();
 
     /* Rarity background */
-    if (isLowFi) {
-        ctx.fillStyle = getFlatRarityColor(rarity, theme);
-        ctx.fillRect(x, y, w, innerH);
-    } else {
-        const grad = ctx.createLinearGradient(x, y, x, y + innerH);
-        const [c1, c2] = getRarityGradient(rarity, theme);
-        grad.addColorStop(0, c1);
-        grad.addColorStop(1, c2);
-        ctx.fillStyle = grad;
-        ctx.fillRect(x, y, w, innerH);
+    ctx.save();
+    ctx.beginPath();
+    drawRoundRect(ctx, x, y, w, innerH, 8);
+    ctx.clip();
 
-        if (rarity === 'Special') {
-            const rainbow = ctx.createLinearGradient(x, y, x + w, y + innerH);
-            rainbow.addColorStop(0, 'rgba(81,247,204,0.25)');
-            rainbow.addColorStop(0.5, 'rgba(227,116,238,0.35)');
-            rainbow.addColorStop(1, 'rgba(181,246,158,0.25)');
-            ctx.fillStyle = rainbow;
-            ctx.fillRect(x, y, w, innerH);
-        }
+    const grad = ctx.createLinearGradient(x, y, x, y + innerH);
+    const [c1, c2] = getRarityGradient(rarity, theme);
+    grad.addColorStop(0, c1);
+    grad.addColorStop(1, c2);
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, w, innerH);
 
-        const shine = ctx.createLinearGradient(x, y, x, y + innerH);
-        shine.addColorStop(0, 'rgba(255,255,255,0.2)');
-        shine.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = shine;
+    /* Special rainbow overlay */
+    if (rarity === 'Special') {
+        const rainbow = ctx.createLinearGradient(x, y, x + w, y + innerH);
+        rainbow.addColorStop(0, 'rgba(81,247,204,0.25)');
+        rainbow.addColorStop(0.5, 'rgba(227,116,238,0.35)');
+        rainbow.addColorStop(1, 'rgba(181,246,158,0.25)');
+        ctx.fillStyle = rainbow;
         ctx.fillRect(x, y, w, innerH);
     }
 
+    /* Highlight shine */
+    const shine = ctx.createLinearGradient(x, y, x, y + innerH);
+    shine.addColorStop(0, 'rgba(255,255,255,0.12)');
+    shine.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = shine;
+    ctx.fillRect(x, y, w, innerH);
+
+    if (isGrayed) {
+        ctx.fillStyle = 'rgba(11, 13, 20, 0.45)';
+        ctx.fillRect(x, y, w, innerH);
+    }
+    ctx.restore();
+
     /* Sprite image */
-    if (img.complete && img.naturalWidth > 0) {
+    const img = imageMap[sprite.id];
+    if (img && img.complete && img.naturalWidth > 0) {
+        ctx.save();
+        ctx.beginPath();
+        drawRoundRect(ctx, x, y, w, innerH, 8);
+        ctx.clip();
+
+        if (isGrayed) {
+            try {
+                ctx.filter = 'grayscale(100%) brightness(48%)';
+            } catch (e) {}
+        }
         const maxDim = w * 0.82;
         const ratio = Math.min(maxDim / img.width, maxDim / img.height);
         const nw = img.width * ratio;
         const nh = img.height * ratio;
         ctx.drawImage(img, x + (w - nw) / 2, y + (innerH - nh) / 2, nw, nh);
+        ctx.restore();
+
+        if (isGrayed) {
+            ctx.fillStyle = 'rgba(15, 20, 30, 0.15)';
+            ctx.beginPath();
+            drawRoundRect(ctx, x, y, w, innerH, 8);
+            ctx.fill();
+        }
     }
 
     /* Status label */
-    if (mode === 'collected' || mode === 'unmastered' || mode === 'mastered') {
-        ctx.save();
-        ctx.font = '900 13px "Oswald", sans-serif';
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.shadowBlur = 3;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        ctx.fillStyle = isMastered ? '#ffd700' : '#22c55e';
-        ctx.fillText(isMastered ? 'MASTERED' : 'COLLECTED', x + 6, y + 6);
-        ctx.restore();
+    ctx.save();
+    ctx.font = '900 8.5px "Oswald", sans-serif';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 2;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    let labelText = 'COLLECTED';
+    let labelColor = '#22c55e';
+    if (isMastered) {
+        labelText = 'MASTERED';
+        labelColor = '#ffd700';
+    } else if (isMissing) {
+        labelText = 'MISSING';
+        labelColor = '#ef4444';
     }
+
+    ctx.fillStyle = labelColor;
+    ctx.fillText(labelText, x + 5, y + 5);
+    ctx.restore();
 
     /* Rarity tag (angled shape) */
     const [tagBg, tagText] = getRarityTagColors(rarity);
     ctx.save();
-    if (rarity === 'Special' && !isLowFi) {
-        const tg = ctx.createLinearGradient(x, y + innerH - 18, x + 75, y + innerH - 18);
+    ctx.beginPath();
+    drawRoundRect(ctx, x, y, w, innerH, 8);
+    ctx.clip();
+
+    if (rarity === 'Special') {
+        const tg = ctx.createLinearGradient(x, y + innerH - 12, x + w * 0.6, y + innerH - 12);
         tg.addColorStop(0, '#51f7cc');
         tg.addColorStop(0.5, '#e374ee');
         tg.addColorStop(1, '#b5f69e');
@@ -548,255 +625,559 @@ function drawExportCard(ctx, sprite, x, y, w, h, img, mode) {
         ctx.fillStyle = tagBg;
     }
     ctx.beginPath();
-    ctx.moveTo(x, y + innerH - 18);
-    ctx.lineTo(x + 70, y + innerH - 18);
-    ctx.lineTo(x + 82, y + innerH);
+    ctx.moveTo(x, y + innerH - 12);
+    ctx.lineTo(x + w * 0.48, y + innerH - 12);
+    ctx.lineTo(x + w * 0.58, y + innerH);
     ctx.lineTo(x, y + innerH);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
 
     ctx.fillStyle = tagText;
-    ctx.font = '900 13px "Oswald", sans-serif';
+    ctx.font = '900 8.5px "Oswald", sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(rarity === 'Mythic' ? 'MYTHIC' : rarity.toUpperCase(), x + 6, y + innerH - 9);
+    ctx.fillText(rarity === 'Mythic' ? 'MYTHIC' : rarity.toUpperCase(), x + 4, y + innerH - 6);
 
-    /* Name footer */
+    /* Name/Theme footer */
     ctx.fillStyle = 'rgba(15,20,29,0.9)';
-    ctx.fillRect(x, y + innerH, w, 38);
+    ctx.fillRect(x, y + innerH, w, 22);
 
-    ctx.fillStyle = '#ffffff';
-    let fontSize = 16.95;
+    ctx.fillStyle = isMissing ? '#ef4444' : '#ffffff';
+    let fontSize = 9.5;
     const name = sprite.name.toUpperCase();
-    ctx.font = `${fontSize}px "Oswald", sans-serif`;
+    ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    while (ctx.measureText(name).width > w - 8 && fontSize > 6) {
+    while (ctx.measureText(name).width > w - 6 && fontSize > 6.5) {
         fontSize -= 0.5;
-        ctx.font = `${fontSize}px "Oswald", sans-serif`;
+        ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
     }
-    ctx.fillText(name, x + w / 2, y + innerH + 19);
+    ctx.fillText(name, x + w / 2, y + innerH + 11);
 
     /* Bottom accent + border */
-    ctx.fillStyle = isMastered ? '#ffd700' : tagBg;
-    ctx.fillRect(x, y + h - 4, w, 4);
+    let bottomAccentColor = tagBg;
+    let borderColor = '#1a2233';
+    if (isMastered) {
+        bottomAccentColor = '#ffd700';
+        borderColor = '#ffd700';
+    } else if (isMissing) {
+        bottomAccentColor = '#ef4444';
+    } else if (cardState === 'unmastered') {
+        bottomAccentColor = '#00f0ff';
+    }
 
-    ctx.strokeStyle = isMastered ? '#ffd700' : '#1a2233';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(x, y, w, h);
+    ctx.fillStyle = bottomAccentColor;
+    ctx.fillRect(x, y + h - 3, w, 3);
+
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = isMastered ? 2 : 1;
+    ctx.beginPath();
+    drawRoundRect(ctx, x, y, w, h, 8);
+    ctx.stroke();
+
+    /* Crown at top center */
+    if (isMastered) {
+        drawCrown(ctx, x + w / 2, y - 2);
+    }
 }
 
 /* ===================================================
-   Canvas Export - Main
+   Canvas Export - Status Icons & Trade Card Exporter
    =================================================== */
+
+function drawRoundRect(ctx, x, y, width, height, radius) {
+    if (ctx.roundRect) {
+        ctx.roundRect(x, y, width, height, radius);
+    } else {
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + width - radius, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+        ctx.lineTo(x + width, y + height - radius);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        ctx.lineTo(x + radius, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+        ctx.lineTo(x, y + radius);
+        ctx.quadraticCurveTo(x, y, x + radius, y);
+        ctx.closePath();
+    }
+}
 
 function exportImage(mode) {
     const config = getExportConfig(mode);
     if (!config) return;
 
-    let items = config.items;
-    items = sortSprites(items, state.settings.sortOrder);
+    // Helper functions for names
+    const getCharName = (charKey) => {
+        const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
+        return basicSprite ? basicSprite.name : (charKey.charAt(0).toUpperCase() + charKey.slice(1));
+    };
 
-    /* Layout constants */
-    const CW = 160, CH = 200, PAD = 15, BORDER = 8, FOOTER_H = 55, MAX_COLS = 6;
-    const cols = Math.min(MAX_COLS, items.length);
-    const rows = Math.ceil(items.length / cols);
-    const innerW = cols * (CW + PAD) + PAD;
+    const getDisplayName = (name) => {
+        if (name === 'Burnt Peanut') return name;
+        return `${name} Sprite`;
+    };
 
-    const barsInline = cols >= 5;
-    const barsStacked = cols <= 2 && config.showBars;
-    let headerH = 55;
-    if (config.showBars) {
-        if (barsStacked) headerH = 135;
-        else if (!barsInline) headerH = 95;
-    }
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = innerW + BORDER * 2;
-    canvas.height = headerH + rows * (CH + PAD) + PAD + FOOTER_H + BORDER * 2;
-
-    const mascot = new Image();
-    mascot.src = 'siteimages/staticsprite.png';
-
-    const onReady = () => {
-        /* Border + inner background */
-        ctx.fillStyle = config.color;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#0b0d13';
-        ctx.fillRect(BORDER, BORDER, canvas.width - BORDER * 2, canvas.height - BORDER * 2);
-
-        /* Header background */
-        ctx.fillStyle = '#181c25';
-        ctx.fillRect(BORDER, BORDER, canvas.width - BORDER * 2, headerH);
-
-        /* Header separator */
-        ctx.strokeStyle = config.color;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(BORDER, BORDER + headerH);
-        ctx.lineTo(canvas.width - BORDER, BORDER + headerH);
-        ctx.stroke();
-
-        /* Mascot */
-        let textLeft = BORDER + PAD;
-        if (mascot.complete && mascot.naturalWidth > 0) {
-            const my = barsStacked ? BORDER + 12 : BORDER + headerH / 2 - 16;
-            ctx.drawImage(mascot, textLeft, my, 32, 32);
-            textLeft += 42;
+    // Gather released sprites and unique character keys
+    const releasedSprites = baseSprites.filter(s => !s.unreleased);
+    const charKeys = [];
+    releasedSprites.forEach(s => {
+        const key = s.id.split('_')[0];
+        if (!charKeys.includes(key)) {
+            charKeys.push(key);
         }
+    });
 
-        /* Title text */
-        ctx.fillStyle = config.color;
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-
-        let availW = canvas.width - textLeft - BORDER - PAD;
-        if (config.showBars && barsInline) availW -= 260;
-
-        let fullTitle = `${config.titleL1} ${config.titleL2}`;
-        if (mode === 'missing' && items.length === 1) {
-            fullTitle = 'MISSING';
-            config.fallback = 'MISSING';
+    // Theme columns order
+    const activeThemes = [];
+    baseSprites.forEach(s => {
+        if (!s.unreleased && !activeThemes.includes(s.theme)) {
+            activeThemes.push(s.theme);
         }
+    });
+    activeThemes.sort((a, b) => {
+        const idxA = THEME_ORDER.indexOf(a);
+        const idxB = THEME_ORDER.indexOf(b);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+    });
 
-        let useFallback = false;
-        ctx.font = 'italic 900 24px "Oswald", sans-serif';
-        if (ctx.measureText(fullTitle).width > availW && (barsStacked || barsInline)) {
-            useFallback = true;
-        }
+    const getThemeDisplayName = (theme) => {
+        const maps = { 'Basic': 'NORMAL', 'Candy': 'GUMMY' };
+        return maps[theme] || theme.toUpperCase();
+    };
 
-        if (barsStacked) {
-            ctx.font = 'italic 900 20px "Oswald", sans-serif';
-            ctx.fillText(config.fallback, textLeft, BORDER + 28);
-        } else {
-            let fs = 32;
-            const text = useFallback ? config.fallback : fullTitle;
-            ctx.font = `italic 900 ${fs}px "Oswald", sans-serif`;
-            while (ctx.measureText(text).width > availW && fs > 12) {
-                fs--;
-                ctx.font = `italic 900 ${fs}px "Oswald", sans-serif`;
-            }
-            const cy = config.showBars && !barsInline ? BORDER + 30 : BORDER + headerH / 2;
-            ctx.fillText(text, textLeft, cy);
-        }
+    const THEMES = activeThemes.map(theme => {
+        return {
+            name: getThemeDisplayName(theme),
+            themeName: theme
+        };
+    });
 
-        /* Progress bars (collection mode only) */
-        if (config.showBars) {
-            const released = baseSprites.filter(s => !s.unreleased);
-            const total = released.length;
-            const colCount = released.filter(s => state.obtained.includes(s.id)).length;
-            const masCount = released.filter(s => state.mastered.includes(s.id)).length;
-            const colPct = total > 0 ? colCount / total : 0;
-            const masPct = total > 0 ? masCount / total : 0;
+    // Load assets (mascot and all released sprites)
+    const imagesToLoad = [];
+    imagesToLoad.push({ id: 'mascot', src: 'siteimages/staticsprite.png' });
+    releasedSprites.forEach(s => {
+        imagesToLoad.push({ id: s.id, src: `sprites/${s.id}.png` });
+    });
 
-            if (barsInline) {
-                ctx.font = '900 12px "Oswald", sans-serif';
-                const bw = 110;
-                const re = canvas.width - BORDER - PAD;
-
-                ctx.fillStyle = '#22c55e';
-                ctx.fillText(`COLLECTION: ${colCount}/${total}`, re - bw * 2 - 25, BORDER + 16);
-                ctx.fillStyle = '#0e1117';
-                ctx.fillRect(re - bw * 2 - 25, BORDER + 31, bw, 12);
-                ctx.strokeStyle = '#3b4253'; ctx.lineWidth = 1.5;
-                ctx.strokeRect(re - bw * 2 - 25, BORDER + 31, bw, 12);
-                ctx.fillStyle = '#22c55e';
-                ctx.fillRect(re - bw * 2 - 25, BORDER + 32, bw * colPct, 10);
-
-                ctx.fillStyle = '#ffd700';
-                ctx.fillText(`MASTERY: ${masCount}/${total}`, re - bw, BORDER + 16);
-                ctx.fillStyle = '#0e1117';
-                ctx.fillRect(re - bw, BORDER + 31, bw, 12);
-                ctx.strokeRect(re - bw, BORDER + 31, bw, 12);
-                ctx.fillStyle = '#ffd700';
-                ctx.fillRect(re - bw, BORDER + 32, bw * masPct, 10);
-            } else if (barsStacked) {
-                ctx.font = '900 11px "Oswald", sans-serif';
-                const fw = canvas.width - BORDER * 2 - PAD * 2;
-                const bx = BORDER + PAD;
-
-                const cy1 = BORDER + 54;
-                ctx.fillStyle = '#22c55e';
-                ctx.fillText(`COLLECTION: ${colCount} / ${total}`, bx, cy1);
-                ctx.fillStyle = '#0e1117'; ctx.fillRect(bx, cy1 + 10, fw, 12);
-                ctx.strokeStyle = '#3b4253'; ctx.strokeRect(bx, cy1 + 10, fw, 12);
-                ctx.fillStyle = '#22c55e'; ctx.fillRect(bx, cy1 + 11, fw * colPct, 10);
-
-                const cy2 = BORDER + 94;
-                ctx.fillStyle = '#ffd700';
-                ctx.fillText(`MASTERY: ${masCount} / ${total}`, bx, cy2);
-                ctx.fillStyle = '#0e1117'; ctx.fillRect(bx, cy2 + 10, fw, 12);
-                ctx.strokeStyle = '#3b4253'; ctx.strokeRect(bx, cy2 + 10, fw, 12);
-                ctx.fillStyle = '#ffd700'; ctx.fillRect(bx, cy2 + 11, fw * masPct, 10);
-            } else {
-                ctx.font = '900 12px "Oswald", sans-serif';
-                const my = BORDER + 68;
-                const bx = BORDER + PAD;
-
-                ctx.fillStyle = '#22c55e';
-                ctx.fillText(`COLLECTION: ${colCount} / ${total}`, bx, my);
-                ctx.fillStyle = '#0e1117'; ctx.fillRect(bx + 135, my - 6, 85, 12);
-                ctx.strokeStyle = '#3b4253'; ctx.strokeRect(bx + 135, my - 6, 85, 12);
-                ctx.fillStyle = '#22c55e'; ctx.fillRect(bx + 135, my - 5, 85 * colPct, 10);
-
-                ctx.fillStyle = '#ffd700';
-                ctx.fillText(`MASTERY: ${masCount} / ${total}`, bx + 240, my);
-                ctx.fillStyle = '#0e1117'; ctx.fillRect(bx + 335, my - 6, 85, 12);
-                ctx.strokeRect(bx + 335, my - 6, 85, 12);
-                ctx.fillStyle = '#ffd700'; ctx.fillRect(bx + 335, my - 5, 85 * masPct, 10);
-            }
-        }
-
-        /* Load and draw each card */
-        let loaded = 0;
-        items.forEach((sprite, i) => {
+    const loadImage = (item) => {
+        return new Promise((resolve) => {
             const img = new Image();
             img.crossOrigin = 'anonymous';
-            img.src = `sprites/${sprite.id}.png`;
-
-            const onCard = () => {
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-                const x = BORDER + PAD + col * (CW + PAD);
-                const y = BORDER + headerH + PAD + row * (CH + PAD);
-                drawExportCard(ctx, sprite, x, y, CW, CH, img, mode);
-
-                loaded++;
-                if (loaded === items.length) {
-                    /* Footer */
-                    ctx.fillStyle = '#0e1117';
-                    ctx.fillRect(BORDER, canvas.height - FOOTER_H - BORDER, canvas.width - BORDER * 2, FOOTER_H);
-                    const url = 'cghxst.github.io/fnsprites/';
-                    let fs = 24;
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = `bold ${fs}px "Oswald", sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    const maxW = canvas.width - BORDER * 2 - 30;
-                    while (ctx.measureText(url).width > maxW && fs > 8) {
-                        fs--;
-                        ctx.font = `bold ${fs}px "Oswald", sans-serif`;
-                    }
-                    ctx.fillText(url, canvas.width / 2, canvas.height - BORDER - FOOTER_H / 2);
-
-                    /* Download */
-                    const link = document.createElement('a');
-                    link.download = `${config.filename}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    toast('Image exported!', 'success');
-                }
-            };
-
-            img.onload = onCard;
-            img.onerror = onCard;
+            img.onload = () => resolve({ id: item.id, img, success: true });
+            img.onerror = () => resolve({ id: item.id, img, success: false });
+            img.src = item.src;
         });
     };
 
-    mascot.onload = onReady;
-    mascot.onerror = onReady;
+    toast('Generating image export...', 'info');
+
+    Promise.all(imagesToLoad.map(loadImage)).then(loadedImages => {
+        const imageMap = {};
+        loadedImages.forEach(res => {
+            if (res.success) {
+                imageMap[res.id] = res.img;
+            }
+        });
+
+        // Mapping function for card states
+        const getCardState = (sprite, mode) => {
+            const isOwned = state.obtained.includes(sprite.id);
+            const isMastered = state.mastered.includes(sprite.id);
+
+            if (mode === 'trade') {
+                return isOwned ? (isMastered ? 'mastered' : 'owned') : 'missing_gray';
+            } else if (mode === 'collected') {
+                return isOwned ? (isMastered ? 'mastered' : 'owned') : 'empty';
+            } else if (mode === 'missing') {
+                return !isOwned ? 'missing_color' : 'empty';
+            } else if (mode === 'mastered') {
+                return isMastered ? 'mastered' : 'empty';
+            } else if (mode === 'unmastered') {
+                return (isOwned && !isMastered) ? 'unmastered' : 'empty';
+            }
+            return 'empty';
+        };
+
+        // Filter out empty rows
+        const activeCharKeys = charKeys.filter(charKey => {
+            const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+            return themeSprites.some(s => getCardState(s, mode) !== 'empty');
+        });
+
+        // Split characters into two columns
+        const half = Math.ceil(activeCharKeys.length / 2);
+        const leftColumnKeys = activeCharKeys.slice(0, half);
+        const rightColumnKeys = activeCharKeys.slice(half);
+
+        // Dimensions for the binder sheet
+        const BORDER = 8;
+        const HEADER_H = 80;
+        const COL_HEADER_H = 35;
+        const CW = 80;
+        const CH = 100;
+        const ROW_GAP = 12;
+        const CARD_GAP = 8;
+        const LABEL_W = 120;
+        const COL_GAP = 60;
+        const FOOTER_H = 60;
+
+        const maxRows = Math.max(leftColumnKeys.length, rightColumnKeys.length);
+        const rowH = CH + ROW_GAP;
+        const rowsH = maxRows * rowH;
+
+        // Card block width
+        const cardBlockW = THEMES.length * CW + (THEMES.length - 1) * CARD_GAP;
+        const colW = LABEL_W + cardBlockW;
+
+        const canvasW = colW * 2 + COL_GAP + BORDER * 2 + 40;
+        const canvasH = BORDER * 2 + HEADER_H + COL_HEADER_H + rowsH + FOOTER_H;
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+
+        // Border gradient
+        let borderGrad;
+        if (mode === 'trade') {
+            borderGrad = ctx.createLinearGradient(0, 0, canvasW, canvasH);
+            borderGrad.addColorStop(0, '#ffd700');
+            borderGrad.addColorStop(1, '#22c55e');
+            ctx.fillStyle = borderGrad;
+        } else {
+            ctx.fillStyle = config.color;
+            borderGrad = config.color;
+        }
+        ctx.fillRect(0, 0, canvasW, canvasH);
+
+        // Inner Background
+        ctx.fillStyle = '#0b0d13';
+        ctx.fillRect(BORDER, BORDER, canvasW - BORDER * 2, canvasH - BORDER * 2);
+
+        // Header Background
+        ctx.fillStyle = '#181c25';
+        ctx.fillRect(BORDER, BORDER, canvasW - BORDER * 2, HEADER_H);
+
+        // Header separator
+        ctx.strokeStyle = borderGrad;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(BORDER, BORDER + HEADER_H);
+        ctx.lineTo(canvasW - BORDER, BORDER + HEADER_H);
+        ctx.stroke();
+
+        // Mascot
+        let textLeft = BORDER + 20;
+        const mascotImg = imageMap['mascot'];
+        if (mascotImg) {
+            ctx.drawImage(mascotImg, textLeft, BORDER + HEADER_H / 2 - 16, 32, 32);
+            textLeft += 42;
+        }
+
+        // Title text
+        ctx.fillStyle = borderGrad;
+        ctx.font = 'italic 900 26px "Oswald", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const fullTitle = `${config.titleL1} ${config.titleL2}`;
+        ctx.fillText(fullTitle, textLeft, BORDER + HEADER_H / 2);
+
+        // Header Stats / Progress Bars
+        const totalCount = releasedSprites.length;
+        const ownedCount = state.obtained.length;
+        const masteredCount = state.mastered.length;
+        const colPct = totalCount > 0 ? ownedCount / totalCount : 0;
+        const masPct = totalCount > 0 ? masteredCount / totalCount : 0;
+
+        ctx.font = '900 12px "Oswald", sans-serif';
+        const bw = 110;
+        const re = canvasW - BORDER - 20;
+
+        // Collection Progress
+        ctx.fillStyle = '#22c55e';
+        ctx.fillText(`COLLECTION: ${ownedCount}/${totalCount}`, re - bw * 2 - 25, BORDER + 28);
+        ctx.fillStyle = '#0e1117';
+        ctx.fillRect(re - bw * 2 - 25, BORDER + 43, bw, 12);
+        ctx.strokeStyle = '#3b4253'; ctx.lineWidth = 1.5;
+        ctx.strokeRect(re - bw * 2 - 25, BORDER + 43, bw, 12);
+        ctx.fillStyle = '#22c55e';
+        ctx.fillRect(re - bw * 2 - 25, BORDER + 44, bw * colPct, 10);
+
+        // Mastery Progress
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`MASTERY: ${masteredCount}/${totalCount}`, re - bw, BORDER + 28);
+        ctx.fillStyle = '#0e1117';
+        ctx.fillRect(re - bw, BORDER + 43, bw, 12);
+        ctx.strokeRect(re - bw, BORDER + 43, bw, 12);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(re - bw, BORDER + 44, bw * masPct, 10);
+
+        const startTableY = BORDER + HEADER_H + COL_HEADER_H;
+
+        // Column headers drawing helper
+        const drawColHeaders = (startX) => {
+            ctx.fillStyle = '#8891a5';
+            ctx.font = 'bold 12px "Oswald", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            THEMES.forEach((t, i) => {
+                const cx = startX + LABEL_W + i * (CW + CARD_GAP) + CW / 2;
+                ctx.fillText(t.name, cx, startTableY - 8);
+            });
+        };
+
+        const leftTableX = BORDER + 20;
+        const rightTableX = leftTableX + colW + COL_GAP;
+
+        drawColHeaders(leftTableX);
+        if (rightColumnKeys.length > 0) {
+            drawColHeaders(rightTableX);
+        }
+
+
+
+        // Drawing a single character family row
+        const drawRow = (charKey, startX, y) => {
+            const name = getCharName(charKey);
+            const displayName = getDisplayName(name);
+
+            // Draw label
+            ctx.fillStyle = '#ffffff';
+            let fontSize = 14;
+            ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            while (ctx.measureText(displayName).width > LABEL_W - 12 && fontSize > 8) {
+                fontSize -= 0.5;
+                ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
+            }
+            ctx.fillText(displayName, startX + LABEL_W - 10, y + CH / 2);
+
+            // Draw cards
+            THEMES.forEach((t, colIndex) => {
+                const cx = startX + LABEL_W + colIndex * (CW + CARD_GAP);
+                const s = baseSprites.find(x => x.id.split('_')[0] === charKey && x.theme === t.themeName);
+
+                if (s) {
+                    const cardState = getCardState(s, mode);
+                    drawMiniCard(ctx, s, cx, y, CW, CH, cardState, imageMap);
+                } else {
+                    // Empty slot dashed outline
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.beginPath();
+                    drawRoundRect(ctx, cx, y, CW, CH, 8);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            });
+        };
+
+        // Draw columns
+        leftColumnKeys.forEach((charKey, idx) => {
+            const y = startTableY + idx * rowH;
+            drawRow(charKey, leftTableX, y);
+        });
+
+        rightColumnKeys.forEach((charKey, idx) => {
+            const y = startTableY + idx * rowH;
+            drawRow(charKey, rightTableX, y);
+        });
+
+        // Footer
+        ctx.fillStyle = '#0e1117';
+        ctx.fillRect(BORDER, canvasH - FOOTER_H - BORDER, canvasW - BORDER * 2, FOOTER_H);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px "Oswald", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('CGHXST.GITHUB.IO/FNSPRITES', canvasW / 2, canvasH - BORDER - FOOTER_H / 2);
+
+        // Download
+        const link = document.createElement('a');
+        link.download = `${config.filename}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        toast('Image exported successfully!', 'success');
+    });
+}
+
+/* ===================================================
+   Trade Text Generation
+   =================================================== */
+
+function generateTradeText() {
+    let sections = [];
+    
+    const charKeys = [];
+    baseSprites.forEach(s => {
+        if (s.unreleased) return;
+        const key = s.id.split('_')[0];
+        if (!charKeys.includes(key)) {
+            charKeys.push(key);
+        }
+    });
+
+    const getCharName = (charKey) => {
+        const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
+        return basicSprite ? basicSprite.name : (charKey.charAt(0).toUpperCase() + charKey.slice(1));
+    };
+
+    const themeMaps = {
+        'Basic': 'Base',
+        'Candy': 'Gummy'
+    };
+    const formatThemeName = (theme) => themeMaps[theme] || theme;
+
+    // 1. Looking for
+    let lfLines = [];
+    charKeys.forEach(charKey => {
+        const name = getCharName(charKey);
+        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+        
+        const missing = themeSprites.filter(s => !state.obtained.includes(s.id));
+        if (missing.length === 0) return;
+
+        const list = missing.map(s => formatThemeName(s.theme)).join(', ');
+        lfLines.push(`  ▸ ${name} ➔ ${list}`);
+    });
+    if (lfLines.length > 0) {
+        sections.push(`【 LOOKING FOR 】\n${lfLines.join('\n')}`);
+    }
+
+    // 2. I have
+    let haveLines = [];
+    charKeys.forEach(charKey => {
+        const name = getCharName(charKey);
+        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+        
+        const owned = themeSprites.filter(s => state.obtained.includes(s.id));
+        if (owned.length === 0) return;
+
+        const list = owned.map(s => formatThemeName(s.theme)).join(', ');
+        haveLines.push(`  ▸ ${name} ➔ ${list}`);
+    });
+    if (haveLines.length > 0) {
+        sections.push(`【 HAVE 】\n${haveLines.join('\n')}`);
+    }
+
+    // 3. Still need to master
+    let mNeedLines = [];
+    charKeys.forEach(charKey => {
+        const name = getCharName(charKey);
+        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+        
+        const owned = themeSprites.filter(s => state.obtained.includes(s.id));
+        const unmastered = owned.filter(s => !state.mastered.includes(s.id));
+        if (unmastered.length === 0) return;
+
+        const list = unmastered.map(s => formatThemeName(s.theme)).join(', ');
+        mNeedLines.push(`  ▸ ${name} ➔ ${list}`);
+    });
+    if (mNeedLines.length > 0) {
+        sections.push(`【 STILL NEED TO MASTER 】\n${mNeedLines.join('\n')}`);
+    }
+
+    return sections.join('\n\n');
+}
+
+function generateTradeGridText() {
+    const OVERRIDES = {
+        zeropoint: 'ZP',
+        theburntpeanut: 'PEANUT'
+    };
+
+    const getAbbrev = (charKey) => {
+        if (OVERRIDES[charKey]) return OVERRIDES[charKey];
+        const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
+        return basicSprite ? basicSprite.name.toUpperCase() : charKey.toUpperCase();
+    };
+
+    const activeThemes = [];
+    baseSprites.forEach(s => {
+        if (!s.unreleased && !activeThemes.includes(s.theme)) {
+            activeThemes.push(s.theme);
+        }
+    });
+    activeThemes.sort((a, b) => {
+        const idxA = THEME_ORDER.indexOf(a);
+        const idxB = THEME_ORDER.indexOf(b);
+        if (idxA === -1 && idxB === -1) return 0;
+        if (idxA === -1) return 1;
+        if (idxB === -1) return -1;
+        return idxA - idxB;
+    });
+
+    const getThemeDisplayName = (theme) => {
+        const maps = { 'Basic': 'Base', 'Candy': 'Gummy' };
+        return maps[theme] || theme;
+    };
+
+    const headerTitle = `『 ${activeThemes.map(getThemeDisplayName).join(' ┃ ')} 』`;
+    const boxWidth = headerTitle.length;
+
+    let lines = [
+        headerTitle,
+        '┏' + '━'.repeat(boxWidth - 2) + '┓'
+    ];
+
+    const columnWidths = activeThemes.map(theme => getThemeDisplayName(theme).length + 2);
+
+    const padSymbol = (symbol, columnIndex) => {
+        const width = columnWidths[columnIndex];
+        const paddingNeeded = width - 1;
+        const leftPadding = Math.floor(paddingNeeded / 2);
+        const rightPadding = paddingNeeded - leftPadding;
+        return ' '.repeat(leftPadding) + symbol + ' '.repeat(rightPadding);
+    };
+
+    const charKeys = [];
+    baseSprites.forEach(s => {
+        if (s.unreleased) return;
+        const key = s.id.split('_')[0];
+        if (!charKeys.includes(key)) {
+            charKeys.push(key);
+        }
+    });
+
+    charKeys.forEach(charKey => {
+        const abbrev = getAbbrev(charKey);
+        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+        
+        let rowStates = [];
+        activeThemes.forEach((theme, colIndex) => {
+            const s = themeSprites.find(x => x.theme === theme);
+            let symbol = '❌';
+            if (s) {
+                const isObtained = state.obtained.includes(s.id);
+                const isMastered = state.mastered.includes(s.id);
+                if (isMastered) {
+                    symbol = '👑';
+                } else if (isObtained) {
+                    symbol = '✅';
+                }
+            } else {
+                symbol = '➖';
+            }
+            rowStates.push(padSymbol(symbol, colIndex));
+        });
+
+        if (rowStates.length > 0) {
+            lines.push(`┣${rowStates.join('┃')}┃ ${abbrev}`);
+        }
+    });
+
+    lines.push('┗' + '━'.repeat(boxWidth - 2) + '┛');
+
+    return lines.join('\n');
 }
 
 /* ===================================================
@@ -876,6 +1257,7 @@ function bindEvents() {
     /* Export dropdown */
     dom.exportToggle.addEventListener('click', (e) => {
         e.stopPropagation();
+        dom.copyDropdown.classList.remove('open');
         dom.exportDropdown.classList.toggle('open');
     });
 
@@ -886,10 +1268,101 @@ function bindEvents() {
         });
     });
 
+    /* Copy dropdown */
+    dom.copyToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dom.exportDropdown.classList.remove('open');
+        dom.copyDropdown.classList.toggle('open');
+    });
+
     document.addEventListener('click', (e) => {
         if (!dom.exportDropdown.contains(e.target)) {
             dom.exportDropdown.classList.remove('open');
         }
+        if (!dom.copyDropdown.contains(e.target)) {
+            dom.copyDropdown.classList.remove('open');
+        }
+    });
+
+    /* Backup Export */
+    dom.exportBackupBtn.addEventListener('click', () => {
+        const data = {
+            obtained: state.obtained,
+            mastered: state.mastered
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = 'fnsprites-backup.json';
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+        toast('Backup file exported!', 'success');
+        dom.exportDropdown.classList.remove('open');
+    });
+
+    /* Backup Import */
+    dom.importBtn.addEventListener('click', () => {
+        if (state.viewMode) {
+            toast('Cannot import in view-only mode!', 'error');
+            return;
+        }
+        dom.importInput.click();
+    });
+
+    dom.importInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const data = JSON.parse(event.target.result);
+                if (!data || !Array.isArray(data.obtained) || !Array.isArray(data.mastered)) {
+                    throw new Error('Invalid backup file format');
+                }
+
+                const validIds = new Set(baseSprites.map(s => s.id));
+                const obtained = data.obtained.filter(id => validIds.has(id));
+                const mastered = data.mastered.filter(id => validIds.has(id) && obtained.includes(id));
+
+                state.obtained = obtained;
+                state.mastered = mastered;
+
+                persist(KEYS.obtained, state.obtained);
+                persist(KEYS.mastered, state.mastered);
+
+                renderGrid();
+                toast('Collection imported successfully!', 'success');
+            } catch (err) {
+                toast('Failed to import: invalid JSON format', 'error');
+                console.error(err);
+            }
+            dom.importInput.value = '';
+        };
+        reader.readAsText(file);
+    });
+
+    /* Copy trade list */
+    dom.copyTradeTextBtn.addEventListener('click', () => {
+        const text = generateTradeText();
+        navigator.clipboard.writeText(text).then(() => {
+            toast('Trade list copied to clipboard!', 'success');
+        }).catch(() => {
+            toast('Failed to copy trade list', 'error');
+        });
+        dom.copyDropdown.classList.remove('open');
+    });
+
+    /* Copy trade grid */
+    dom.copyTradeGridBtn.addEventListener('click', () => {
+        const text = generateTradeGridText();
+        navigator.clipboard.writeText(text).then(() => {
+            toast('Trade grid copied to clipboard!', 'success');
+        }).catch(() => {
+            toast('Failed to copy trade grid', 'error');
+        });
+        dom.copyDropdown.classList.remove('open');
     });
 
     /* Share */

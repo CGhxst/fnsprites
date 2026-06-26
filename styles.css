@@ -393,6 +393,12 @@ a { color: var(--mastered); }
 
 .dropdown-menu button:hover { background: var(--surface-overlay); }
 
+.dropdown-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 4px 0;
+}
+
 .dot {
     width: 8px;
     height: 8px;
