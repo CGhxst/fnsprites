@@ -244,9 +244,11 @@ a { color: var(--mastered); }
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     overflow: hidden;
+    min-width: 0;
 }
 
 .pill {
+    min-width: 0;
     padding: 7px 14px;
     font-size: 13px;
     font-weight: 500;
@@ -331,12 +333,18 @@ a { color: var(--mastered); }
 }
 
 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 36px;
     padding: 0 16px;
     font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: nowrap;
     border-radius: var(--radius-sm);
     background: var(--surface);
     border: 1px solid var(--border);
@@ -700,10 +708,21 @@ body.low-fidelity .rarity-Special .card-rarity { background: #51f7cc; }
     .pills { flex: 1; }
     .pill { flex: 1; text-align: center; }
     .switches { width: 100%; }
-    .actions { width: 100%; justify-content: stretch; }
-    .actions .btn { flex: 1; }
-    .actions .dropdown { flex: 1; }
+    .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        margin-left: 0;
+    }
+    .actions .btn,
+    .actions .dropdown { width: 100%; min-width: 0; }
     .actions .dropdown .btn { width: 100%; }
+    .actions .dropdown-menu {
+        left: 0;
+        right: auto;
+        width: min(260px, calc(100vw - var(--gap) * 2));
+        max-width: calc(100vw - var(--gap) * 2);
+    }
 
     .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
 }
