@@ -1,692 +1,707 @@
+[hidden] {
+    display: none !important;
+}
+
+/* ===================================================
+   Design Tokens
+   =================================================== */
+
 :root {
-    --fn-bg: #0b0d13;
-    --fn-panel-bg: #181c25;
-    --fn-yellow: #f4c430;
-    --fn-border: #3b4253;
-    --fn-neon-cyan: #00f0ff;
-    --fn-unreleased: #ef4444;
-    --fn-collected: #22c55e;
-    --fn-lime: #32cd32;
-    --fn-mastered: #ffd700;
-    --fn-magenta: #ed2bff;
+    --bg: #0b0d14;
+    --surface: #141720;
+    --surface-raised: #1a1e2a;
+    --surface-overlay: #222738;
 
-    /* Precise Fortnite Locker Hex Codes */
-    --color-Rare: #004A8E;
-    --color-Epic: #511D7F;
-    --color-Legendary: #8E4122;
-    --color-Mythic: #80622A;
-    
-    /* Custom Special Rainbow Palette */
-    --color-Special: linear-gradient(135deg, #51f7cc 0%, #7da9fc 28%, #e374ee 62%, #ffb6a1 85%, #b5f69e 100%);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.16);
+    --border-focus: rgba(0, 180, 255, 0.5);
 
-    /* Text Colors for Rarities */
-    --text-Rare: #00FFFB;
-    --text-Epic: #ED2BFF;
-    --text-Legendary: #FBC568;
-    --text-Mythic: #FFF1A9;
-    --text-Special: #000000;
+    --text: #e4e7ef;
+    --text-soft: #8891a5;
+    --text-muted: #555d72;
 
-    /* Base Rarity Solid Backgrounds */
-    --bg-Rare: linear-gradient(180deg, #104273 0%, #081a35 100%);
-    --bg-Epic: linear-gradient(180deg, #4d1566 0%, #1e052c 100%);
-    --bg-Legendary: linear-gradient(180deg, #743e0a 0%, #301702 100%);
-    --bg-Mythic: linear-gradient(180deg, #70531c 0%, #2e2107 100%);
-    
-    /* Dynamic theme variants */
-    --theme-bg-Basic: linear-gradient(180deg, #1c2436 0%, #0c0f17 100%);
-    --theme-bg-Gold: linear-gradient(180deg, #61460b 0%, #241a02 100%);
-    --theme-bg-Candy: linear-gradient(180deg, #6b183f 0%, #260514 100%);
-    --theme-bg-Galaxy: linear-gradient(180deg, #1f1145 0%, #080314 100%);
-    --theme-bg-Gem: linear-gradient(180deg, #114c47 0%, #041a18 100%);
-    --theme-bg-Holofoil: linear-gradient(180deg, #204454 0%, #09171f 100%);
-    --theme-bg-Rift: linear-gradient(180deg, #154b5e 0%, #04161c 100%);
+    --collected: #22c55e;
+    --mastered: #ffd700;
+    --missing: #ef4444;
+    --unmastered: #00d4ff;
+    --unreleased-color: #ef4444;
+
+    --rare: #004A8E;
+    --rare-deep: #081a35;
+    --rare-text: #00FFFB;
+    --epic: #511D7F;
+    --epic-deep: #1e052c;
+    --epic-text: #ED2BFF;
+    --legendary: #8E4122;
+    --legendary-deep: #301702;
+    --legendary-text: #FBC568;
+    --mythic: #80622A;
+    --mythic-deep: #2e2107;
+    --mythic-text: #FFF1A9;
+
+    --gap: 12px;
+    --gap-lg: 20px;
+    --radius: 8px;
+    --radius-sm: 6px;
+    --radius-pill: 999px;
+    --ease: 150ms ease;
+    --ease-slow: 300ms ease;
 }
 
-* {
-    box-sizing: border-box;
-    font-family: 'Oswald', sans-serif;
-    text-transform: uppercase;
-}
+/* ===================================================
+   Reset & Base
+   =================================================== */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background-color: var(--fn-bg);
-    background-image: radial-gradient(circle at 50% 50%, #1c2333 0%, #0b0d13 100%);
-    color: #ffffff;
-    margin: 0;
-    padding: 20px;
-    letter-spacing: 0.5px;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 0%, #161f30 0%, var(--bg) 70%);
+    color: var(--text);
+    font-family: 'Oswald', system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
-.view-mode-banner {
-    background-color: #1a2233;
-    border: 2px solid var(--fn-neon-cyan);
-    color: #ffffff;
-    padding: 12px 20px;
+img { display: block; max-width: 100%; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, select { font: inherit; color: inherit; }
+a { color: var(--mastered); }
+
+/* ===================================================
+   App Shell
+   =================================================== */
+
+.app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--gap-lg);
+}
+
+/* ===================================================
+   View-Mode Banner
+   =================================================== */
+
+.banner {
+    background: var(--surface);
+    border-bottom: 2px solid var(--unmastered);
+    padding: 10px var(--gap-lg);
     text-align: center;
-    font-weight: 700;
-    font-style: italic;
-    margin-bottom: 25px;
-    border-radius: 4px;
-}
-
-.view-mode-banner a {
-    color: var(--fn-yellow);
-    margin-left: 10px;
-    text-decoration: underline;
-}
-
-.fn-navbar {
+    font-size: 14px;
+    font-weight: 500;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    border-bottom: 4px solid #ffffff;
-    padding-bottom: 10px;
-    margin-bottom: 30px;
-    gap: 15px;
-}
-
-.brand-container {
-    display: flex;
+    justify-content: center;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+.banner a { font-weight: 700; text-decoration: none; }
+.banner a:hover { text-decoration: underline; }
+
+/* ===================================================
+   Header
+   =================================================== */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-lg);
+    padding-bottom: var(--gap);
+    border-bottom: 2px solid var(--border-hover);
+    margin-bottom: var(--gap);
+    flex-wrap: wrap;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-shrink: 0;
 }
 
-.brand-mascot {
-    width: 42px;
-    height: 42px;
+.brand-icon {
+    width: 36px;
+    height: 36px;
     object-fit: contain;
-    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.brand-title {
-    font-size: 38px;
-    font-weight: 900;
-    font-style: italic;
-    text-shadow: 2px 2px 0px #000;
+.brand h1 {
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
 }
 
-.nav-controls-right {
+.progress-group {
     display: flex;
-    align-items: center;
+    gap: var(--gap);
     flex-wrap: wrap;
-    gap: 15px;
+    min-width: 0;
 }
 
-.progress-wrapper {
+.progress-item {
+    min-width: 180px;
+    flex: 1;
+}
+
+.progress-meta {
     display: flex;
-    gap: 15px;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
 }
 
-.live-progress-box {
-    background-color: var(--fn-panel-bg);
-    border: 2px solid var(--fn-border);
-    border-radius: 4px;
-    padding: 6px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 190px;
+.progress-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-soft);
 }
 
-.live-progress-text {
+.progress-value {
     font-size: 13px;
     font-weight: 700;
-    color: #8a929e;
-    display: flex;
-    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
 }
 
-.live-progress-text span { color: #fff; }
-
-.live-progress-bar-bg {
-    background: #0e1117;
-    height: 12px;
-    border-radius: 5px;
+.progress-track {
+    height: 6px;
+    background: var(--surface-overlay);
+    border-radius: var(--radius-pill);
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.05);
 }
 
-.live-progress-bar-fill {
-    background: linear-gradient(90deg, #22c55e, #4ade80);
+.progress-fill {
     height: 100%;
     width: 0%;
-    transition: width 0.3s ease;
+    background: var(--collected);
+    border-radius: var(--radius-pill);
+    transition: width var(--ease-slow);
 }
 
-.live-progress-bar-fill.mastery-fill {
-    background: linear-gradient(90deg, #e6b800, var(--fn-mastered));
+.progress-fill.mastery {
+    background: linear-gradient(90deg, #e6b800, var(--mastered));
 }
 
-.share-btn, .image-btn, .missing-image-btn, .unmastered-image-btn, .mastered-image-btn {
-    font-size: 20px;
-    font-weight: 700;
-    font-style: italic;
-    color: #ffffff;
-    padding: 8px 24px;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-    height: 100%;
-    display: inline-flex;
-    align-items: center;
-}
+/* ===================================================
+   Toolbar
+   =================================================== */
 
-.share-btn { border-right: 4px solid var(--fn-magenta); background: linear-gradient(90deg, transparent, rgba(237,43,255,0.15)); }
-.image-btn { border-right: 4px solid var(--fn-lime); background: linear-gradient(90deg, transparent, rgba(50,205,50,0.15)); }
-.missing-image-btn { border-right: 4px solid var(--fn-unreleased); background: linear-gradient(90deg, transparent, rgba(239,68,68,0.15)); }
-.unmastered-image-btn { border-right: 4px solid var(--fn-neon-cyan); background: linear-gradient(90deg, transparent, rgba(0,240,255,0.15)); }
-.mastered-image-btn { border-right: 4px solid var(--fn-mastered); background: linear-gradient(90deg, transparent, rgba(255,215,0,0.15)); }
-
-.share-btn:hover { background: linear-gradient(90deg, transparent, rgba(237,43,255,0.3)); border-color: rgba(255,255,255,0.2); }
-.image-btn:hover { background: linear-gradient(90deg, transparent, rgba(50,205,50,0.3)); border-color: rgba(255,255,255,0.2); }
-.missing-image-btn:hover { background: linear-gradient(90deg, transparent, rgba(239,68,68,0.3)); border-color: rgba(255,255,255,0.2); }
-.unmastered-image-btn:hover { background: linear-gradient(90deg, transparent, rgba(0,240,255,0.3)); border-color: rgba(255,255,255,0.2); }
-.mastered-image-btn:hover { background: linear-gradient(90deg, transparent, rgba(255,215,0,0.3)); border-color: rgba(255,255,255,0.2); }
-
-.app-layout {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 30px;
-    align-items: start;
-}
-
-.sidebar {
+.toolbar {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: var(--gap);
+    margin-bottom: var(--gap-lg);
 }
 
-.panel-box {
-    background-color: var(--fn-panel-bg);
-    border: 3px solid var(--fn-border);
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-}
-
-.filter-header {
-    font-size: 14px;
-    color: #8a929e;
-    margin: 0 0 8px 0;
-    font-style: italic;
-}
-
-.fn-input, .fn-select {
-    width: 100%;
-    background-color: #0e1117;
-    border: 2px solid var(--fn-border);
-    color: #fff;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 4px;
-    margin-bottom: 12px;
-}
-
-.toggle-container {
+.toolbar-row {
     display: flex;
-    background: #0e1117;
-    border: 2px solid var(--fn-border);
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 12px;
-}
-
-.toggle-btn {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: #8a929e;
-    padding: 10px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s ease-out;
-}
-
-.toggle-btn.active {
-    background: var(--fn-neon-cyan);
-    color: #000;
-}
-
-.switch-row {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 5px 2px;
-    margin-top: 4px;
+    gap: var(--gap);
+    flex-wrap: wrap;
 }
 
-.switch-label { font-size: 14px; font-weight: 700; }
+/* ── Input & Select ── */
 
-.switch-input {
+.input, .select {
+    height: 36px;
+    padding: 0 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    transition: border-color var(--ease);
+}
+
+.input:focus, .select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+}
+
+.input { width: 200px; }
+
+.select {
     appearance: none;
-    width: 44px;
-    height: 22px;
-    background: #0e1117;
-    border: 2px solid var(--fn-border);
-    border-radius: 11px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238891a5' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+}
+
+/* ── Status Pills ── */
+
+.pills {
+    display: flex;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.pill {
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background var(--ease), color var(--ease);
+    color: var(--text-soft);
+}
+
+.pill:hover { background: var(--surface-overlay); color: var(--text); }
+
+.pill.active {
+    background: var(--surface-overlay);
+    color: var(--text);
+    box-shadow: inset 0 -2px 0 var(--collected);
+}
+
+/* ── Toggle Switches ── */
+
+.switches {
+    display: flex;
+    align-items: center;
+    gap: var(--gap);
+    flex-wrap: wrap;
+}
+
+.switch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+    color: var(--text-soft);
+    transition: color var(--ease);
+}
+
+.switch:hover { color: var(--text); }
+
+.switch input {
+    appearance: none;
+    width: 32px;
+    height: 18px;
+    background: var(--surface-overlay);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
     position: relative;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background var(--ease), border-color var(--ease);
+    flex-shrink: 0;
 }
 
-.switch-input:checked { background: var(--fn-unreleased); border-color: var(--fn-unreleased); }
-
-.switch-input::before {
+.switch input::after {
     content: '';
     position: absolute;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--text-muted);
     top: 2px;
     left: 2px;
-    transition: transform 0.2s;
+    transition: transform var(--ease), background var(--ease);
 }
 
-.switch-input:checked::before { transform: translateX(22px); }
-
-.creator-card { text-align: center; display: flex; flex-direction: column; align-items: center; }
-.creator-title { font-size: 20px; font-weight: 900; color: var(--fn-yellow); margin-bottom: 12px; font-style: italic; }
-
-.creator-link {
-    display: block;
-    text-decoration: none;
-    border: 2px solid var(--fn-border);
-    border-radius: 6px;
-    overflow: hidden;
-    transition: border-color 0.15s;
-    background: #0e1117;
-    max-width: 50%;
-    margin: 0 auto;
-}
-.creator-link:hover { border-color: #ff0000; }
-.creator-img { width: 100%; height: auto; display: block; }
-.creator-subtext { font-size: 13px; color: #a0aec0; margin-top: 10px; line-height: 1.4; font-weight: 500; }
-
-.sub-btn {
-    display: inline-block;
-    background-color: #ff0000;
-    color: #ffffff;
-    font-weight: 700;
-    padding: 6px 16px;
-    margin-top: 10px;
-    border-radius: 4px;
-    text-decoration: none;
-    font-size: 14px;
-    transition: background-color 0.15s;
-    border: none;
-    cursor: pointer;
-}
-.sub-btn:hover { background-color: #cc0000; }
-
-.sprite-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+.switch input:checked {
+    background: rgba(34, 197, 94, 0.2);
+    border-color: var(--collected);
 }
 
-.sprite-card {
-    border: 3px solid #1a2233;
-    background-color: #0f141d;
-    border-radius: 0px; 
-    padding: 0px;
-    position: relative;
-    cursor: pointer;
-    aspect-ratio: 1 / 1.25;
+.switch input:checked::after {
+    transform: translateX(14px);
+    background: var(--collected);
+}
+
+/* ── Buttons ── */
+
+.actions {
     display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-    transition: transform 0.15s, border-color 0.15s;
+    gap: 8px;
+    margin-left: auto;
 }
 
-.sprite-card:hover {
-    transform: translate3d(0, -4px, 0);
-    border-color: #ffffff;
-    z-index: 10;
+.btn {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: background var(--ease), border-color var(--ease);
 }
 
-.sprite-card.rarity-Rare .card-inner-display { background: var(--bg-Rare); }
-.sprite-card.rarity-Epic .card-inner-display { background: var(--bg-Epic); }
-.sprite-card.rarity-Legendary .card-inner-display { background: var(--bg-Legendary); }
-.sprite-card.rarity-Mythic .card-inner-display { background: var(--bg-Mythic); }
+.btn:hover { background: var(--surface-overlay); border-color: var(--border-hover); }
 
-.sprite-card.rarity-Special.theme-Basic .card-inner-display { background: var(--theme-bg-Basic); }
-.sprite-card.rarity-Special.theme-Gold .card-inner-display { background: var(--theme-bg-Gold); }
-.sprite-card.rarity-Special.theme-Candy .card-inner-display { background: var(--theme-bg-Candy); }
-.sprite-card.rarity-Special.theme-Galaxy .card-inner-display { background: var(--theme-bg-Galaxy); }
-.sprite-card.rarity-Special.theme-Gem .card-inner-display { background: var(--theme-bg-Gem); }
-.sprite-card.rarity-Special.theme-Holofoil .card-inner-display { background: var(--theme-bg-Holofoil); }
-.sprite-card.rarity-Special.theme-Rift .card-inner-display { background: var(--theme-bg-Rift); }
+.btn-accent {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: var(--collected);
+    color: var(--collected);
+}
 
-.card-inner-display {
-    flex: 1;
+.btn-accent:hover {
+    background: rgba(34, 197, 94, 0.25);
+}
+
+/* ── Export Dropdown ── */
+
+.dropdown { position: relative; }
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 200px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    padding: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all var(--ease);
+    z-index: 100;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.dropdown.open .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-menu button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    transition: background var(--ease);
+}
+
+.dropdown-menu button:hover { background: var(--surface-overlay); }
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* ===================================================
+   Sprite Grid
+   =================================================== */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: var(--gap);
+}
+
+/* ===================================================
+   Sprite Cards
+   =================================================== */
+
+.card {
     position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    opacity: 0.45;
+    filter: brightness(0.7) saturate(0.4);
+    transition: opacity var(--ease), filter var(--ease), transform var(--ease), box-shadow var(--ease);
+}
+
+.card:hover {
+    opacity: 0.7;
+    filter: brightness(0.85) saturate(0.7);
+    transform: translateY(-2px);
+}
+
+.card.obtained {
+    opacity: 1;
+    filter: none;
+}
+
+.card.obtained:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.card.mastered {
+    box-shadow: 0 0 0 2px var(--mastered), 0 4px 16px rgba(255, 215, 0, 0.15);
+}
+
+.card.mastered:hover {
+    box-shadow: 0 0 0 2px var(--mastered), 0 8px 24px rgba(255, 215, 0, 0.25);
+}
+
+/* Card display area */
+.card-display {
+    aspect-ratio: 4 / 5;
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     overflow: hidden;
 }
 
-.sprite-img {
-    max-width: 82%;
-    max-height: 82%;
+.card-display::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.card-display img {
+    width: 82%;
+    height: 82%;
     object-fit: contain;
-    filter: drop-shadow(0px 10px 12px rgba(0,0,0,0.6));
+    position: relative;
     z-index: 2;
 }
 
-.sprite-card.obtained { border-color: var(--fn-lime); box-shadow: 0 0 20px rgba(50, 205, 80, 0.45); }
-.sprite-card.obtained.mastered { border-color: var(--fn-mastered) !important; box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important; }
-
-.status-badge.unreleased { position: absolute; top: 6px; left: 6px; background: var(--fn-unreleased); color: #fff; font-size: 10px; font-weight: 900; padding: 1px 6px; z-index: 4; transform: skewX(-10deg); }
-.status-badge.collected { position: absolute; top: 6px; left: 6px; background: var(--fn-collected); color: #fff; font-size: 10px; font-weight: 900; padding: 1px 6px; z-index: 4; transform: skewX(-10deg); }
-.status-badge.mastered-badge { position: absolute; top: 6px; left: 6px; background: linear-gradient(90deg, #b8860b, var(--fn-mastered)); color: #000; font-size: 10px; font-weight: 900; padding: 1px 6px; z-index: 4; transform: skewX(-10deg); }
-
-/* FLOATING HEAD CROWN (Animation stripped to remove lag) */
-.rendered-head-crown {
-    position: absolute;
-    top: 12%;
-    font-size: 26px;
-    z-index: 6;
-    pointer-events: none;
-    line-height: 1;
-    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.6));
-}
-
-/* POSITIONED ACTION CROWN */
-.crown-action-icon {
-    position: absolute;
-    bottom: 65px; 
-    left: 3px;    
-    font-size: 19px;
-    z-index: 9;
-    cursor: pointer;
-    line-height: 1;
-    filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.9));
-    transition: transform 0.1s ease;
-    user-select: none;
-}
-.crown-action-icon:hover { transform: scale(1.25); }
-
-.fortnite-rarity-tag {
-    position: absolute;
-    bottom: 0px;
-    left: 0px;
-    font-size: 11px;
-    font-weight: 900;
-    padding: 2px 14px 2px 6px;
-    z-index: 4;
-    clip-path: polygon(0 0, 84% 0, 100% 100%, 0 100%);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
-}
-
-.sprite-card.rarity-Rare .fortnite-rarity-tag { background: var(--color-Rare); color: var(--text-Rare); }
-.sprite-card.rarity-Epic .fortnite-rarity-tag { background: var(--color-Epic); color: var(--text-Epic); }
-.sprite-card.rarity-Legendary .fortnite-rarity-tag { background: var(--color-Legendary); color: var(--text-Legendary); }
-.sprite-card.rarity-Mythic .fortnite-rarity-tag { background: var(--color-Mythic); color: var(--text-Mythic); }
-.sprite-card.rarity-Special .fortnite-rarity-tag { background: var(--color-Special); color: var(--text-Special); }
-
-.card-title-footer {
-    height: 38px;
-    padding: 0px 4px;
-    color: #ffffff;
-    z-index: 3;
-    position: relative;
-    background-color: rgba(15, 20, 29, 0.9);
-    border-top: 1px solid rgba(255,255,255,0.06);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-.card-title-footer span {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    max-width: 100%;
-    width: 100%;
-    overflow: hidden;
-    white-space: nowrap;
+/* Card name footer */
+.card-name {
+    padding: 6px 8px;
     text-align: center;
+    background: rgba(10, 12, 20, 0.85);
+    border-top: 1px solid var(--border);
+    overflow: hidden;
 }
 
-.creator-card {
-    position: relative;
-}
-
-.close-creator-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: none;
-    border: none;
+.card-name span {
+    display: block;
     font-size: 14px;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    transition: transform 0.1s ease;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+/* Obtained accent */
+.card.obtained .card-name {
+    border-bottom: 2px solid var(--collected);
+}
+
+.card.mastered .card-name {
+    border-bottom: 2px solid var(--mastered);
+}
+
+/* Status badges */
+.card-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
     z-index: 5;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: 3px;
 }
 
-.close-creator-btn:hover {
-    transform: scale(1.2);
+.card-badge.collected { background: rgba(34, 197, 94, 0.85); color: #fff; }
+.card-badge.mastered-badge { background: rgba(255, 215, 0, 0.9); color: #1a1200; }
+.card-badge.unreleased-badge { background: rgba(239, 68, 68, 0.85); color: #fff; }
+
+/* Crown icon SVG styles */
+.crown-icon {
+    width: 14px;
+    height: 14px;
+    fill: var(--text-soft);
+    transition: fill var(--ease);
 }
 
-.sprite-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px; z-index: 5; }
-.sprite-card.rarity-Rare::after { background: var(--color-Rare); }
-.sprite-card.rarity-Epic::after { background: var(--color-Epic); }
-.sprite-card.rarity-Legendary::after { background: var(--color-Legendary); }
-.sprite-card.rarity-Mythic::after { background: var(--color-Mythic); }
-.sprite-card.rarity-Special::after { background: var(--color-Special); }
-.sprite-card.mastered::after { background: var(--fn-mastered) !important; }
+/* Crown action (toggle mastery) */
+.card-crown {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 5;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--ease), background var(--ease);
+}
 
-/* LOW FIDELITY OVERRIDES */
-body.low-fidelity .sprite-card.rarity-Rare .card-inner-display { background: #104273 !important; }
-body.low-fidelity .sprite-card.rarity-Epic .card-inner-display { background: #4d1566 !important; }
-body.low-fidelity .sprite-card.rarity-Legendary .card-inner-display { background: #743e0a !important; }
-body.low-fidelity .sprite-card.rarity-Mythic .card-inner-display { background: #70531c !important; }
-body.low-fidelity .sprite-card.rarity-Special .card-inner-display { background: #1c2436 !important; }
+.card:hover .card-crown { opacity: 1; }
+.card-crown:hover { background: rgba(255, 215, 0, 0.3); }
+.card-crown:hover .crown-icon { fill: var(--mastered); }
 
+@media (hover: none) {
+    .card-crown { opacity: 0.85; }
+    .card-crown .crown-icon { fill: var(--mastered); }
+}
 
-/* ==========================================
-   COMPLETE MOBILE UI OPTIMIZATION (<= 768px)
-   ========================================== */
+/* Crown display (mastered) */
+.card-crown-display {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 3;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+    display: flex;
+}
+
+.card-crown-display .crown-icon {
+    width: 18px;
+    height: 18px;
+    fill: var(--mastered);
+}
+
+/* Rarity tag */
+.card-rarity {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    z-index: 3;
+    padding: 3px 18px 3px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
+}
+
+/* ===================================================
+   Rarity Backgrounds
+   =================================================== */
+
+.rarity-Rare .card-display { background: linear-gradient(180deg, var(--rare), var(--rare-deep)); }
+.rarity-Epic .card-display { background: linear-gradient(180deg, var(--epic), var(--epic-deep)); }
+.rarity-Legendary .card-display { background: linear-gradient(180deg, var(--legendary), var(--legendary-deep)); }
+.rarity-Mythic .card-display { background: linear-gradient(180deg, var(--mythic), var(--mythic-deep)); }
+
+.rarity-Special.theme-Basic .card-display { background: linear-gradient(180deg, #1c2436, #0c0f17); }
+.rarity-Special.theme-Gold .card-display { background: linear-gradient(180deg, #61460b, #241a02); }
+.rarity-Special.theme-Candy .card-display { background: linear-gradient(180deg, #6b183f, #260514); }
+.rarity-Special.theme-Galaxy .card-display { background: linear-gradient(180deg, #1f1145, #080314); }
+.rarity-Special.theme-Gem .card-display { background: linear-gradient(180deg, #114c47, #041a18); }
+.rarity-Special.theme-Holofoil .card-display { background: linear-gradient(180deg, #204454, #09171f); }
+.rarity-Special.theme-Rift .card-display { background: linear-gradient(180deg, #154b5e, #04161c); }
+
+/* Special rarity rainbow overlay */
+.rarity-Special .card-display::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+        rgba(81, 247, 204, 0.25) 0%,
+        rgba(125, 169, 252, 0.2) 28%,
+        rgba(227, 116, 238, 0.3) 62%,
+        rgba(255, 182, 161, 0.2) 85%,
+        rgba(181, 246, 158, 0.25) 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Rarity tag colors */
+.rarity-Rare .card-rarity { background: var(--rare); color: var(--rare-text); }
+.rarity-Epic .card-rarity { background: var(--epic); color: var(--epic-text); }
+.rarity-Legendary .card-rarity { background: var(--legendary); color: var(--legendary-text); }
+.rarity-Mythic .card-rarity { background: var(--mythic); color: var(--mythic-text); }
+.rarity-Special .card-rarity {
+    background: linear-gradient(90deg, #51f7cc, #e374ee, #b5f69e);
+    color: #000;
+}
+
+/* ===================================================
+   Low Fidelity Mode
+   =================================================== */
+
+body.low-fidelity .card-display::before,
+body.low-fidelity .rarity-Special .card-display::after { display: none; }
+
+body.low-fidelity .rarity-Rare .card-display { background: var(--rare); }
+body.low-fidelity .rarity-Epic .card-display { background: var(--epic); }
+body.low-fidelity .rarity-Legendary .card-display { background: var(--legendary); }
+body.low-fidelity .rarity-Mythic .card-display { background: var(--mythic); }
+
+body.low-fidelity .rarity-Special.theme-Basic .card-display { background: #1c2436; }
+body.low-fidelity .rarity-Special.theme-Gold .card-display { background: #61460b; }
+body.low-fidelity .rarity-Special.theme-Candy .card-display { background: #6b183f; }
+body.low-fidelity .rarity-Special.theme-Galaxy .card-display { background: #1f1145; }
+body.low-fidelity .rarity-Special.theme-Gem .card-display { background: #114c47; }
+body.low-fidelity .rarity-Special.theme-Holofoil .card-display { background: #204454; }
+body.low-fidelity .rarity-Special.theme-Rift .card-display { background: #154b5e; }
+
+body.low-fidelity .rarity-Special .card-rarity { background: #51f7cc; }
+
+/* ===================================================
+   Toast Notifications
+   =================================================== */
+
+.toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(calc(100% + 40px));
+    padding: 10px 20px;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    transition: transform var(--ease-slow) cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.toast.visible { transform: translateX(-50%) translateY(0); }
+.toast-success { border-left: 3px solid var(--collected); }
+.toast-error { border-left: 3px solid var(--missing); }
+
+/* ===================================================
+   Responsive
+   =================================================== */
+
 @media (max-width: 768px) {
-    body {
-        padding: 12px; 
-    }
+    .app { padding: var(--gap); }
 
-    .app-layout {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
+    .header { flex-direction: column; align-items: stretch; }
+    .brand { justify-content: center; }
+    .progress-group { flex-direction: column; }
+    .progress-item { min-width: 0; }
 
-    .sidebar {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        display: contents; 
-    }
+    .toolbar-row { flex-wrap: wrap; }
+    .input { width: 100%; flex: 1; min-width: 120px; }
+    .select { flex: 1; min-width: 120px; }
+    .pills { flex: 1; }
+    .pill { flex: 1; text-align: center; }
+    .switches { width: 100%; }
+    .actions { width: 100%; justify-content: stretch; }
+    .actions .btn { flex: 1; }
+    .actions .dropdown { flex: 1; }
+    .actions .dropdown .btn { width: 100%; }
 
-    .sidebar .panel-box:not(.creator-card) {
-        order: 1;
-        width: 100%;
-    }
-
-    .sprite-grid {
-        order: 2;
-        width: 100%;
-    }
-
-    .creator-card {
-        order: 3;
-        width: 100%;
-    }
-
-    .fn-navbar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 12px;
-        padding-bottom: 14px;
-        border-bottom-width: 3px;
-    }
-
-    .brand-container {
-        justify-content: center; 
-    }
-
-    .brand-title {
-        font-size: 28px; 
-    }
-
-    .nav-controls-right {
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-        gap: 10px;
-    }
-
-    .progress-wrapper {
-        flex-direction: column; 
-        gap: 8px;
-        width: 100%;
-    }
-
-    .live-progress-box {
-        min-width: 100%; 
-    }
-
-    .nav-controls-right > .share-btn,
-    .nav-controls-right > .image-btn,
-    .nav-controls-right > .missing-image-btn,
-    .nav-controls-right > .unmastered-image-btn,
-    .nav-controls-right > .mastered-image-btn {
-        display: flex;
-        justify-content: center;
-        font-size: 16px;
-        padding: 10px 16px;
-        height: auto;
-        width: 100%;
-        border-right: none;
-        border-bottom: 3px solid transparent;
-    }
-
-    .share-btn { border-bottom-color: var(--fn-magenta) !important; }
-    .image-btn { border-bottom-color: var(--fn-lime) !important; }
-    .missing-image-btn { border-bottom-color: var(--fn-unreleased) !important; }
-    .unmastered-image-btn { border-bottom-color: var(--fn-neon-cyan) !important; }
-    .mastered-image-btn { border-bottom-color: var(--fn-mastered) !important; }
-
-    .panel-box {
-        padding: 14px; 
-    }
-
-    .fn-input, .fn-select, .toggle-container {
-        margin-bottom: 8px;
-        font-size: 15px;
-        padding: 8px;
-    }
-
-    .sprite-grid {
-        grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); 
-        gap: 8px;
-    }
-
-    .card-title-footer {
-        height: 32px; 
-        font-size: 12px;
-    }
-
-    .fortnite-rarity-tag {
-        font-size: 9px;
-        padding: 1px 10px 1px 4px;
-    }
-
-    .crown-action-icon {
-        bottom: 40px; 
-        font-size: 16px;
-    }
-
-    .creator-card {
-        padding: 12px;
-        margin-top: 10px; 
-    }
-
-    .creator-link {
-        max-width: 120px; 
-        margin: 0 auto;   
-        display: block;
-    }
-
-    .creator-img {
-        width: 80px;      
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-    }
-
-    .creator-title {
-        font-size: 18px;
-        margin-bottom: 6px;
-    }
-
-    .creator-subtext {
-        font-size: 12px;
-        margin-top: 6px;
-    }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
 }
 
-/* ==========================================
-   LANDSCAPE MOBILE OPTIMIZATION
-   ========================================== */
-@media (max-width: 932px) and (orientation: landscape) {
-    .app-layout {
-        display: flex;
-        flex-direction: column;
-        align-items: center; 
-        width: 100%;
-    }
-
-    .sidebar {
-        display: contents; 
-    }
-
-    .sidebar .panel-box:not(.creator-card) {
-        order: 1;
-        width: 100%;
-        max-width: 500px; 
-        text-align: center;
-        margin: 0 auto;
-    }
-
-    .sprite-grid {
-        order: 2;
-        width: 100%;
-        justify-content: center; 
-        grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
-        gap: 10px;
-    }
-
-    .creator-card {
-        order: 3;
-        width: 100%;
-        max-width: 500px;
-        margin: 15px auto 0 auto;
-        text-align: center;
-    }
-}
-
-/* ==========================================
-   SETTINGS BOX ACTIVE SWITCHES (GREEN)
-   ========================================== */
-.sidebar .switch-input:checked {
-    accent-color: #22c55e !important; 
-    background-color: #22c55e !important;
-    border-color: #32cd32 !important;
+@media (max-width: 480px) {
+    .brand h1 { font-size: 18px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 6px; }
+    .card-name span { font-size: 12px; }
 }
