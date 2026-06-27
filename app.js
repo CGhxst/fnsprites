@@ -217,37 +217,88 @@ function toast(message, type = 'info') {
 }
 
 /* ===================================================
+   Sprite Helpers
+   =================================================== */
+
+function getFamilyKey(sprite) {
+    return sprite.id.split('_')[0];
+}
+
+function getReleasedSprites() {
+    return baseSprites.filter(sprite => !sprite.unreleased);
+}
+
+function getFamilyKeys(sprites = getReleasedSprites()) {
+    return sprites.reduce((keys, sprite) => {
+        const key = getFamilyKey(sprite);
+        if (!keys.includes(key)) keys.push(key);
+        return keys;
+    }, []);
+}
+
+function getActiveThemes(sprites = getReleasedSprites()) {
+    return sprites
+        .reduce((themes, sprite) => {
+            if (!themes.includes(sprite.theme)) themes.push(sprite.theme);
+            return themes;
+        }, [])
+        .sort((a, b) => getOrderedIndex(THEME_ORDER, a) - getOrderedIndex(THEME_ORDER, b));
+}
+
+function getOrderedIndex(order, value) {
+    const index = order.indexOf(value);
+    return index === -1 ? Infinity : index;
+}
+
+function isObtained(id) {
+    return state.obtained.includes(id);
+}
+
+function isMastered(id) {
+    return state.mastered.includes(id);
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>'"]/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;',
+    }[char]));
+}
+
+/* ===================================================
    Progress
    =================================================== */
 
 function updateProgress() {
-    const released = baseSprites.filter(s => !s.unreleased);
+    const released = getReleasedSprites();
     const total = released.length;
-    const collected = released.filter(s => state.obtained.includes(s.id)).length;
-    const mastered = released.filter(s => state.mastered.includes(s.id)).length;
+    const collected = released.filter(sprite => isObtained(sprite.id)).length;
+    const mastered = released.filter(sprite => isMastered(sprite.id)).length;
 
     dom.collectionRatio.textContent = `${collected} / ${total}`;
     dom.collectionFill.style.width = total > 0 ? `${(collected / total) * 100}%` : '0%';
     dom.masteryRatio.textContent = `${mastered} / ${total}`;
     dom.masteryFill.style.width = total > 0 ? `${(mastered / total) * 100}%` : '0%';
 }
-
 /* ===================================================
    Filtering & Sorting
    =================================================== */
 
 function filterSprites() {
     return baseSprites.filter(sprite => {
-        if (state.settings.hideMastered && state.mastered.includes(sprite.id)) return false;
+        if (state.settings.hideMastered && isMastered(sprite.id)) return false;
         if (!state.settings.showUnreleased && sprite.unreleased) return false;
-        if (state.viewMode && (!state.obtained.includes(sprite.id) || sprite.unreleased)) return false;
+        if (state.viewMode && (!isObtained(sprite.id) || sprite.unreleased)) return false;
 
         const matchesSearch = sprite.name.toLowerCase().includes(state.filters.search.toLowerCase());
         const matchesTheme = state.filters.theme === 'all' || sprite.theme === state.filters.theme;
 
         let matchesStatus = true;
         if (!state.viewMode) {
-            const isOwned = state.obtained.includes(sprite.id);
+            const isOwned = isObtained(sprite.id);
             if (state.filters.status === 'owned') matchesStatus = isOwned;
             if (state.filters.status === 'missing') matchesStatus = !isOwned;
         }
@@ -260,20 +311,18 @@ function sortSprites(items, method) {
     const sorted = [...items];
     if (method === 'theme') {
         return sorted.sort((a, b) => {
-            let idxA = THEME_ORDER.indexOf(a.theme);
-            let idxB = THEME_ORDER.indexOf(b.theme);
-            if (idxA === -1) idxA = Infinity;
-            if (idxB === -1) idxB = Infinity;
+            const idxA = getOrderedIndex(THEME_ORDER, a.theme);
+            const idxB = getOrderedIndex(THEME_ORDER, b.theme);
             if (idxA !== idxB) return idxA - idxB;
             return 0;
         });
     }
     if (method === 'sprite') {
         return sorted.sort((a, b) => {
-            const familyA = a.id.split('_')[0];
-            const familyB = b.id.split('_')[0];
+            const familyA = getFamilyKey(a);
+            const familyB = getFamilyKey(b);
             if (familyA !== familyB) return familyA.localeCompare(familyB);
-            return THEME_ORDER.indexOf(a.theme) - THEME_ORDER.indexOf(b.theme);
+            return getOrderedIndex(THEME_ORDER, a.theme) - getOrderedIndex(THEME_ORDER, b.theme);
         });
     }
     if (method === 'name') {
@@ -281,10 +330,8 @@ function sortSprites(items, method) {
     }
     if (method === 'rarity') {
         return sorted.sort((a, b) => {
-            let idxA = RARITY_ORDER.indexOf(a.rarity);
-            let idxB = RARITY_ORDER.indexOf(b.rarity);
-            if (idxA === -1) idxA = Infinity;
-            if (idxB === -1) idxB = Infinity;
+            const idxA = getOrderedIndex(RARITY_ORDER, a.rarity);
+            const idxB = getOrderedIndex(RARITY_ORDER, b.rarity);
             if (idxA !== idxB) return idxA - idxB;
             return a.name.localeCompare(b.name);
         });
@@ -303,18 +350,18 @@ function renderGrid() {
     const frag = document.createDocumentFragment();
 
     for (const sprite of items) {
-        const isObtained = state.obtained.includes(sprite.id);
-        const isMastered = state.mastered.includes(sprite.id);
+        const obtained = isObtained(sprite.id);
+        const mastered = isMastered(sprite.id);
 
         const card = document.createElement('div');
         card.dataset.id = sprite.id;
 
         const classes = ['card', `rarity-${sprite.rarity}`, `theme-${sprite.theme}`];
-        if (isObtained) classes.push('obtained');
-        if (isMastered) classes.push('mastered');
+        if (obtained) classes.push('obtained');
+        if (mastered) classes.push('mastered');
         card.className = classes.join(' ');
 
-        card.innerHTML = buildCardHTML(sprite, isObtained, isMastered);
+        card.innerHTML = buildCardHTML(sprite, obtained, mastered);
         frag.appendChild(card);
     }
 
@@ -324,36 +371,38 @@ function renderGrid() {
     updateProgress();
 }
 
-function buildCardHTML(sprite, isObtained, isMastered) {
+function buildCardHTML(sprite, obtained, mastered) {
     const rarityLabel = sprite.rarity === 'Mythic' ? 'MYTHIC' : sprite.rarity.toUpperCase();
-    const imgPath = `sprites/${sprite.id}.png`;
+    const imgPath = `sprites/${encodeURIComponent(sprite.id)}.png`;
+    const safeName = escapeHTML(sprite.name);
+    const safeRarity = escapeHTML(rarityLabel);
 
     let badge = '';
     if (sprite.unreleased) {
         badge = '<div class="card-badge unreleased-badge">Unreleased</div>';
-    } else if (isMastered) {
+    } else if (mastered) {
         badge = '<div class="card-badge mastered-badge">Mastered</div>';
-    } else if (isObtained) {
+    } else if (obtained) {
         badge = '<div class="card-badge collected">Collected</div>';
     }
 
     let crownAction = '';
-    if (isObtained && !isMastered && !state.viewMode) {
+    if (obtained && !mastered && !state.viewMode) {
         crownAction = '<button class="card-crown" title="Toggle mastery"><svg class="crown-icon" viewBox="0 0 24 24"><path d="M2 19h20v2H2v-2zM2 5l5 3.5L12 2l5 6.5L22 5v12H2V5z"/></svg></button>';
     }
 
     let crownDisplay = '';
-    if (isMastered) {
+    if (mastered) {
         crownDisplay = '<div class="card-crown-display"><svg class="crown-icon" viewBox="0 0 24 24"><path d="M2 19h20v2H2v-2zM2 5l5 3.5L12 2l5 6.5L22 5v12H2V5z"/></svg></div>';
     }
 
     return `${badge}${crownAction}
         <div class="card-display">
             ${crownDisplay}
-            <img src="${imgPath}" alt="${sprite.name}" loading="lazy">
-            <div class="card-rarity">${rarityLabel}</div>
+            <img src="${imgPath}" alt="${safeName}" loading="lazy">
+            <div class="card-rarity">${safeRarity}</div>
         </div>
-        <div class="card-name"><span>${sprite.name}</span></div>`;
+        <div class="card-name"><span>${safeName}</span></div>`;
 }
 
 function fitCardNames() {
@@ -374,7 +423,7 @@ function fitCardNames() {
    =================================================== */
 
 function toggleObtained(id) {
-    if (state.obtained.includes(id)) {
+    if (isObtained(id)) {
         state.obtained = state.obtained.filter(x => x !== id);
         state.mastered = state.mastered.filter(x => x !== id);
     } else {
@@ -386,8 +435,8 @@ function toggleObtained(id) {
 }
 
 function toggleMastery(id) {
-    if (!state.obtained.includes(id)) return;
-    if (state.mastered.includes(id)) {
+    if (!isObtained(id)) return;
+    if (isMastered(id)) {
         state.mastered = state.mastered.filter(x => x !== id);
     } else {
         state.mastered.push(id);
@@ -430,39 +479,34 @@ function getRarityTagColors(rarity) {
 function getExportConfig(mode) {
     const configs = {
         collected: {
-            items: baseSprites.filter(s => state.obtained.includes(s.id)),
+            items: baseSprites.filter(sprite => isObtained(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'MY COLLECTION',
-            fallback: 'MY COLLECTION', color: '#32cd32',
+            color: '#32cd32',
             filename: 'fnsprites-collection', emptyMsg: 'No collected sprites to export!',
-            showBars: true,
         },
         missing: {
-            items: baseSprites.filter(s => !s.unreleased && !state.obtained.includes(s.id)),
+            items: getReleasedSprites().filter(sprite => !isObtained(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: "I'M LOOKING FOR THESE!",
-            fallback: 'MISSING SPRITES', color: '#ef4444',
+            color: '#ef4444',
             filename: 'fnsprites-missing', emptyMsg: "You aren't missing any released sprites!",
-            showBars: false,
         },
         unmastered: {
-            items: baseSprites.filter(s => state.obtained.includes(s.id) && !state.mastered.includes(s.id)),
+            items: baseSprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'UNMASTERED SPRITES',
-            fallback: 'UNMASTERED', color: '#00f0ff',
+            color: '#00f0ff',
             filename: 'fnsprites-unmastered', emptyMsg: "You don't have any unmastered sprites!",
-            showBars: false,
         },
         mastered: {
-            items: baseSprites.filter(s => state.obtained.includes(s.id) && state.mastered.includes(s.id)),
+            items: baseSprites.filter(sprite => isObtained(sprite.id) && isMastered(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'MASTERED SPRITES',
-            fallback: 'MASTERED', color: '#ffd700',
+            color: '#ffd700',
             filename: 'fnsprites-mastered', emptyMsg: "You don't have any mastered sprites!",
-            showBars: false,
         },
         trade: {
-            items: baseSprites.filter(s => !s.unreleased),
+            items: getReleasedSprites(),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'TRADE CARD',
-            fallback: 'TRADE CARD', color: '#ffd700',
+            color: '#ffd700',
             filename: 'fnsprites-trade-card', emptyMsg: 'No sprites to export!',
-            showBars: true,
         },
     };
 
@@ -719,31 +763,10 @@ function exportImage(mode) {
         return `${name} Sprite`;
     };
 
-    // Gather released sprites and unique character keys
-    const releasedSprites = baseSprites.filter(s => !s.unreleased);
-    const charKeys = [];
-    releasedSprites.forEach(s => {
-        const key = s.id.split('_')[0];
-        if (!charKeys.includes(key)) {
-            charKeys.push(key);
-        }
-    });
-
-    // Theme columns order
-    const activeThemes = [];
-    baseSprites.forEach(s => {
-        if (!s.unreleased && !activeThemes.includes(s.theme)) {
-            activeThemes.push(s.theme);
-        }
-    });
-    activeThemes.sort((a, b) => {
-        const idxA = THEME_ORDER.indexOf(a);
-        const idxB = THEME_ORDER.indexOf(b);
-        if (idxA === -1 && idxB === -1) return 0;
-        if (idxA === -1) return 1;
-        if (idxB === -1) return -1;
-        return idxA - idxB;
-    });
+    // Gather released sprites, character families, and active theme columns.
+    const releasedSprites = getReleasedSprites();
+    const charKeys = getFamilyKeys(releasedSprites);
+    const activeThemes = getActiveThemes(releasedSprites);
 
     const getThemeDisplayName = (theme) => {
         const maps = { 'Basic': 'NORMAL', 'Candy': 'GUMMY' };
@@ -760,8 +783,8 @@ function exportImage(mode) {
     // Load assets (mascot and all released sprites)
     const imagesToLoad = [];
     imagesToLoad.push({ id: 'mascot', src: 'siteimages/staticsprite.png' });
-    releasedSprites.forEach(s => {
-        imagesToLoad.push({ id: s.id, src: `sprites/${s.id}.png` });
+    releasedSprites.forEach(sprite => {
+        imagesToLoad.push({ id: sprite.id, src: `sprites/${encodeURIComponent(sprite.id)}.png` });
     });
 
     const loadImage = (item) => {
@@ -786,26 +809,26 @@ function exportImage(mode) {
 
         // Mapping function for card states
         const getCardState = (sprite, mode) => {
-            const isOwned = state.obtained.includes(sprite.id);
-            const isMastered = state.mastered.includes(sprite.id);
+            const isOwned = isObtained(sprite.id);
+            const mastered = isMastered(sprite.id);
 
             if (mode === 'trade') {
-                return isOwned ? (isMastered ? 'mastered' : 'owned') : 'missing_gray';
+                return isOwned ? (mastered ? 'mastered' : 'owned') : 'missing_gray';
             } else if (mode === 'collected') {
-                return isOwned ? (isMastered ? 'mastered' : 'owned') : 'empty';
+                return isOwned ? (mastered ? 'mastered' : 'owned') : 'empty';
             } else if (mode === 'missing') {
                 return !isOwned ? 'missing_color' : 'empty';
             } else if (mode === 'mastered') {
-                return isMastered ? 'mastered' : 'empty';
+                return mastered ? 'mastered' : 'empty';
             } else if (mode === 'unmastered') {
-                return (isOwned && !isMastered) ? 'unmastered' : 'empty';
+                return (isOwned && !mastered) ? 'unmastered' : 'empty';
             }
             return 'empty';
         };
 
         // Filter out empty rows
         const activeCharKeys = charKeys.filter(charKey => {
-            const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+            const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
             return themeSprites.some(s => getCardState(s, mode) !== 'empty');
         });
 
@@ -889,8 +912,8 @@ function exportImage(mode) {
 
         // Header Stats / Progress Bars
         const totalCount = releasedSprites.length;
-        const ownedCount = state.obtained.length;
-        const masteredCount = state.mastered.length;
+        const ownedCount = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
+        const masteredCount = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
         const colPct = totalCount > 0 ? ownedCount / totalCount : 0;
         const masPct = totalCount > 0 ? masteredCount / totalCount : 0;
 
@@ -961,7 +984,7 @@ function exportImage(mode) {
             // Draw cards
             THEMES.forEach((t, colIndex) => {
                 const cx = startX + LABEL_W + colIndex * (CW + CARD_GAP);
-                const s = baseSprites.find(x => x.id.split('_')[0] === charKey && x.theme === t.themeName);
+                const s = releasedSprites.find(sprite => getFamilyKey(sprite) === charKey && sprite.theme === t.themeName);
 
                 if (s) {
                     const cardState = getCardState(s, mode);
@@ -1015,16 +1038,8 @@ function exportImage(mode) {
    =================================================== */
 
 function generateTradeText() {
-    let sections = [];
-    
-    const charKeys = [];
-    baseSprites.forEach(s => {
-        if (s.unreleased) return;
-        const key = s.id.split('_')[0];
-        if (!charKeys.includes(key)) {
-            charKeys.push(key);
-        }
-    });
+    const releasedSprites = getReleasedSprites();
+    const charKeys = getFamilyKeys(releasedSprites);
 
     const getCharName = (charKey) => {
         const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
@@ -1037,145 +1052,84 @@ function generateTradeText() {
     };
     const formatThemeName = (theme) => themeMaps[theme] || theme;
 
-    // 1. Looking for
-    let lfLines = [];
-    charKeys.forEach(charKey => {
-        const name = getCharName(charKey);
-        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
-        
-        const missing = themeSprites.filter(s => !state.obtained.includes(s.id));
-        if (missing.length === 0) return;
+    const total = releasedSprites.length;
+    const collected = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
+    const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
 
-        const list = missing.map(s => formatThemeName(s.theme)).join(', ');
-        lfLines.push(`  ▸ ${name} ➔ ${list}`);
-    });
-    if (lfLines.length > 0) {
-        sections.push(`【 LOOKING FOR 】\n${lfLines.join('\n')}`);
-    }
+    const buildSection = (title, selectSprites) => {
+        const lines = [];
 
-    // 2. I have
-    let haveLines = [];
-    charKeys.forEach(charKey => {
-        const name = getCharName(charKey);
-        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
-        
-        const owned = themeSprites.filter(s => state.obtained.includes(s.id));
-        if (owned.length === 0) return;
+        charKeys.forEach(charKey => {
+            const name = getCharName(charKey);
+            const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
+            const selected = selectSprites(themeSprites);
+            if (selected.length === 0) return;
 
-        const list = owned.map(s => formatThemeName(s.theme)).join(', ');
-        haveLines.push(`  ▸ ${name} ➔ ${list}`);
-    });
-    if (haveLines.length > 0) {
-        sections.push(`【 HAVE 】\n${haveLines.join('\n')}`);
-    }
+            const list = selected.map(sprite => formatThemeName(sprite.theme)).join(', ');
+            lines.push(`  ▸ ${name} ➔ ${list}`);
+        });
 
-    // 3. Still need to master
-    let mNeedLines = [];
-    charKeys.forEach(charKey => {
-        const name = getCharName(charKey);
-        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
-        
-        const owned = themeSprites.filter(s => state.obtained.includes(s.id));
-        const unmastered = owned.filter(s => !state.mastered.includes(s.id));
-        if (unmastered.length === 0) return;
+        return lines.length > 0 ? `【 ${title} 】\n${lines.join('\n')}` : '';
+    };
 
-        const list = unmastered.map(s => formatThemeName(s.theme)).join(', ');
-        mNeedLines.push(`  ▸ ${name} ➔ ${list}`);
-    });
-    if (mNeedLines.length > 0) {
-        sections.push(`【 STILL NEED TO MASTER 】\n${mNeedLines.join('\n')}`);
-    }
+    const sections = [
+        buildSection('LOOKING FOR', sprites => sprites.filter(sprite => !isObtained(sprite.id))),
+        buildSection('HAVE', sprites => sprites.filter(sprite => isObtained(sprite.id))),
+        buildSection('STILL NEED TO MASTER', sprites => sprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id))),
+        [
+            `Collected: ${collected}/${total}`,
+            `Mastered: ${mastered}/${total}`,
+            'Track yours: https://cghxst.github.io/fnsprites/',
+        ].join('\n'),
+    ].filter(Boolean);
 
     return sections.join('\n\n');
 }
 
 function generateTradeGridText() {
-    const OVERRIDES = {
-        zeropoint: 'ZP',
-        theburntpeanut: 'PEANUT'
-    };
-
-    const getAbbrev = (charKey) => {
-        if (OVERRIDES[charKey]) return OVERRIDES[charKey];
+    const getCharName = (charKey) => {
         const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
-        return basicSprite ? basicSprite.name.toUpperCase() : charKey.toUpperCase();
+        return basicSprite ? basicSprite.name : charKey.charAt(0).toUpperCase() + charKey.slice(1);
     };
 
-    const activeThemes = [];
-    baseSprites.forEach(s => {
-        if (!s.unreleased && !activeThemes.includes(s.theme)) {
-            activeThemes.push(s.theme);
-        }
-    });
-    activeThemes.sort((a, b) => {
-        const idxA = THEME_ORDER.indexOf(a);
-        const idxB = THEME_ORDER.indexOf(b);
-        if (idxA === -1 && idxB === -1) return 0;
-        if (idxA === -1) return 1;
-        if (idxB === -1) return -1;
-        return idxA - idxB;
-    });
+    const releasedSprites = getReleasedSprites();
+    const activeThemes = getActiveThemes(releasedSprites);
+    const charKeys = getFamilyKeys(releasedSprites);
 
     const getThemeDisplayName = (theme) => {
-        const maps = { 'Basic': 'Base', 'Candy': 'Gummy' };
-        return maps[theme] || theme;
+        const maps = { 'Basic': 'NORMAL', 'Candy': 'GUMMY' };
+        return maps[theme] || theme.toUpperCase();
     };
 
-    const headerTitle = `『 ${activeThemes.map(getThemeDisplayName).join(' ┃ ')} 』`;
-    const boxWidth = headerTitle.length;
+    const total = releasedSprites.length;
+    const collected = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
+    const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
 
     let lines = [
-        headerTitle,
-        '┏' + '━'.repeat(boxWidth - 2) + '┓'
+        `| ${activeThemes.map(getThemeDisplayName).join(' | ')} | Sprite`,
+        '✅ Owned  👑 Mastered  ❌ Missing  - Not available',
+        '-----------------------',
     ];
 
-    const columnWidths = activeThemes.map(theme => getThemeDisplayName(theme).length + 2);
-
-    const padSymbol = (symbol, columnIndex) => {
-        const width = columnWidths[columnIndex];
-        const paddingNeeded = width - 1;
-        const leftPadding = Math.floor(paddingNeeded / 2);
-        const rightPadding = paddingNeeded - leftPadding;
-        return ' '.repeat(leftPadding) + symbol + ' '.repeat(rightPadding);
-    };
-
-    const charKeys = [];
-    baseSprites.forEach(s => {
-        if (s.unreleased) return;
-        const key = s.id.split('_')[0];
-        if (!charKeys.includes(key)) {
-            charKeys.push(key);
-        }
-    });
-
     charKeys.forEach(charKey => {
-        const abbrev = getAbbrev(charKey);
-        const themeSprites = baseSprites.filter(s => s.id.split('_')[0] === charKey && !s.unreleased);
+        const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
         
-        let rowStates = [];
-        activeThemes.forEach((theme, colIndex) => {
+        const rowStates = activeThemes.map(theme => {
             const s = themeSprites.find(x => x.theme === theme);
-            let symbol = '❌';
-            if (s) {
-                const isObtained = state.obtained.includes(s.id);
-                const isMastered = state.mastered.includes(s.id);
-                if (isMastered) {
-                    symbol = '👑';
-                } else if (isObtained) {
-                    symbol = '✅';
-                }
-            } else {
-                symbol = '➖';
-            }
-            rowStates.push(padSymbol(symbol, colIndex));
+            if (!s) return '-';
+            if (isMastered(s.id)) return '👑';
+            return isObtained(s.id) ? '✅' : '❌';
         });
 
-        if (rowStates.length > 0) {
-            lines.push(`┣${rowStates.join('┃')}┃ ${abbrev}`);
-        }
+        lines.push(`| ${rowStates.join(' | ')} | ${getCharName(charKey)}`);
     });
 
-    lines.push('┗' + '━'.repeat(boxWidth - 2) + '┛');
+    lines.push(
+        '',
+        `Collected: ${collected}/${total}`,
+        `Mastered: ${mastered}/${total}`,
+        'Track yours: https://cghxst.github.io/fnsprites/'
+    );
 
     return lines.join('\n');
 }
