@@ -1038,8 +1038,6 @@ function exportImage(mode) {
    =================================================== */
 
 function generateTradeText() {
-    let sections = [];
-    
     const releasedSprites = getReleasedSprites();
     const charKeys = getFamilyKeys(releasedSprites);
 
@@ -1054,126 +1052,84 @@ function generateTradeText() {
     };
     const formatThemeName = (theme) => themeMaps[theme] || theme;
 
-    // 1. Looking for
-    let lfLines = [];
-    charKeys.forEach(charKey => {
-        const name = getCharName(charKey);
-        const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
-        
-        const missing = themeSprites.filter(s => !isObtained(s.id));
-        if (missing.length === 0) return;
+    const total = releasedSprites.length;
+    const collected = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
+    const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
 
-        const list = missing.map(s => formatThemeName(s.theme)).join(', ');
-        lfLines.push(`  ▸ ${name} ➔ ${list}`);
-    });
-    if (lfLines.length > 0) {
-        sections.push(`【 LOOKING FOR 】\n${lfLines.join('\n')}`);
-    }
+    const buildSection = (title, selectSprites) => {
+        const lines = [];
 
-    // 2. I have
-    let haveLines = [];
-    charKeys.forEach(charKey => {
-        const name = getCharName(charKey);
-        const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
-        
-        const owned = themeSprites.filter(s => isObtained(s.id));
-        if (owned.length === 0) return;
+        charKeys.forEach(charKey => {
+            const name = getCharName(charKey);
+            const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
+            const selected = selectSprites(themeSprites);
+            if (selected.length === 0) return;
 
-        const list = owned.map(s => formatThemeName(s.theme)).join(', ');
-        haveLines.push(`  ▸ ${name} ➔ ${list}`);
-    });
-    if (haveLines.length > 0) {
-        sections.push(`【 HAVE 】\n${haveLines.join('\n')}`);
-    }
+            const list = selected.map(sprite => formatThemeName(sprite.theme)).join(', ');
+            lines.push(`  ▸ ${name} ➔ ${list}`);
+        });
 
-    // 3. Still need to master
-    let mNeedLines = [];
-    charKeys.forEach(charKey => {
-        const name = getCharName(charKey);
-        const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
-        
-        const owned = themeSprites.filter(s => isObtained(s.id));
-        const unmastered = owned.filter(s => !isMastered(s.id));
-        if (unmastered.length === 0) return;
+        return lines.length > 0 ? `【 ${title} 】\n${lines.join('\n')}` : '';
+    };
 
-        const list = unmastered.map(s => formatThemeName(s.theme)).join(', ');
-        mNeedLines.push(`  ▸ ${name} ➔ ${list}`);
-    });
-    if (mNeedLines.length > 0) {
-        sections.push(`【 STILL NEED TO MASTER 】\n${mNeedLines.join('\n')}`);
-    }
+    const sections = [
+        buildSection('LOOKING FOR', sprites => sprites.filter(sprite => !isObtained(sprite.id))),
+        buildSection('HAVE', sprites => sprites.filter(sprite => isObtained(sprite.id))),
+        buildSection('STILL NEED TO MASTER', sprites => sprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id))),
+        [
+            `Collected: ${collected}/${total}`,
+            `Mastered: ${mastered}/${total}`,
+            'Track yours: https://cghxst.github.io/fnsprites/',
+        ].join('\n'),
+    ].filter(Boolean);
 
     return sections.join('\n\n');
 }
 
 function generateTradeGridText() {
-    const OVERRIDES = {
-        zeropoint: 'ZP',
-        theburntpeanut: 'PEANUT'
-    };
-
-    const getAbbrev = (charKey) => {
-        if (OVERRIDES[charKey]) return OVERRIDES[charKey];
+    const getCharName = (charKey) => {
         const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
-        return basicSprite ? basicSprite.name.toUpperCase() : charKey.toUpperCase();
+        return basicSprite ? basicSprite.name : charKey.charAt(0).toUpperCase() + charKey.slice(1);
     };
 
     const releasedSprites = getReleasedSprites();
     const activeThemes = getActiveThemes(releasedSprites);
-
-    const getThemeDisplayName = (theme) => {
-        const maps = { 'Basic': 'Base', 'Candy': 'Gummy' };
-        return maps[theme] || theme;
-    };
-
-    const headerTitle = `『 ${activeThemes.map(getThemeDisplayName).join(' ┃ ')} 』`;
-    const boxWidth = headerTitle.length;
-
-    let lines = [
-        headerTitle,
-        '┏' + '━'.repeat(boxWidth - 2) + '┓'
-    ];
-
-    const columnWidths = activeThemes.map(theme => getThemeDisplayName(theme).length + 2);
-
-    const padSymbol = (symbol, columnIndex) => {
-        const width = columnWidths[columnIndex];
-        const paddingNeeded = width - 1;
-        const leftPadding = Math.floor(paddingNeeded / 2);
-        const rightPadding = paddingNeeded - leftPadding;
-        return ' '.repeat(leftPadding) + symbol + ' '.repeat(rightPadding);
-    };
-
     const charKeys = getFamilyKeys(releasedSprites);
 
+    const getThemeDisplayName = (theme) => {
+        const maps = { 'Basic': 'NORMAL', 'Candy': 'GUMMY' };
+        return maps[theme] || theme.toUpperCase();
+    };
+
+    const total = releasedSprites.length;
+    const collected = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
+    const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
+
+    let lines = [
+        `| ${activeThemes.map(getThemeDisplayName).join(' | ')} | Sprite`,
+        '✅ Owned  👑 Mastered  ❌ Missing  - Not available',
+        '-----------------------',
+    ];
+
     charKeys.forEach(charKey => {
-        const abbrev = getAbbrev(charKey);
         const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
         
-        let rowStates = [];
-        activeThemes.forEach((theme, colIndex) => {
+        const rowStates = activeThemes.map(theme => {
             const s = themeSprites.find(x => x.theme === theme);
-            let symbol = '❌';
-            if (s) {
-                const obtained = isObtained(s.id);
-                const mastered = isMastered(s.id);
-                if (mastered) {
-                    symbol = '👑';
-                } else if (obtained) {
-                    symbol = '✅';
-                }
-            } else {
-                symbol = '➖';
-            }
-            rowStates.push(padSymbol(symbol, colIndex));
+            if (!s) return '-';
+            if (isMastered(s.id)) return '👑';
+            return isObtained(s.id) ? '✅' : '❌';
         });
 
-        if (rowStates.length > 0) {
-            lines.push(`┣${rowStates.join('┃')}┃ ${abbrev}`);
-        }
+        lines.push(`| ${rowStates.join(' | ')} | ${getCharName(charKey)}`);
     });
 
-    lines.push('┗' + '━'.repeat(boxWidth - 2) + '┛');
+    lines.push(
+        '',
+        `Collected: ${collected}/${total}`,
+        `Mastered: ${mastered}/${total}`,
+        'Track yours: https://cghxst.github.io/fnsprites/'
+    );
 
     return lines.join('\n');
 }
