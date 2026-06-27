@@ -46,17 +46,13 @@
 
     <nav class="toolbar">
         <div class="toolbar-row">
+            <label class="sr-only" for="searchInput">Search sprites</label>
             <input type="search" id="searchInput" class="input" placeholder="Search sprites…" autocomplete="off" spellcheck="false">
+            <label class="sr-only" for="themeFilter">Filter by theme</label>
             <select id="themeFilter" class="select">
                 <option value="all">All themes</option>
-                <option value="Basic">Basic</option>
-                <option value="Gold">Gold</option>
-                <option value="Candy">Gummy</option>
-                <option value="Galaxy">Galaxy</option>
-                <option value="Gem">Gem</option>
-                <option value="Holofoil">Holofoil</option>
-                <option value="Rift">Rift</option>
             </select>
+            <label class="sr-only" for="sortOrder">Sort sprites</label>
             <select id="sortOrder" class="select">
                 <option value="theme">Group by theme</option>
                 <option value="sprite">Group by sprite</option>
@@ -64,9 +60,9 @@
                 <option value="rarity">Sort by rarity</option>
             </select>
             <div class="pills" id="statusPills">
-                <button class="pill active" data-status="all">All</button>
-                <button class="pill" data-status="owned">Owned</button>
-                <button class="pill" data-status="missing">Missing</button>
+                <button type="button" class="pill active" data-status="all">All</button>
+                <button type="button" class="pill" data-status="owned">Owned</button>
+                <button type="button" class="pill" data-status="missing">Missing</button>
             </div>
         </div>
         <div class="toolbar-row">
@@ -77,32 +73,32 @@
             </div>
             <div class="actions">
                 <div class="dropdown" id="exportDropdown">
-                    <button class="btn" id="exportToggle">Export</button>
-                    <div class="dropdown-menu">
-                        <button data-export="collected"><span class="dot" style="background:var(--collected)"></span>Collection image</button>
-                        <button data-export="missing"><span class="dot" style="background:var(--missing)"></span>Missing sprites</button>
-                        <button data-export="unmastered"><span class="dot" style="background:var(--unmastered)"></span>Unmastered sprites</button>
-                        <button data-export="mastered"><span class="dot" style="background:var(--mastered)"></span>Mastered sprites</button>
-                        <button data-export="trade"><span class="dot" style="background:linear-gradient(135deg, #ffd700, #22c55e)"></span>Trade card image</button>
+                    <button type="button" class="btn" id="exportToggle" aria-haspopup="true" aria-expanded="false">Export</button>
+                    <div class="dropdown-menu" aria-label="Export options">
+                        <button type="button" data-export="collected"><span class="dot dot-collected"></span>Collection image</button>
+                        <button type="button" data-export="missing"><span class="dot dot-missing"></span>Missing sprites</button>
+                        <button type="button" data-export="unmastered"><span class="dot dot-unmastered"></span>Unmastered sprites</button>
+                        <button type="button" data-export="mastered"><span class="dot dot-mastered"></span>Mastered sprites</button>
+                        <button type="button" data-export="trade"><span class="dot dot-trade"></span>Trade card image</button>
                         <hr class="dropdown-divider">
-                        <button id="exportBackupBtn"><span class="dot" style="background:#555"></span>Backup data (JSON)</button>
+                        <button type="button" id="exportBackupBtn"><span class="dot dot-backup"></span>Backup data (JSON)</button>
                     </div>
                 </div>
-                <button class="btn" id="importBtn">Import</button>
-                <input type="file" id="importInput" accept=".json" style="display: none">
+                <button type="button" class="btn" id="importBtn">Import</button>
+                <input type="file" id="importInput" class="file-input" accept=".json">
                 <div class="dropdown" id="copyDropdown">
-                    <button class="btn" id="copyToggle">Copy trade list</button>
-                    <div class="dropdown-menu">
-                        <button id="copyTradeTextBtn"><span class="dot" style="background:#8891a5"></span>Trade list (text)</button>
-                        <button id="copyTradeGridBtn"><span class="dot" style="background:#555"></span>Trade grid (text)</button>
+                    <button type="button" class="btn" id="copyToggle" aria-haspopup="true" aria-expanded="false">Copy trade list</button>
+                    <div class="dropdown-menu" aria-label="Copy options">
+                        <button type="button" id="copyTradeTextBtn"><span class="dot dot-text"></span>Trade list (text)</button>
+                        <button type="button" id="copyTradeGridBtn"><span class="dot dot-backup"></span>Trade grid (text)</button>
                     </div>
                 </div>
-                <button class="btn btn-accent" id="shareBtn">Share</button>
+                <button type="button" class="btn btn-accent" id="shareBtn">Share</button>
             </div>
         </div>
     </nav>
 
-    <main class="grid" id="spriteGrid"></main>
+    <main class="grid" id="spriteGrid" aria-label="Sprites collection"></main>
 </div>
 
 </body>

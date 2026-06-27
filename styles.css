@@ -65,9 +65,33 @@ body {
 }
 
 img { display: block; max-width: 100%; }
-button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; touch-action: manipulation; }
 input, select { font: inherit; color: inherit; }
 a { color: var(--mastered); }
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.file-input { display: none; }
+
+.btn:focus-visible,
+.pill:focus-visible,
+.switch input:focus-visible,
+.dropdown-menu button:focus-visible,
+.card:focus-visible,
+.card-crown:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
 
 /* ===================================================
    App Shell
@@ -256,6 +280,8 @@ a { color: var(--mastered); }
     letter-spacing: 0.5px;
     transition: background var(--ease), color var(--ease);
     color: var(--text-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pill:hover { background: var(--surface-overlay); color: var(--text); }
@@ -279,6 +305,7 @@ a { color: var(--mastered); }
     display: flex;
     align-items: center;
     gap: 6px;
+    min-width: 0;
     cursor: pointer;
     user-select: none;
     font-size: 13px;
@@ -287,6 +314,8 @@ a { color: var(--mastered); }
 }
 
 .switch:hover { color: var(--text); }
+
+.switch span { min-width: 0; }
 
 .switch input {
     appearance: none;
@@ -415,6 +444,14 @@ a { color: var(--mastered); }
     border-radius: 50%;
     flex-shrink: 0;
 }
+
+.dot-collected { background: var(--collected); }
+.dot-missing { background: var(--missing); }
+.dot-unmastered { background: var(--unmastered); }
+.dot-mastered { background: var(--mastered); }
+.dot-trade { background: linear-gradient(135deg, var(--mastered), var(--collected)); }
+.dot-backup { background: #555; }
+.dot-text { background: var(--text-soft); }
 
 /* ===================================================
    Sprite Grid
@@ -734,7 +771,59 @@ body.low-fidelity .rarity-Special .card-rarity { background: #51f7cc; }
 }
 
 @media (max-width: 480px) {
+    html,
+    body {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+    .app {
+        width: 100vw;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
     .brand h1 { font-size: 18px; }
-    .grid { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 6px; }
+    .toolbar-row:first-child {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .toolbar-row:first-child > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+    .toolbar-row:first-child .input,
+    .toolbar-row:first-child .pills {
+        grid-column: 1 / -1;
+    }
+    .toolbar-row:first-child .pills { width: 100%; }
+    .toolbar-row:first-child .select {
+        width: 100%;
+        min-width: 0;
+    }
+    .switches { gap: 8px; }
+    .switch {
+        gap: 4px;
+        font-size: 12px;
+    }
+    .pill { padding-inline: 10px; }
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
     .card-name span { font-size: 12px; }
+}
+
+@media (max-width: 380px) {
+    .actions { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+
+    .card:hover,
+    .card.obtained:hover {
+        transform: none;
+    }
 }

@@ -16,6 +16,31 @@ const KEYS = {
 
 const THEME_ORDER = ['Basic', 'Gold', 'Candy', 'Galaxy', 'Gem', 'Holofoil', 'Rift'];
 const RARITY_ORDER = ['Mythic', 'Legendary', 'Epic', 'Rare', 'Special'];
+const STATUS_FILTERS = ['all', 'owned', 'missing'];
+const SORT_METHODS = ['theme', 'sprite', 'name', 'rarity'];
+const UI_THEME_LABELS = { Candy: 'Gummy' };
+const EXPORT_THEME_LABELS = { Basic: 'NORMAL', Candy: 'GUMMY' };
+const TRADE_THEME_LABELS = { Basic: 'Base', Candy: 'Gummy' };
+const TRACKER_URL = 'https://cghxst.github.io/fnsprites/';
+const CROWN_ICON = '<svg class="crown-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 19h20v2H2v-2zM2 5l5 3.5L12 2l5 6.5L22 5v12H2V5z"/></svg>';
+
+const EXPORT_LAYOUT = {
+    border: 8,
+    sidePad: 20,
+    minCanvasW: 360,
+    compactHeaderW: 760,
+    headerH: 80,
+    compactHeaderH: 132,
+    colHeaderH: 35,
+    cardW: 80,
+    cardH: 100,
+    rowGap: 12,
+    cardGap: 8,
+    labelW: 120,
+    colGap: 60,
+    footerH: 60,
+    maxSingleColumnRows: 6,
+};
 
 /* ===================================================
    State
@@ -69,18 +94,42 @@ const dom = {
    =================================================== */
 
 function persist(key, value) {
-    localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+    try {
+        localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+    } catch (err) {
+        console.warn('Unable to save tracker state.', err);
+    }
+}
+
+function readStoredArray(key) {
+    try {
+        const value = JSON.parse(localStorage.getItem(key));
+        return Array.isArray(value) ? value : [];
+    } catch {
+        return [];
+    }
+}
+
+function uniqueValidIds(ids, validIds = getSpriteIdSet()) {
+    return [...new Set(ids)].filter(id => validIds.has(id));
+}
+
+function saveCollection() {
+    persist(KEYS.obtained, state.obtained);
+    persist(KEYS.mastered, state.mastered);
 }
 
 function load() {
-    state.obtained = JSON.parse(localStorage.getItem(KEYS.obtained)) || [];
-    state.mastered = JSON.parse(localStorage.getItem(KEYS.mastered)) || [];
+    const validIds = getSpriteIdSet();
+    state.obtained = uniqueValidIds(readStoredArray(KEYS.obtained), validIds);
+    state.mastered = uniqueValidIds(readStoredArray(KEYS.mastered), validIds)
+        .filter(id => state.obtained.includes(id));
     state.filters.search = localStorage.getItem(KEYS.search) || '';
     state.filters.theme = localStorage.getItem(KEYS.theme) || 'all';
 
     let savedStatus = localStorage.getItem(KEYS.status) || 'all';
     if (savedStatus === 'obtained') savedStatus = 'owned';
-    state.filters.status = savedStatus;
+    state.filters.status = STATUS_FILTERS.includes(savedStatus) ? savedStatus : 'all';
 
     state.settings.hideMastered = localStorage.getItem(KEYS.hideMastered) === 'true';
     
@@ -89,7 +138,7 @@ function load() {
         const legacyGroup = localStorage.getItem('fn_state_group_theme');
         savedSort = legacyGroup === 'false' ? 'sprite' : 'theme';
     }
-    state.settings.sortOrder = savedSort;
+    state.settings.sortOrder = SORT_METHODS.includes(savedSort) ? savedSort : 'theme';
 
     state.settings.showUnreleased = localStorage.getItem(KEYS.showUnreleased) === 'true';
     state.settings.lowFidelity = localStorage.getItem(KEYS.lowFidelity) === 'true';
@@ -102,7 +151,7 @@ function applyStateToDOM() {
     dom.hideMastered.checked = state.settings.hideMastered;
     dom.showUnreleased.checked = state.settings.showUnreleased;
     dom.lowFidelity.checked = state.settings.lowFidelity;
-    if (state.settings.lowFidelity) document.body.classList.add('low-fidelity');
+    document.body.classList.toggle('low-fidelity', state.settings.lowFidelity);
 
     dom.statusPills.querySelectorAll('.pill').forEach(pill => {
         const match =
@@ -110,6 +159,7 @@ function applyStateToDOM() {
             (pill.dataset.status === 'owned' && state.filters.status === 'owned') ||
             (pill.dataset.status === 'missing' && state.filters.status === 'missing');
         pill.classList.toggle('active', match);
+        pill.setAttribute('aria-pressed', String(match));
     });
 }
 
@@ -212,7 +262,8 @@ function toast(message, type = 'info') {
     requestAnimationFrame(() => el.classList.add('visible'));
     setTimeout(() => {
         el.classList.remove('visible');
-        el.addEventListener('transitionend', () => el.remove());
+        el.addEventListener('transitionend', () => el.remove(), { once: true });
+        setTimeout(() => el.remove(), 500);
     }, 2500);
 }
 
@@ -222,6 +273,10 @@ function toast(message, type = 'info') {
 
 function getFamilyKey(sprite) {
     return sprite.id.split('_')[0];
+}
+
+function getSpriteIdSet(sprites = baseSprites) {
+    return new Set(sprites.map(sprite => sprite.id));
 }
 
 function getReleasedSprites() {
@@ -250,6 +305,44 @@ function getOrderedIndex(order, value) {
     return index === -1 ? Infinity : index;
 }
 
+function getCharName(charKey) {
+    const basicSprite = baseSprites.find(sprite => sprite.id === `${charKey}_basic`);
+    return basicSprite ? basicSprite.name : charKey.charAt(0).toUpperCase() + charKey.slice(1);
+}
+
+function getDisplayName(name) {
+    return name === 'Burnt Peanut' ? name : `${name} Sprite`;
+}
+
+function getUiThemeLabel(theme) {
+    return UI_THEME_LABELS[theme] || theme;
+}
+
+function getExportThemeLabel(theme) {
+    return EXPORT_THEME_LABELS[theme] || theme.toUpperCase();
+}
+
+function getTradeThemeLabel(theme) {
+    return TRADE_THEME_LABELS[theme] || theme;
+}
+
+function getCollectionCounts(sprites = getReleasedSprites()) {
+    return {
+        total: sprites.length,
+        collected: sprites.filter(sprite => isObtained(sprite.id)).length,
+        mastered: sprites.filter(sprite => isMastered(sprite.id)).length,
+    };
+}
+
+function getFamilyThemeMap(sprites) {
+    return sprites.reduce((map, sprite) => {
+        const familyKey = getFamilyKey(sprite);
+        if (!map.has(familyKey)) map.set(familyKey, new Map());
+        map.get(familyKey).set(sprite.theme, sprite);
+        return map;
+    }, new Map());
+}
+
 function isObtained(id) {
     return state.obtained.includes(id);
 }
@@ -273,10 +366,7 @@ function escapeHTML(value) {
    =================================================== */
 
 function updateProgress() {
-    const released = getReleasedSprites();
-    const total = released.length;
-    const collected = released.filter(sprite => isObtained(sprite.id)).length;
-    const mastered = released.filter(sprite => isMastered(sprite.id)).length;
+    const { total, collected, mastered } = getCollectionCounts();
 
     dom.collectionRatio.textContent = `${collected} / ${total}`;
     dom.collectionFill.style.width = total > 0 ? `${(collected / total) * 100}%` : '0%';
@@ -288,12 +378,14 @@ function updateProgress() {
    =================================================== */
 
 function filterSprites() {
+    const search = state.filters.search.trim().toLowerCase();
+
     return baseSprites.filter(sprite => {
         if (state.settings.hideMastered && isMastered(sprite.id)) return false;
         if (!state.settings.showUnreleased && sprite.unreleased) return false;
         if (state.viewMode && (!isObtained(sprite.id) || sprite.unreleased)) return false;
 
-        const matchesSearch = sprite.name.toLowerCase().includes(state.filters.search.toLowerCase());
+        const matchesSearch = !search || sprite.name.toLowerCase().includes(search);
         const matchesTheme = state.filters.theme === 'all' || sprite.theme === state.filters.theme;
 
         let matchesStatus = true;
@@ -343,6 +435,17 @@ function sortSprites(items, method) {
    Rendering
    =================================================== */
 
+function populateThemeFilter() {
+    const themes = getActiveThemes(baseSprites);
+    const selectedTheme = themes.includes(state.filters.theme) ? state.filters.theme : 'all';
+
+    dom.themeFilter.replaceChildren(
+        new Option('All themes', 'all'),
+        ...themes.map(theme => new Option(getUiThemeLabel(theme), theme))
+    );
+    state.filters.theme = selectedTheme;
+}
+
 function renderGrid() {
     let items = filterSprites();
     items = sortSprites(items, state.settings.sortOrder);
@@ -360,6 +463,12 @@ function renderGrid() {
         if (obtained) classes.push('obtained');
         if (mastered) classes.push('mastered');
         card.className = classes.join(' ');
+        if (!state.viewMode) {
+            card.tabIndex = 0;
+            card.setAttribute('role', 'button');
+            card.setAttribute('aria-pressed', String(obtained));
+            card.setAttribute('aria-label', `${obtained ? 'Remove' : 'Mark'} ${sprite.name} ${obtained ? 'from' : 'as part of'} your collection`);
+        }
 
         card.innerHTML = buildCardHTML(sprite, obtained, mastered);
         frag.appendChild(card);
@@ -388,12 +497,12 @@ function buildCardHTML(sprite, obtained, mastered) {
 
     let crownAction = '';
     if (obtained && !mastered && !state.viewMode) {
-        crownAction = '<button class="card-crown" title="Toggle mastery"><svg class="crown-icon" viewBox="0 0 24 24"><path d="M2 19h20v2H2v-2zM2 5l5 3.5L12 2l5 6.5L22 5v12H2V5z"/></svg></button>';
+        crownAction = `<button class="card-crown" type="button" title="Toggle mastery" aria-label="Mark ${safeName} as mastered">${CROWN_ICON}</button>`;
     }
 
     let crownDisplay = '';
     if (mastered) {
-        crownDisplay = '<div class="card-crown-display"><svg class="crown-icon" viewBox="0 0 24 24"><path d="M2 19h20v2H2v-2zM2 5l5 3.5L12 2l5 6.5L22 5v12H2V5z"/></svg></div>';
+        crownDisplay = `<div class="card-crown-display">${CROWN_ICON}</div>`;
     }
 
     return `${badge}${crownAction}
@@ -406,7 +515,7 @@ function buildCardHTML(sprite, obtained, mastered) {
 }
 
 function fitCardNames() {
-    document.querySelectorAll('.card-name span').forEach(span => {
+    dom.grid.querySelectorAll('.card-name span').forEach(span => {
         const parent = span.parentElement;
         if (!parent || parent.clientWidth === 0) return;
         let size = 14;
@@ -429,8 +538,7 @@ function toggleObtained(id) {
     } else {
         state.obtained.push(id);
     }
-    persist(KEYS.obtained, state.obtained);
-    persist(KEYS.mastered, state.mastered);
+    saveCollection();
     renderGrid();
 }
 
@@ -441,7 +549,7 @@ function toggleMastery(id) {
     } else {
         state.mastered.push(id);
     }
-    persist(KEYS.mastered, state.mastered);
+    saveCollection();
     renderGrid();
 }
 
@@ -477,33 +585,34 @@ function getRarityTagColors(rarity) {
 }
 
 function getExportConfig(mode) {
+    const releasedSprites = getReleasedSprites();
     const configs = {
         collected: {
-            items: baseSprites.filter(sprite => isObtained(sprite.id)),
+            items: releasedSprites.filter(sprite => isObtained(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'MY COLLECTION',
             color: '#32cd32',
             filename: 'fnsprites-collection', emptyMsg: 'No collected sprites to export!',
         },
         missing: {
-            items: getReleasedSprites().filter(sprite => !isObtained(sprite.id)),
+            items: releasedSprites.filter(sprite => !isObtained(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: "I'M LOOKING FOR THESE!",
             color: '#ef4444',
             filename: 'fnsprites-missing', emptyMsg: "You aren't missing any released sprites!",
         },
         unmastered: {
-            items: baseSprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id)),
+            items: releasedSprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'UNMASTERED SPRITES',
             color: '#00f0ff',
             filename: 'fnsprites-unmastered', emptyMsg: "You don't have any unmastered sprites!",
         },
         mastered: {
-            items: baseSprites.filter(sprite => isObtained(sprite.id) && isMastered(sprite.id)),
+            items: releasedSprites.filter(sprite => isObtained(sprite.id) && isMastered(sprite.id)),
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'MASTERED SPRITES',
             color: '#ffd700',
             filename: 'fnsprites-mastered', emptyMsg: "You don't have any mastered sprites!",
         },
         trade: {
-            items: getReleasedSprites(),
+            items: releasedSprites,
             titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'TRADE CARD',
             color: '#ffd700',
             filename: 'fnsprites-trade-card', emptyMsg: 'No sprites to export!',
@@ -516,6 +625,28 @@ function getExportConfig(mode) {
         return null;
     }
     return config;
+}
+
+function getExportCardState(sprite, mode) {
+    const isOwned = isObtained(sprite.id);
+    const mastered = isMastered(sprite.id);
+
+    if (mode === 'trade') return isOwned ? (mastered ? 'mastered' : 'owned') : 'missing_gray';
+    if (mode === 'collected') return isOwned ? (mastered ? 'mastered' : 'owned') : 'empty';
+    if (mode === 'missing') return !isOwned ? 'missing_color' : 'empty';
+    if (mode === 'mastered') return mastered ? 'mastered' : 'empty';
+    if (mode === 'unmastered') return isOwned && !mastered ? 'unmastered' : 'empty';
+    return 'empty';
+}
+
+function loadImage(item) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => resolve({ id: item.id, img, success: true });
+        img.onerror = () => resolve({ id: item.id, img, success: false });
+        img.src = item.src;
+    });
 }
 
 function drawCrown(ctx, cx, cy) {
@@ -613,7 +744,7 @@ function drawMiniCard(ctx, sprite, x, y, w, h, cardState, imageMap) {
         if (isGrayed) {
             try {
                 ctx.filter = 'grayscale(100%) brightness(48%)';
-            } catch (e) {}
+            } catch {}
         }
         const maxDim = w * 0.82;
         const ratio = Math.min(maxDim / img.width, maxDim / img.height);
@@ -752,50 +883,18 @@ function exportImage(mode) {
     const config = getExportConfig(mode);
     if (!config) return;
 
-    // Helper functions for names
-    const getCharName = (charKey) => {
-        const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
-        return basicSprite ? basicSprite.name : (charKey.charAt(0).toUpperCase() + charKey.slice(1));
-    };
-
-    const getDisplayName = (name) => {
-        if (name === 'Burnt Peanut') return name;
-        return `${name} Sprite`;
-    };
-
-    // Gather released sprites, character families, and active theme columns.
     const releasedSprites = getReleasedSprites();
     const charKeys = getFamilyKeys(releasedSprites);
-    const activeThemes = getActiveThemes(releasedSprites);
+    const familyThemeMap = getFamilyThemeMap(releasedSprites);
+    const allThemeColumns = getActiveThemes(releasedSprites).map(theme => ({
+        name: getExportThemeLabel(theme),
+        themeName: theme,
+    }));
 
-    const getThemeDisplayName = (theme) => {
-        const maps = { 'Basic': 'NORMAL', 'Candy': 'GUMMY' };
-        return maps[theme] || theme.toUpperCase();
-    };
-
-    const THEMES = activeThemes.map(theme => {
-        return {
-            name: getThemeDisplayName(theme),
-            themeName: theme
-        };
-    });
-
-    // Load assets (mascot and all released sprites)
-    const imagesToLoad = [];
-    imagesToLoad.push({ id: 'mascot', src: 'siteimages/staticsprite.png' });
-    releasedSprites.forEach(sprite => {
-        imagesToLoad.push({ id: sprite.id, src: `sprites/${encodeURIComponent(sprite.id)}.png` });
-    });
-
-    const loadImage = (item) => {
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => resolve({ id: item.id, img, success: true });
-            img.onerror = () => resolve({ id: item.id, img, success: false });
-            img.src = item.src;
-        });
-    };
+    const imagesToLoad = [
+        { id: 'mascot', src: 'siteimages/staticsprite.png' },
+        ...releasedSprites.map(sprite => ({ id: sprite.id, src: `sprites/${encodeURIComponent(sprite.id)}.png` })),
+    ];
 
     toast('Generating image export...', 'info');
 
@@ -807,58 +906,34 @@ function exportImage(mode) {
             }
         });
 
-        // Mapping function for card states
-        const getCardState = (sprite, mode) => {
-            const isOwned = isObtained(sprite.id);
-            const mastered = isMastered(sprite.id);
-
-            if (mode === 'trade') {
-                return isOwned ? (mastered ? 'mastered' : 'owned') : 'missing_gray';
-            } else if (mode === 'collected') {
-                return isOwned ? (mastered ? 'mastered' : 'owned') : 'empty';
-            } else if (mode === 'missing') {
-                return !isOwned ? 'missing_color' : 'empty';
-            } else if (mode === 'mastered') {
-                return mastered ? 'mastered' : 'empty';
-            } else if (mode === 'unmastered') {
-                return (isOwned && !mastered) ? 'unmastered' : 'empty';
-            }
-            return 'empty';
-        };
-
-        // Filter out empty rows
         const activeCharKeys = charKeys.filter(charKey => {
-            const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
-            return themeSprites.some(s => getCardState(s, mode) !== 'empty');
+            return [...familyThemeMap.get(charKey).values()]
+                .some(sprite => getExportCardState(sprite, mode) !== 'empty');
         });
 
-        // Split characters into two columns
-        const half = Math.ceil(activeCharKeys.length / 2);
+        const themeColumns = allThemeColumns.filter(t => {
+            return activeCharKeys.some(charKey => {
+                const sprite = familyThemeMap.get(charKey).get(t.themeName);
+                return sprite && getExportCardState(sprite, mode) !== 'empty';
+            });
+        });
+
+        const layout = EXPORT_LAYOUT;
+        const tableColumnCount = activeCharKeys.length > layout.maxSingleColumnRows ? 2 : 1;
+        const half = tableColumnCount === 1 ? activeCharKeys.length : Math.ceil(activeCharKeys.length / 2);
         const leftColumnKeys = activeCharKeys.slice(0, half);
         const rightColumnKeys = activeCharKeys.slice(half);
 
-        // Dimensions for the binder sheet
-        const BORDER = 8;
-        const HEADER_H = 80;
-        const COL_HEADER_H = 35;
-        const CW = 80;
-        const CH = 100;
-        const ROW_GAP = 12;
-        const CARD_GAP = 8;
-        const LABEL_W = 120;
-        const COL_GAP = 60;
-        const FOOTER_H = 60;
-
         const maxRows = Math.max(leftColumnKeys.length, rightColumnKeys.length);
-        const rowH = CH + ROW_GAP;
+        const rowH = layout.cardH + layout.rowGap;
         const rowsH = maxRows * rowH;
-
-        // Card block width
-        const cardBlockW = THEMES.length * CW + (THEMES.length - 1) * CARD_GAP;
-        const colW = LABEL_W + cardBlockW;
-
-        const canvasW = colW * 2 + COL_GAP + BORDER * 2 + 40;
-        const canvasH = BORDER * 2 + HEADER_H + COL_HEADER_H + rowsH + FOOTER_H;
+        const cardBlockW = themeColumns.length * layout.cardW + Math.max(0, themeColumns.length - 1) * layout.cardGap;
+        const colW = layout.labelW + cardBlockW;
+        const tableW = colW * tableColumnCount + layout.colGap * Math.max(0, tableColumnCount - 1);
+        const canvasW = Math.max(layout.minCanvasW, tableW + layout.border * 2 + layout.sidePad * 2);
+        const useCompactHeader = canvasW < layout.compactHeaderW;
+        const headerH = useCompactHeader ? layout.compactHeaderH : layout.headerH;
+        const canvasH = layout.border * 2 + headerH + layout.colHeaderH + rowsH + layout.footerH;
 
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -880,67 +955,108 @@ function exportImage(mode) {
 
         // Inner Background
         ctx.fillStyle = '#0b0d13';
-        ctx.fillRect(BORDER, BORDER, canvasW - BORDER * 2, canvasH - BORDER * 2);
+        ctx.fillRect(layout.border, layout.border, canvasW - layout.border * 2, canvasH - layout.border * 2);
 
         // Header Background
         ctx.fillStyle = '#181c25';
-        ctx.fillRect(BORDER, BORDER, canvasW - BORDER * 2, HEADER_H);
+        ctx.fillRect(layout.border, layout.border, canvasW - layout.border * 2, headerH);
 
         // Header separator
         ctx.strokeStyle = borderGrad;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        ctx.moveTo(BORDER, BORDER + HEADER_H);
-        ctx.lineTo(canvasW - BORDER, BORDER + HEADER_H);
+        ctx.moveTo(layout.border, layout.border + headerH);
+        ctx.lineTo(canvasW - layout.border, layout.border + headerH);
         ctx.stroke();
 
-        // Mascot
-        let textLeft = BORDER + 20;
-        const mascotImg = imageMap['mascot'];
-        if (mascotImg) {
-            ctx.drawImage(mascotImg, textLeft, BORDER + HEADER_H / 2 - 16, 32, 32);
-            textLeft += 42;
-        }
-
-        // Title text
-        ctx.fillStyle = borderGrad;
-        ctx.font = 'italic 900 26px "Oswald", sans-serif';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        const fullTitle = `${config.titleL1} ${config.titleL2}`;
-        ctx.fillText(fullTitle, textLeft, BORDER + HEADER_H / 2);
-
         // Header Stats / Progress Bars
-        const totalCount = releasedSprites.length;
-        const ownedCount = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
-        const masteredCount = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
+        const { total: totalCount, collected: ownedCount, mastered: masteredCount } = getCollectionCounts(releasedSprites);
         const colPct = totalCount > 0 ? ownedCount / totalCount : 0;
         const masPct = totalCount > 0 ? masteredCount / totalCount : 0;
 
-        ctx.font = '900 12px "Oswald", sans-serif';
         const bw = 110;
-        const re = canvasW - BORDER - 20;
+        const statGap = 25;
+        const mascotImg = imageMap['mascot'];
+        const fullTitle = `${config.titleL1} ${config.titleL2}`;
 
-        // Collection Progress
-        ctx.fillStyle = '#22c55e';
-        ctx.fillText(`COLLECTION: ${ownedCount}/${totalCount}`, re - bw * 2 - 25, BORDER + 28);
-        ctx.fillStyle = '#0e1117';
-        ctx.fillRect(re - bw * 2 - 25, BORDER + 43, bw, 12);
-        ctx.strokeStyle = '#3b4253'; ctx.lineWidth = 1.5;
-        ctx.strokeRect(re - bw * 2 - 25, BORDER + 43, bw, 12);
-        ctx.fillStyle = '#22c55e';
-        ctx.fillRect(re - bw * 2 - 25, BORDER + 44, bw * colPct, 10);
+        const fitFont = (text, maxWidth, startSize, minSize, style) => {
+            let size = startSize;
+            ctx.font = `${style} ${size}px "Oswald", sans-serif`;
+            while (ctx.measureText(text).width > maxWidth && size > minSize) {
+                size -= 0.5;
+                ctx.font = `${style} ${size}px "Oswald", sans-serif`;
+            }
+            return size;
+        };
 
-        // Mastery Progress
-        ctx.fillStyle = '#ffd700';
-        ctx.fillText(`MASTERY: ${masteredCount}/${totalCount}`, re - bw, BORDER + 28);
-        ctx.fillStyle = '#0e1117';
-        ctx.fillRect(re - bw, BORDER + 43, bw, 12);
-        ctx.strokeRect(re - bw, BORDER + 43, bw, 12);
-        ctx.fillStyle = '#ffd700';
-        ctx.fillRect(re - bw, BORDER + 44, bw * masPct, 10);
+        const drawProgressBlock = (label, count, total, pct, x, y, color) => {
+            ctx.font = '900 12px "Oswald", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = color;
+            ctx.fillText(`${label}: ${count}/${total}`, x, y);
+            ctx.fillStyle = '#0e1117';
+            ctx.fillRect(x, y + 15, bw, 12);
+            ctx.strokeStyle = '#3b4253';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x, y + 15, bw, 12);
+            ctx.fillStyle = color;
+            ctx.fillRect(x, y + 16, bw * pct, 10);
+        };
 
-        const startTableY = BORDER + HEADER_H + COL_HEADER_H;
+        if (useCompactHeader) {
+            const topY = layout.border + 24;
+            const mascotSize = 24;
+            const mascotGap = mascotImg ? 8 : 0;
+            fitFont(config.titleL1, canvasW - layout.border * 2 - 60, 14, 10, 'italic 900');
+            const titleL1W = ctx.measureText(config.titleL1).width;
+            const titleGroupW = titleL1W + (mascotImg ? mascotSize + mascotGap : 0);
+            let groupX = (canvasW - titleGroupW) / 2;
+            if (mascotImg) {
+                ctx.drawImage(mascotImg, groupX, topY - mascotSize / 2, mascotSize, mascotSize);
+                groupX += mascotSize + mascotGap;
+            }
+            ctx.fillStyle = borderGrad;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(config.titleL1, groupX, topY);
+
+            fitFont(config.titleL2, canvasW - layout.border * 2 - 36, 20, 13, 'italic 900');
+            ctx.fillStyle = borderGrad;
+            ctx.textAlign = 'center';
+            ctx.fillText(config.titleL2, canvasW / 2, layout.border + 52);
+
+            const statsW = bw * 2 + statGap;
+            const statsX = (canvasW - statsW) / 2;
+            const statsY = layout.border + 86;
+            drawProgressBlock('COLLECTION', ownedCount, totalCount, colPct, statsX, statsY, '#22c55e');
+            drawProgressBlock('MASTERY', masteredCount, totalCount, masPct, statsX + bw + statGap, statsY, '#ffd700');
+        } else {
+            const statsRight = canvasW - layout.border - layout.sidePad;
+            const collectionX = statsRight - bw * 2 - statGap;
+            const masteryX = statsRight - bw;
+            const titleX = layout.border + layout.sidePad;
+            const mascotSize = 32;
+            const mascotGap = mascotImg ? 10 : 0;
+            const titleMaxW = collectionX - titleX - 20;
+
+            fitFont(fullTitle, titleMaxW - (mascotImg ? mascotSize + mascotGap : 0), 26, 16, 'italic 900');
+            ctx.fillStyle = borderGrad;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+
+            let textLeft = titleX;
+            if (mascotImg) {
+                ctx.drawImage(mascotImg, textLeft, layout.border + headerH / 2 - mascotSize / 2, mascotSize, mascotSize);
+                textLeft += mascotSize + mascotGap;
+            }
+            ctx.fillText(fullTitle, textLeft, layout.border + headerH / 2);
+
+            drawProgressBlock('COLLECTION', ownedCount, totalCount, colPct, collectionX, layout.border + 28, '#22c55e');
+            drawProgressBlock('MASTERY', masteredCount, totalCount, masPct, masteryX, layout.border + 28, '#ffd700');
+        }
+
+        const startTableY = layout.border + headerH + layout.colHeaderH;
 
         // Column headers drawing helper
         const drawColHeaders = (startX) => {
@@ -948,14 +1064,14 @@ function exportImage(mode) {
             ctx.font = 'bold 12px "Oswald", sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
-            THEMES.forEach((t, i) => {
-                const cx = startX + LABEL_W + i * (CW + CARD_GAP) + CW / 2;
+            themeColumns.forEach((t, i) => {
+                const cx = startX + layout.labelW + i * (layout.cardW + layout.cardGap) + layout.cardW / 2;
                 ctx.fillText(t.name, cx, startTableY - 8);
             });
         };
 
-        const leftTableX = BORDER + 20;
-        const rightTableX = leftTableX + colW + COL_GAP;
+        const leftTableX = layout.border + (canvasW - layout.border * 2 - tableW) / 2;
+        const rightTableX = leftTableX + colW + layout.colGap;
 
         drawColHeaders(leftTableX);
         if (rightColumnKeys.length > 0) {
@@ -975,20 +1091,21 @@ function exportImage(mode) {
             ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
             ctx.textAlign = 'right';
             ctx.textBaseline = 'middle';
-            while (ctx.measureText(displayName).width > LABEL_W - 12 && fontSize > 8) {
+            while (ctx.measureText(displayName).width > layout.labelW - 12 && fontSize > 8) {
                 fontSize -= 0.5;
                 ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
             }
-            ctx.fillText(displayName, startX + LABEL_W - 10, y + CH / 2);
+            ctx.fillText(displayName, startX + layout.labelW - 10, y + layout.cardH / 2);
 
             // Draw cards
-            THEMES.forEach((t, colIndex) => {
-                const cx = startX + LABEL_W + colIndex * (CW + CARD_GAP);
-                const s = releasedSprites.find(sprite => getFamilyKey(sprite) === charKey && sprite.theme === t.themeName);
+            const rowCards = themeColumns.map(t => familyThemeMap.get(charKey).get(t.themeName));
+
+            rowCards.forEach((s, colIndex) => {
+                const cx = startX + layout.labelW + colIndex * (layout.cardW + layout.cardGap);
 
                 if (s) {
-                    const cardState = getCardState(s, mode);
-                    drawMiniCard(ctx, s, cx, y, CW, CH, cardState, imageMap);
+                    const cardState = getExportCardState(s, mode);
+                    drawMiniCard(ctx, s, cx, y, layout.cardW, layout.cardH, cardState, imageMap);
                 } else {
                     // Empty slot dashed outline
                     ctx.save();
@@ -996,7 +1113,7 @@ function exportImage(mode) {
                     ctx.lineWidth = 1;
                     ctx.setLineDash([4, 4]);
                     ctx.beginPath();
-                    drawRoundRect(ctx, cx, y, CW, CH, 8);
+                    drawRoundRect(ctx, cx, y, layout.cardW, layout.cardH, 8);
                     ctx.stroke();
                     ctx.restore();
                 }
@@ -1016,13 +1133,13 @@ function exportImage(mode) {
 
         // Footer
         ctx.fillStyle = '#0e1117';
-        ctx.fillRect(BORDER, canvasH - FOOTER_H - BORDER, canvasW - BORDER * 2, FOOTER_H);
+        ctx.fillRect(layout.border, canvasH - layout.footerH - layout.border, canvasW - layout.border * 2, layout.footerH);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 16px "Oswald", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('CGHXST.GITHUB.IO/FNSPRITES', canvasW / 2, canvasH - BORDER - FOOTER_H / 2);
+        ctx.fillText('CGHXST.GITHUB.IO/FNSPRITES', canvasW / 2, canvasH - layout.border - layout.footerH / 2);
 
         // Download
         const link = document.createElement('a');
@@ -1040,32 +1157,19 @@ function exportImage(mode) {
 function generateTradeText() {
     const releasedSprites = getReleasedSprites();
     const charKeys = getFamilyKeys(releasedSprites);
-
-    const getCharName = (charKey) => {
-        const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
-        return basicSprite ? basicSprite.name : (charKey.charAt(0).toUpperCase() + charKey.slice(1));
-    };
-
-    const themeMaps = {
-        'Basic': 'Base',
-        'Candy': 'Gummy'
-    };
-    const formatThemeName = (theme) => themeMaps[theme] || theme;
-
-    const total = releasedSprites.length;
-    const collected = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
-    const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
+    const familyThemeMap = getFamilyThemeMap(releasedSprites);
+    const { total, collected, mastered } = getCollectionCounts(releasedSprites);
 
     const buildSection = (title, selectSprites) => {
         const lines = [];
 
         charKeys.forEach(charKey => {
             const name = getCharName(charKey);
-            const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
+            const themeSprites = [...familyThemeMap.get(charKey).values()];
             const selected = selectSprites(themeSprites);
             if (selected.length === 0) return;
 
-            const list = selected.map(sprite => formatThemeName(sprite.theme)).join(', ');
+            const list = selected.map(sprite => getTradeThemeLabel(sprite.theme)).join(', ');
             lines.push(`  ▸ ${name} ➔ ${list}`);
         });
 
@@ -1079,7 +1183,7 @@ function generateTradeText() {
         [
             `Collected: ${collected}/${total}`,
             `Mastered: ${mastered}/${total}`,
-            'Track yours: https://cghxst.github.io/fnsprites/',
+            `Track yours: ${TRACKER_URL}`,
         ].join('\n'),
     ].filter(Boolean);
 
@@ -1087,37 +1191,23 @@ function generateTradeText() {
 }
 
 function generateTradeGridText() {
-    const getCharName = (charKey) => {
-        const basicSprite = baseSprites.find(s => s.id === `${charKey}_basic`);
-        return basicSprite ? basicSprite.name : charKey.charAt(0).toUpperCase() + charKey.slice(1);
-    };
-
     const releasedSprites = getReleasedSprites();
     const activeThemes = getActiveThemes(releasedSprites);
     const charKeys = getFamilyKeys(releasedSprites);
-
-    const getThemeDisplayName = (theme) => {
-        const maps = { 'Basic': 'NORMAL', 'Candy': 'GUMMY' };
-        return maps[theme] || theme.toUpperCase();
-    };
-
-    const total = releasedSprites.length;
-    const collected = releasedSprites.filter(sprite => isObtained(sprite.id)).length;
-    const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
+    const familyThemeMap = getFamilyThemeMap(releasedSprites);
+    const { total, collected, mastered } = getCollectionCounts(releasedSprites);
 
     let lines = [
         '```',
         '✅ Owned  👑 Mastered  ❌ Missing',
         '',
-        `| ${activeThemes.map(getThemeDisplayName).join(' | ')} | Sprite`,
+        `| ${activeThemes.map(getExportThemeLabel).join(' | ')} | Sprite`,
         '-----------------------',
     ];
 
     charKeys.forEach(charKey => {
-        const themeSprites = releasedSprites.filter(sprite => getFamilyKey(sprite) === charKey);
-        
         const rowStates = activeThemes.map(theme => {
-            const s = themeSprites.find(x => x.theme === theme);
+            const s = familyThemeMap.get(charKey).get(theme);
             if (!s) return '⬛';
             if (isMastered(s.id)) return '👑';
             return isObtained(s.id) ? '✅' : '❌';
@@ -1130,11 +1220,34 @@ function generateTradeGridText() {
         '',
         `Collected: ${collected}/${total}`,
         `Mastered: ${mastered}/${total}`,
-        'Track yours: https://cghxst.github.io/fnsprites/',
+        `Track yours: ${TRACKER_URL}`,
         '```'
     );
 
     return lines.join('\n');
+}
+
+function setDropdownOpen(dropdown, toggle, open) {
+    dropdown.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+}
+
+function closeDropdowns() {
+    setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
+    setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
+}
+
+function copyText(text, successMsg, errorMsg) {
+    if (!navigator.clipboard?.writeText) {
+        toast(errorMsg, 'error');
+        return;
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+        toast(successMsg, 'success');
+    }).catch(() => {
+        toast(errorMsg, 'error');
+    });
 }
 
 /* ===================================================
@@ -1165,6 +1278,17 @@ function bindEvents() {
         }
     });
 
+    dom.grid.addEventListener('keydown', (e) => {
+        if (state.viewMode || e.target.closest('.card-crown')) return;
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+
+        const card = e.target.closest('.card');
+        if (!card) return;
+
+        e.preventDefault();
+        toggleObtained(card.dataset.id);
+    });
+
     /* Search */
     dom.searchInput.addEventListener('input', () => {
         state.filters.search = dom.searchInput.value;
@@ -1192,9 +1316,7 @@ function bindEvents() {
         if (!pill || state.viewMode) return;
         state.filters.status = pill.dataset.status;
         persist(KEYS.status, state.filters.status);
-        dom.statusPills.querySelectorAll('.pill').forEach(p => {
-            p.classList.toggle('active', p === pill);
-        });
+        applyStateToDOM();
         renderGrid();
     });
 
@@ -1214,31 +1336,35 @@ function bindEvents() {
     /* Export dropdown */
     dom.exportToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        dom.copyDropdown.classList.remove('open');
-        dom.exportDropdown.classList.toggle('open');
+        setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
+        setDropdownOpen(dom.exportDropdown, dom.exportToggle, !dom.exportDropdown.classList.contains('open'));
     });
 
     dom.exportDropdown.querySelectorAll('[data-export]').forEach(btn => {
         btn.addEventListener('click', () => {
             exportImage(btn.dataset.export);
-            dom.exportDropdown.classList.remove('open');
+            setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
         });
     });
 
     /* Copy dropdown */
     dom.copyToggle.addEventListener('click', (e) => {
         e.stopPropagation();
-        dom.exportDropdown.classList.remove('open');
-        dom.copyDropdown.classList.toggle('open');
+        setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
+        setDropdownOpen(dom.copyDropdown, dom.copyToggle, !dom.copyDropdown.classList.contains('open'));
     });
 
     document.addEventListener('click', (e) => {
         if (!dom.exportDropdown.contains(e.target)) {
-            dom.exportDropdown.classList.remove('open');
+            setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
         }
         if (!dom.copyDropdown.contains(e.target)) {
-            dom.copyDropdown.classList.remove('open');
+            setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
         }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDropdowns();
     });
 
     /* Backup Export */
@@ -1255,7 +1381,7 @@ function bindEvents() {
         link.click();
         URL.revokeObjectURL(url);
         toast('Backup file exported!', 'success');
-        dom.exportDropdown.classList.remove('open');
+        setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
     });
 
     /* Backup Import */
@@ -1279,15 +1405,16 @@ function bindEvents() {
                     throw new Error('Invalid backup file format');
                 }
 
-                const validIds = new Set(baseSprites.map(s => s.id));
-                const obtained = data.obtained.filter(id => validIds.has(id));
-                const mastered = data.mastered.filter(id => validIds.has(id) && obtained.includes(id));
+                const validIds = getSpriteIdSet();
+                const obtained = uniqueValidIds(data.obtained, validIds);
+                const obtainedIds = new Set(obtained);
+                const mastered = uniqueValidIds(data.mastered, validIds)
+                    .filter(id => obtainedIds.has(id));
 
                 state.obtained = obtained;
                 state.mastered = mastered;
 
-                persist(KEYS.obtained, state.obtained);
-                persist(KEYS.mastered, state.mastered);
+                saveCollection();
 
                 renderGrid();
                 toast('Collection imported successfully!', 'success');
@@ -1302,35 +1429,21 @@ function bindEvents() {
 
     /* Copy trade list */
     dom.copyTradeTextBtn.addEventListener('click', () => {
-        const text = generateTradeText();
-        navigator.clipboard.writeText(text).then(() => {
-            toast('Trade list copied to clipboard!', 'success');
-        }).catch(() => {
-            toast('Failed to copy trade list', 'error');
-        });
-        dom.copyDropdown.classList.remove('open');
+        copyText(generateTradeText(), 'Trade list copied to clipboard!', 'Failed to copy trade list');
+        setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
     });
 
     /* Copy trade grid */
     dom.copyTradeGridBtn.addEventListener('click', () => {
-        const text = generateTradeGridText();
-        navigator.clipboard.writeText(text).then(() => {
-            toast('Trade grid copied to clipboard!', 'success');
-        }).catch(() => {
-            toast('Failed to copy trade grid', 'error');
-        });
-        dom.copyDropdown.classList.remove('open');
+        copyText(generateTradeGridText(), 'Trade grid copied to clipboard!', 'Failed to copy trade grid');
+        setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
     });
 
     /* Share */
     dom.shareBtn.addEventListener('click', () => {
         const code = compressCollection(baseSprites, state.obtained, state.mastered);
         const url = `${location.origin}${location.pathname}?c=${code}`;
-        navigator.clipboard.writeText(url).then(() => {
-            toast('Share link copied to clipboard!', 'success');
-        }).catch(() => {
-            toast('Failed to copy link', 'error');
-        });
+        copyText(url, 'Share link copied to clipboard!', 'Failed to copy link');
     });
 }
 
@@ -1357,6 +1470,7 @@ function init() {
         load();
     }
 
+    populateThemeFilter();
     applyStateToDOM();
     renderGrid();
     bindEvents();
