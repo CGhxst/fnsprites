@@ -1106,8 +1106,10 @@ function generateTradeGridText() {
     const mastered = releasedSprites.filter(sprite => isMastered(sprite.id)).length;
 
     let lines = [
+        '```',
+        '✅ Owned  👑 Mastered  ❌ Missing',
+        '',
         `| ${activeThemes.map(getThemeDisplayName).join(' | ')} | Sprite`,
-        '✅ Owned  👑 Mastered  ❌ Missing  - Not available',
         '-----------------------',
     ];
 
@@ -1116,7 +1118,7 @@ function generateTradeGridText() {
         
         const rowStates = activeThemes.map(theme => {
             const s = themeSprites.find(x => x.theme === theme);
-            if (!s) return '-';
+            if (!s) return '⬛';
             if (isMastered(s.id)) return '👑';
             return isObtained(s.id) ? '✅' : '❌';
         });
@@ -1128,7 +1130,8 @@ function generateTradeGridText() {
         '',
         `Collected: ${collected}/${total}`,
         `Mastered: ${mastered}/${total}`,
-        'Track yours: https://cghxst.github.io/fnsprites/'
+        'Track yours: https://cghxst.github.io/fnsprites/',
+        '```'
     );
 
     return lines.join('\n');
