@@ -1,0 +1,42 @@
+name: Sync Upstream Sprites
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Automatically checks every 30 minutes
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+
+jobs:
+  sync-upstream:
+    name: Sync Upstream Repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git Bot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch and Merge Upstream
+        run: |
+          git remote add upstream https://github.com/staticvacant/fnsprites.git || git remote set-url upstream https://github.com/staticvacant/fnsprites.git
+          git fetch upstream main
+
+          LOCAL_HASH=$(git rev-parse HEAD)
+          UPSTREAM_HASH=$(git rev-parse upstream/main)
+
+          if [ "$LOCAL_HASH" = "$UPSTREAM_HASH" ]; then
+            echo "Already up-to-date with upstream/main."
+          else
+            echo "New upstream commits found. Merging..."
+            git merge upstream/main -m "auto: sync upstream sprites and data" --no-edit
+            git push origin main
+            echo "Successfully synced and pushed upstream updates."
+          fi
