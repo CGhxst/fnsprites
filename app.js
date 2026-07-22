@@ -39,6 +39,28 @@ const liveBarFill = document.getElementById('live-counter-bar');
 const masteryRatio = document.getElementById('mastery-counter-ratio');
 const masteryBarFill = document.getElementById('mastery-counter-bar');
 
+const downloadImagesSwitch = document.getElementById('download-images-switch');
+const downloadSwitchLabel = document.getElementById('download-switch-label');
+const downloadSettingRow = document.getElementById('download-setting-row');
+
+// Detect iOS
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// Initialize Setting State
+if (isIOS) {
+    // Force false on iOS and lock/disable the UI element so users know it's forced
+    downloadImagesSwitch.checked = false;
+    downloadImagesSwitch.disabled = true;
+    downloadSwitchLabel.textContent = "JUST OPEN IMAGES";
+    downloadSettingRow.style.opacity = "0.6";
+    downloadSettingRow.title = "iOS devices are forced to open images in a new tab.";
+} else {
+    // Default enabled ('true') if non-iOS and nothing saved in localStorage yet
+    const savedDownloadPref = localStorage.getItem('fn_state_download_images');
+    downloadImagesSwitch.checked = savedDownloadPref === null ? true : (savedDownloadPref === 'true');
+    downloadSwitchLabel.textContent = downloadImagesSwitch.checked ? "DOWNLOAD IMAGES" : "JUST OPEN IMAGES";
+}
+
 // RESTORE LAST SAVED STATES FROM LOCAL STORAGE
 if (!isViewMode) {
     searchInput.value = localStorage.getItem('fn_state_search') || '';
@@ -123,6 +145,13 @@ lowFidelitySwitch.addEventListener('change', () => {
     } else {
         document.body.classList.remove('low-fidelity');
     }
+});
+downloadImagesSwitch.addEventListener('change', () => {
+    if (isIOS) return; // Ignore on iOS
+    
+    const isDownload = downloadImagesSwitch.checked;
+    downloadSwitchLabel.textContent = isDownload ? "DOWNLOAD IMAGES" : "JUST OPEN IMAGES";
+    localStorage.setItem('fn_state_download_images', isDownload);
 });
 
 function updateCollectionCounter() {
@@ -717,23 +746,22 @@ function finalizeCanvas(canvas, footerLinkHeight, borderThickness, fileName) {
     
     ctx.fillText(cleanUrlString, canvas.width / 2, canvas.height - borderThickness - (footerLinkHeight / 2));
 
-    // Convert canvas to Blob instead of huge base64 Data URL
+    // Convert canvas to Blob
     canvas.toBlob((blob) => {
         if (!blob) return;
         const blobUrl = URL.createObjectURL(blob);
         
-        // Detect iOS
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        // Force opening in tab if on iOS OR if the user turned off "Download Images"
+        const shouldOpenInTab = isIOS || !downloadImagesSwitch.checked;
 
-        if (isIOS) {
-            // On iOS, open image in a new tab so users can tap & hold to save
+        if (shouldOpenInTab) {
             const newWindow = window.open(blobUrl, '_blank');
             if (!newWindow) {
-                // If pop-ups are blocked, redirect current tab
+                // If pop-up blocker triggered, fallback to same tab
                 window.location.href = blobUrl;
             }
         } else {
-            // Desktop / Android direct download
+            // Direct download flow
             const link = document.createElement('a');
             link.download = `${fileName}.png`;
             link.href = blobUrl;
