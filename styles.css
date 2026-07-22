@@ -39,7 +39,7 @@
     --theme-bg-Galaxy: linear-gradient(180deg, #1f1145 0%, #080314 100%);
     --theme-bg-Gem: linear-gradient(180deg, #114c47 0%, #041a18 100%);
     --theme-bg-Holofoil: linear-gradient(180deg, #204454 0%, #09171f 100%);
-    --theme-bg-Rift: linear-gradient(180deg, #154b5e 0%, #04161c 100%);
+    --theme-bg-Cube: linear-gradient(180deg, #154b5e 0%, #04161c 100%);
 }
 
 * {
@@ -359,7 +359,7 @@ body {
 .sprite-card.rarity-Special.theme-Galaxy .card-inner-display { background: var(--theme-bg-Galaxy); }
 .sprite-card.rarity-Special.theme-Gem .card-inner-display { background: var(--theme-bg-Gem); }
 .sprite-card.rarity-Special.theme-Holofoil .card-inner-display { background: var(--theme-bg-Holofoil); }
-.sprite-card.rarity-Special.theme-Rift .card-inner-display { background: var(--theme-bg-Rift); }
+.sprite-card.rarity-Special.theme-Cube .card-inner-display { background: var(--theme-bg-Cube); }
 
 .card-inner-display {
     flex: 1;
