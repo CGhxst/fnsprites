@@ -34,7 +34,7 @@
     
     /* Dynamic theme variants */
     --theme-bg-Basic: linear-gradient(180deg, #1c2436 0%, #0c0f17 100%);
-    --theme-bg-Gold: linear-gradient(180deg, #61460b 0%, #241a02 100%);
+    --theme-bg-Gold: linear-gradient(180deg, #DBBA20 0%, #6E4E0F 100%);
     --theme-bg-Candy: linear-gradient(180deg, #AE39CD 0%, #40892C 100%);
     --theme-bg-Galaxy: linear-gradient(180deg, #5A33BE 0%, #48649E 100%);
     --theme-bg-Gem: linear-gradient(180deg, #C5C5C2 0%, #2C3232 100%);
