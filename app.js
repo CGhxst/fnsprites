@@ -528,7 +528,7 @@ function exportCanvasImage(mode) {
         let loadedCount = 0;
         targetItems.forEach((sprite, index) => {
             const img = new Image();
-            img.crossOrigin = 'anonymous';
+            // img.crossOrigin = 'anonymous';
             img.src = `sprites/${sprite.id}.png`;
             
             img.onload = () => {
@@ -717,11 +717,32 @@ function finalizeCanvas(canvas, footerLinkHeight, borderThickness, fileName) {
     
     ctx.fillText(cleanUrlString, canvas.width / 2, canvas.height - borderThickness - (footerLinkHeight / 2));
 
-    const dataUrl = canvas.toDataURL('image/png');
-    const link = document.createElement('a');
-    link.download = `${fileName}.png`;
-    link.href = dataUrl;
-    link.click();
+    // Convert canvas to Blob instead of huge base64 Data URL
+    canvas.toBlob((blob) => {
+        if (!blob) return;
+        const blobUrl = URL.createObjectURL(blob);
+        
+        // Detect iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        if (isIOS) {
+            // On iOS, open image in a new tab so users can tap & hold to save
+            const newWindow = window.open(blobUrl, '_blank');
+            if (!newWindow) {
+                // If pop-ups are blocked, redirect current tab
+                window.location.href = blobUrl;
+            }
+        } else {
+            // Desktop / Android direct download
+            const link = document.createElement('a');
+            link.download = `${fileName}.png`;
+            link.href = blobUrl;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+        }
+    }, 'image/png');
 }
 
 imageBtn.addEventListener('click', () => exportCanvasImage('collected'));
