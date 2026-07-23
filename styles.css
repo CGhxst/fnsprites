@@ -652,6 +652,7 @@ a { color: var(--mastered); }
 .rarity-Special.theme-Galaxy .card-display { background: linear-gradient(180deg, #1f1145, #080314); }
 .rarity-Special.theme-Gem .card-display { background: linear-gradient(180deg, #114c47, #041a18); }
 .rarity-Special.theme-Holofoil .card-display { background: linear-gradient(180deg, #204454, #09171f); }
+.rarity-Special.theme-Cube .card-display { background: linear-gradient(180deg, #4c1d95, #1e0b3d); }
 .rarity-Special.theme-Rift .card-display { background: linear-gradient(180deg, #154b5e, #04161c); }
 
 /* Special rarity rainbow overlay */
@@ -698,6 +699,7 @@ body.low-fidelity .rarity-Special.theme-Candy .card-display { background: #6b183
 body.low-fidelity .rarity-Special.theme-Galaxy .card-display { background: #1f1145; }
 body.low-fidelity .rarity-Special.theme-Gem .card-display { background: #114c47; }
 body.low-fidelity .rarity-Special.theme-Holofoil .card-display { background: #204454; }
+body.low-fidelity .rarity-Special.theme-Cube .card-display { background: #4c1d95; }
 body.low-fidelity .rarity-Special.theme-Rift .card-display { background: #154b5e; }
 
 body.low-fidelity .rarity-Special .card-rarity { background: #51f7cc; }
