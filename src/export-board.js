@@ -214,6 +214,14 @@ function modeHasContent(sprite, mode, store) {
     return cardState(sprite, mode, store) !== 'hidden';
 }
 
+export function exportThemes(mode, sprites, store) {
+    const themes = activeThemes(sprites);
+    if (mode === 'trade') return themes;
+    return themes.filter(theme => sprites.some(sprite =>
+        sprite.theme === theme && modeHasContent(sprite, mode, store),
+    ));
+}
+
 function downloadCanvas(canvas, filename) {
     return new Promise((resolve, reject) => {
         canvas.toBlob(blob => {
@@ -254,7 +262,7 @@ export async function exportBoard(mode, catalog, store, toast) {
     toast('Building your image…');
     if (document.fonts?.ready) await document.fonts.ready;
 
-    const themes = activeThemes(sprites);
+    const themes = exportThemes(mode, sprites, store);
     const relevantSprites = sprites.filter(sprite => modeHasContent(sprite, mode, store));
     const images = new Map(await Promise.all([
         loadImage('brand', 'sprites/air_basic.png'),
@@ -438,21 +446,32 @@ export function tradeGrid(catalog, store) {
     const themes = activeThemes(sprites);
     const families = familyMap(sprites);
     const lines = [
-        'SPRITES TRACKER  [x] owned  [*] mastered  [ ] missing',
+        '```',
+        '✅ Owned  👑 Mastered  ❌ Missing',
         '',
-        `SPRITE | ${themes.map(exportTheme).join(' | ')}`,
+        `| ${themes.map(theme => ({ Basic: 'NORMAL', Candy: 'GUMMY' })[theme]
+            || theme.toUpperCase()).join(' | ')} | Sprite`,
+        '-----------------------',
     ];
 
     for (const [key, variants] of families) {
         const states = themes.map(theme => {
             const sprite = variants.get(theme);
-            if (!sprite) return '-';
-            if (store.isMastered(sprite.id)) return '*';
-            return store.isOwned(sprite.id) ? 'x' : ' ';
+            if (!sprite) return '⬛';
+            if (store.isMastered(sprite.id)) return '👑';
+            return store.isOwned(sprite.id) ? '✅' : '❌';
         });
-        lines.push(`${catalog.familyName(key)} | ${states.join(' | ')}`);
+        lines.push(`| ${states.join(' | ')} | ${catalog.familyName(key)}`);
     }
-    lines.push('', TRACKER_URL);
+    const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
+    const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
+    lines.push(
+        '',
+        `Collected: ${owned}/${sprites.length}`,
+        `Mastered: ${mastered}/${sprites.length}`,
+        `Track yours: ${TRACKER_URL}`,
+        '```',
+    );
     return lines.join('\n');
 }
 

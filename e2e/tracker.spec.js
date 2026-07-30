@@ -151,6 +151,7 @@ test('handles empty exports and downloads valid PNGs for every board mode', asyn
     await page.locator('[data-id="air_basic"] .mastery-button').click();
     await page.locator('[data-id="water_basic"] .sprite-art').click();
 
+    const dimensions = {};
     for (const mode of ['collected', 'missing', 'unmastered', 'mastered', 'trade']) {
         await page.locator('#exportToggle').click();
         const downloadPromise = page.waitForEvent('download');
@@ -169,10 +170,19 @@ test('handles empty exports and downloads valid PNGs for every board mode', asyn
         for await (const chunk of stream) chunks.push(chunk);
         const png = Buffer.concat(chunks);
         expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-        expect(png.readUInt32BE(16)).toBeGreaterThan(300);
-        expect(png.readUInt32BE(20)).toBeGreaterThan(200);
+        dimensions[mode] = {
+            width: png.readUInt32BE(16),
+            height: png.readUInt32BE(20),
+        };
+        expect(dimensions[mode].height).toBeGreaterThan(200);
         await expect(page.locator('.toast-success')).toContainText('Image ready');
     }
+
+    expect(dimensions.collected.width).toBe(234);
+    expect(dimensions.unmastered.width).toBe(234);
+    expect(dimensions.mastered.width).toBe(234);
+    expect(dimensions.missing.width).toBe(dimensions.trade.width);
+    expect(dimensions.trade.width).toBe(1738);
 });
 
 test('has no horizontal overflow at a 390px viewport', async ({ page }) => {
