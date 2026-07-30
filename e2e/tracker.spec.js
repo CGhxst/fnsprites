@@ -1,6 +1,12 @@
 import { expect, test as base } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { createCatalog, familyMap } from '../src/catalog.js';
+import { sprites } from '../src/generated/sprites.js';
 import { decodeShare, encodeShare } from '../src/share.js';
+
+const catalog = createCatalog(sprites);
+const releasedCount = catalog.released.length;
+const familyCount = familyMap(catalog.released).size;
 
 const test = base.extend({
     page: async ({ page }, use) => {
@@ -23,8 +29,8 @@ test.beforeEach(async ({ page }) => {
 
 test('renders the released catalog with valid interactive structure', async ({ page }) => {
     await expect(page).toHaveTitle('Fortnite Sprites Tracker');
-    await expect(page.locator('.sprite-card')).toHaveCount(111);
-    await expect(page.locator('.sprite-group')).toHaveCount(25);
+    await expect(page.locator('.sprite-card')).toHaveCount(releasedCount);
+    await expect(page.locator('.sprite-group')).toHaveCount(familyCount);
     await expect(page.locator('button button')).toHaveCount(0);
     await expect(page.locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
     await expect(page.locator('#groupOrder')).toHaveValue('sprite');
@@ -50,11 +56,11 @@ test('owns, masters, filters, and restores a sprite', async ({ page }) => {
     const air = page.locator('[data-id="air_basic"]');
     await air.locator('.sprite-art').click();
     await expect(air).toHaveClass(/is-owned/);
-    await expect(page.locator('#collectionRatio')).toHaveText('1 / 111');
+    await expect(page.locator('#collectionRatio')).toHaveText(`1 / ${releasedCount}`);
 
     await air.locator('.mastery-button').click();
     await expect(air).toHaveClass(/is-mastered/);
-    await expect(page.locator('#masteryRatio')).toHaveText('1 / 111');
+    await expect(page.locator('#masteryRatio')).toHaveText(`1 / ${releasedCount}`);
 
     await page.reload();
     await expect(page.locator('[data-id="air_basic"]')).toHaveClass(/is-mastered/);
@@ -98,8 +104,8 @@ test('downloads, imports, and validates collection backups', async ({ page }) =>
             mastered: ['air_basic'],
         })),
     });
-    await expect(page.locator('#collectionRatio')).toHaveText('2 / 111');
-    await expect(page.locator('#masteryRatio')).toHaveText('1 / 111');
+    await expect(page.locator('#collectionRatio')).toHaveText(`2 / ${releasedCount}`);
+    await expect(page.locator('#masteryRatio')).toHaveText(`1 / ${releasedCount}`);
 
     await page.locator('#importInput').setInputFiles({
         name: 'invalid.json',
