@@ -1,0 +1,27 @@
+{
+  "name": "fortnite-sprites-tracker",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:data": "node scripts/build-catalog-module.mjs",
+    "dev": "node scripts/serve.mjs",
+    "lint": "eslint .",
+    "validate": "node scripts/validate-catalog.mjs",
+    "test:unit": "node --test",
+    "test:e2e": "node scripts/run-e2e.mjs",
+    "test": "npm run test:unit && npm run test:e2e",
+    "check": "npm run lint && npm run validate && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.0",
+    "acorn": "^8.18.0",
+    "eslint": "^10.8.0",
+    "globals": "^17.8.0"
+  }
+}

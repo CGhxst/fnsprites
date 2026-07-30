@@ -1,105 +1,156 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Track, manage, and share your Fortnite Sprites collection and mastery progress.">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Track, master, and share your Fortnite Sprites collection.">
+    <meta name="theme-color" content="#090c10">
     <title>Fortnite Sprites Tracker</title>
-    <link rel="icon" type="image/png" href="siteimages/staticsprite.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="sprites/air_basic.png">
+    <link rel="preload" href="fonts/Oswald-Variable.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="styles.css">
-    <script src="sprites-data.js" defer></script>
     <script type="module" src="app.js"></script>
 </head>
 <body>
+    <div class="identity-stripe" aria-hidden="true"></div>
 
-<div class="banner" id="viewBanner" hidden>
-    <span>Viewing a shared collection - showing collected sprites only.</span>
-    <a href="index.html">Go to my tracker</a>
-</div>
+    <aside class="shared-banner" id="sharedBanner" hidden>
+        <span>Viewing a shared collection</span>
+        <a href="./">Open my tracker</a>
+    </aside>
 
-<div class="app">
-    <header class="header">
-        <div class="brand">
-            <img src="siteimages/staticsprite.png" alt="" class="brand-icon" width="36" height="36">
-            <h1>Sprites Tracker</h1>
-        </div>
-        <div class="progress-group">
-            <div class="progress-item">
-                <div class="progress-meta">
-                    <span class="progress-label">Collection</span>
-                    <span class="progress-value" id="collectionRatio">0 / 0</span>
-                </div>
-                <div class="progress-track"><div class="progress-fill" id="collectionFill"></div></div>
-            </div>
-            <div class="progress-item">
-                <div class="progress-meta">
-                    <span class="progress-label">Mastery</span>
-                    <span class="progress-value" id="masteryRatio">0 / 0</span>
-                </div>
-                <div class="progress-track"><div class="progress-fill mastery" id="masteryFill"></div></div>
-            </div>
-        </div>
-    </header>
+    <div class="app-shell">
+        <header class="site-header">
+            <a class="brand" href="./" aria-label="Sprites Tracker home">
+                <img src="sprites/air_basic.png" alt="" width="52" height="52">
+                <span class="brand-name">SPRITES <strong>TRACKER</strong></span>
+            </a>
 
-    <nav class="toolbar">
-        <div class="toolbar-row">
-            <label class="sr-only" for="searchInput">Search sprites</label>
-            <input type="search" id="searchInput" class="input" placeholder="Search sprites…" autocomplete="off" spellcheck="false">
-            <label class="sr-only" for="themeFilter">Filter by theme</label>
-            <select id="themeFilter" class="select">
-                <option value="all">All themes</option>
-            </select>
-            <label class="sr-only" for="sortOrder">Sort sprites</label>
-            <select id="sortOrder" class="select">
-                <option value="theme">Group by theme</option>
-                <option value="sprite">Group by sprite</option>
-                <option value="name">Alphabetical (A-Z)</option>
-                <option value="rarity">Sort by rarity</option>
-            </select>
-            <div class="pills" id="statusPills">
-                <button type="button" class="pill active" data-status="all">All</button>
-                <button type="button" class="pill" data-status="owned">Owned</button>
-                <button type="button" class="pill" data-status="missing">Missing</button>
-            </div>
-        </div>
-        <div class="toolbar-row">
-            <div class="switches">
-                <label class="switch"><input type="checkbox" id="hideMastered"><span>Hide mastered</span></label>
-                <label class="switch"><input type="checkbox" id="showUnreleased"><span>Unreleased</span></label>
-                <label class="switch"><input type="checkbox" id="lowFidelity"><span>Low fidelity</span></label>
-            </div>
-            <div class="actions">
-                <div class="dropdown" id="exportDropdown">
-                    <button type="button" class="btn" id="exportToggle" aria-haspopup="true" aria-expanded="false">Export</button>
-                    <div class="dropdown-menu" aria-label="Export options">
-                        <button type="button" data-export="collected"><span class="dot dot-collected"></span>Collection image</button>
-                        <button type="button" data-export="missing"><span class="dot dot-missing"></span>Missing sprites</button>
-                        <button type="button" data-export="unmastered"><span class="dot dot-unmastered"></span>Unmastered sprites</button>
-                        <button type="button" data-export="mastered"><span class="dot dot-mastered"></span>Mastered sprites</button>
-                        <button type="button" data-export="trade"><span class="dot dot-trade"></span>Trade card image</button>
-                        <hr class="dropdown-divider">
-                        <button type="button" id="exportBackupBtn"><span class="dot dot-backup"></span>Backup data (JSON)</button>
+            <div class="progress">
+                <div class="progress-item">
+                    <div class="progress-copy">
+                        <span>Collection</span>
+                        <strong id="collectionRatio">0 / 0</strong>
+                    </div>
+                    <div class="progress-track" aria-hidden="true">
+                        <span id="collectionFill"></span>
                     </div>
                 </div>
-                <button type="button" class="btn" id="importBtn">Import</button>
-                <input type="file" id="importInput" class="file-input" accept=".json">
-                <div class="dropdown" id="copyDropdown">
-                    <button type="button" class="btn" id="copyToggle" aria-haspopup="true" aria-expanded="false">Copy trade list</button>
-                    <div class="dropdown-menu" aria-label="Copy options">
-                        <button type="button" id="copyTradeTextBtn"><span class="dot dot-text"></span>Trade list (text)</button>
-                        <button type="button" id="copyTradeGridBtn"><span class="dot dot-backup"></span>Trade grid (text)</button>
+                <div class="progress-item">
+                    <div class="progress-copy">
+                        <span>Mastery</span>
+                        <strong id="masteryRatio">0 / 0</strong>
+                    </div>
+                    <div class="progress-track mastery-track" aria-hidden="true">
+                        <span id="masteryFill"></span>
                     </div>
                 </div>
-                <button type="button" class="btn btn-accent" id="shareBtn">Share</button>
             </div>
-        </div>
-    </nav>
+        </header>
 
-    <main class="grid" id="spriteGrid" aria-label="Sprites collection"></main>
-</div>
+        <nav class="tracker-controls" aria-label="Collection controls">
+            <div class="primary-controls">
+                <label class="search-field" for="searchInput">
+                    <span class="control-icon" id="searchIcon" aria-hidden="true"></span>
+                    <span class="sr-only">Search sprites</span>
+                    <input type="search" id="searchInput" placeholder="Find a sprite" autocomplete="off" spellcheck="false">
+                </label>
 
+                <label class="select-field">
+                    <span class="sr-only">Filter by theme</span>
+                    <select id="themeFilter">
+                        <option value="all">All themes</option>
+                    </select>
+                </label>
+
+                <label class="select-field">
+                    <span class="sr-only">Group sprites</span>
+                    <select id="groupOrder">
+                        <option value="sprite">Group by sprite</option>
+                        <option value="theme">Group by theme</option>
+                        <option value="rarity">Group by rarity</option>
+                        <option value="name">Alphabetical</option>
+                    </select>
+                </label>
+
+                <div class="status-tabs" id="statusTabs" aria-label="Collection status">
+                    <button type="button" data-status="all">All</button>
+                    <button type="button" data-status="owned">Owned</button>
+                    <button type="button" data-status="missing">Missing</button>
+                </div>
+            </div>
+
+            <div class="secondary-controls">
+                <div class="quick-filters">
+                    <label class="switch">
+                        <input type="checkbox" id="hideMastered">
+                        <span aria-hidden="true"></span>
+                        Hide mastered
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" id="showUnreleased">
+                        <span aria-hidden="true"></span>
+                        Unreleased
+                    </label>
+                </div>
+
+                <div class="actions">
+                    <div class="menu" id="exportMenu">
+                        <button type="button" class="action-button" id="exportToggle" aria-expanded="false" aria-controls="exportPopover">
+                            <span class="button-icon" id="exportIcon" aria-hidden="true"></span>
+                            Export
+                            <span class="chevron" id="exportChevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="menu-popover" id="exportPopover" aria-label="Export image boards">
+                            <p class="menu-label">Image boards</p>
+                            <button type="button" data-export="collected">Collection</button>
+                            <button type="button" data-export="missing">Missing</button>
+                            <button type="button" data-export="unmastered">To master</button>
+                            <button type="button" data-export="mastered">Mastered</button>
+                            <button type="button" data-export="trade">Trade board</button>
+                        </div>
+                    </div>
+
+                    <button type="button" class="action-button action-primary" id="shareButton">
+                        <span class="button-icon" id="shareIcon" aria-hidden="true"></span>
+                        Share
+                    </button>
+
+                    <div class="menu" id="moreMenu">
+                        <button type="button" class="icon-button" id="moreToggle" aria-label="More collection tools" aria-expanded="false" aria-controls="morePopover">
+                            <span id="moreIcon" aria-hidden="true"></span>
+                        </button>
+                        <div class="menu-popover" id="morePopover" aria-label="More collection tools">
+                            <p class="menu-label">Collection tools</p>
+                            <button type="button" id="copyTradeButton">Copy trade list</button>
+                            <button type="button" id="copyGridButton">Copy text grid</button>
+                            <div class="menu-divider"></div>
+                            <button type="button" id="backupButton">Download backup</button>
+                            <button type="button" id="importButton">Import backup</button>
+                            <label class="menu-toggle">
+                                <input type="checkbox" id="lowFidelity">
+                                <span>Reduce visual effects</span>
+                            </label>
+                        </div>
+                    </div>
+                    <input type="file" id="importInput" accept="application/json,.json" hidden>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <div class="collection-heading">
+                <h1 id="collectionTitle">All sprites</h1>
+                <span id="resultCount" aria-live="polite">0 shown</span>
+            </div>
+            <div id="spriteGroups"></div>
+            <div class="empty-state" id="emptyState" hidden>
+                <strong>No sprites found</strong>
+                <span>Try a different search or filter.</span>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
 </body>
 </html>

@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createCatalog, familyKey, groupSprites, sortSprites } from '../src/catalog.js';
+
+const sample = [
+    { id: 'air_gold', name: 'Gold Air', theme: 'Gold', rarity: 'Special', unreleased: false },
+    { id: 'water_basic', name: 'Water', theme: 'Basic', rarity: 'Rare', unreleased: false },
+    { id: 'air_basic', name: 'Air', theme: 'Basic', rarity: 'Rare', unreleased: false },
+    { id: 'water_gold', name: 'Gold Water', theme: 'Gold', rarity: 'Special', unreleased: true },
+];
+
+test('catalog indexes released sprites and family names', () => {
+    const catalog = createCatalog(sample);
+    assert.equal(catalog.released.length, 3);
+    assert.equal(catalog.familyName('air'), 'Air');
+    assert.equal(catalog.byId.get('water_gold').unreleased, true);
+});
+
+test('familyKey uses the final id segment as the variant', () => {
+    assert.equal(familyKey({ id: 'zero_point_basic' }), 'zero_point');
+});
+
+test('sprite grouping keeps each family together in theme order', () => {
+    const catalog = createCatalog(sample);
+    const sorted = sortSprites(catalog.sprites, 'sprite');
+    const groups = groupSprites(sorted, 'sprite', catalog);
+    assert.deepEqual(groups.map(group => group.key), ['air', 'water']);
+    assert.deepEqual(groups[0].sprites.map(sprite => sprite.theme), ['Basic', 'Gold']);
+});
+
+test('catalog rejects duplicate ids', () => {
+    assert.throws(() => createCatalog([sample[0], sample[0]]), /Duplicate sprite id/);
+    assert.throws(() => createCatalog([]), /must not be empty/);
+});

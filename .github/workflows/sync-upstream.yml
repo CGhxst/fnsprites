@@ -1,42 +1,60 @@
-name: Sync Upstream Sprites
+name: Sync sprite dataset
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Automatically checks every 30 minutes
-  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: sync-sprite-dataset
+  cancel-in-progress: false
 
 jobs:
-  sync-upstream:
-    name: Sync Upstream Repository
+  sync:
+    name: Import upstream sprite data
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Check out tracker
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Configure Git Bot
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install data tooling
+        run: npm ci
+
+      - name: Fetch upstream dataset
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/staticvacant/fnsprites.git
+          git fetch --no-tags upstream main
 
-      - name: Fetch and Merge Upstream
+      - name: Import data and sprite images only
+        run: git checkout upstream/main -- sprites-data.js sprites
+
+      - name: Generate application data module
+        run: node scripts/build-catalog-module.mjs
+
+      - name: Validate imported dataset
+        run: node scripts/validate-catalog.mjs
+
+      - name: Commit changes
         run: |
-          git remote add upstream https://github.com/staticvacant/fnsprites.git || git remote set-url upstream https://github.com/staticvacant/fnsprites.git
-          git fetch upstream main
+          git add sprites-data.js sprites src/generated/sprites.js
 
-          LOCAL_HASH=$(git rev-parse HEAD)
-          UPSTREAM_HASH=$(git rev-parse upstream/main)
-
-          if [ "$LOCAL_HASH" = "$UPSTREAM_HASH" ]; then
-            echo "Already up-to-date with upstream/main."
-          else
-            echo "New upstream commits found. Merging..."
-            git merge upstream/main -m "auto: sync upstream sprites and data" --no-edit
-            git push origin main
-            echo "Successfully synced and pushed upstream updates."
+          if git diff --cached --quiet -- sprites-data.js sprites src/generated/sprites.js; then
+            echo "Sprite dataset is already current."
+            exit 0
           fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "data: sync upstream sprites"
+          git push origin HEAD:main

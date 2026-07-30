@@ -131,6 +131,9 @@ const baseSprites = [
 	{ id: "pollo_basic", name: "Pollo", theme: "Basic", rarity: "Mythic", unreleased: false },
 
 	{ id: "vini_basic", name: "Vini Jr.", theme: "Basic", rarity: "Mythic", unreleased: false },
+
+	{ id: "peely_basic", name: "Peely", theme: "Basic", rarity: "Rare", unreleased: false },
+	{ id: "llama_basic", name: "Llama", theme: "Basic", rarity: "Legendary", unreleased: false },
 	
 	{ id: "wick_basic", name: "John Wick", theme: "Basic", rarity: "Mythic", unreleased: true },
 

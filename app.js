@@ -1,1480 +1,459 @@
-/* ===================================================
-   Constants
-   =================================================== */
+import { createCatalog, activeThemes, displayTheme, groupSprites, sortSprites } from './src/catalog.js';
+import { parseBackup } from './src/backup.js';
+import { GROUP_METHODS, ICONS, STATUS_FILTERS } from './src/config.js';
+import { downloadBackup, exportBoard, tradeGrid, tradeList } from './src/export-board.js';
+import { decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
+import { TrackerStore } from './src/store.js';
+import { sprites as rawSprites } from './src/generated/sprites.js';
 
-const KEYS = {
-    obtained: 'fn_obtained_sprites',
-    mastered: 'fn_mastered_sprites',
-    search: 'fn_state_search',
-    theme: 'fn_state_theme',
-    status: 'fn_state_status_filter',
-    hideMastered: 'fn_state_hide_mastered',
-    sortOrder: 'fn_state_sort_order',
-    showUnreleased: 'fn_state_unreleased',
-    lowFidelity: 'fn_state_low_fidelity',
-};
-
-const THEME_ORDER = ['Basic', 'Gold', 'Candy', 'Galaxy', 'Gem', 'Holofoil', 'Cube', 'Rift'];
-const RARITY_ORDER = ['Mythic', 'Legendary', 'Epic', 'Rare', 'Special'];
-const STATUS_FILTERS = ['all', 'owned', 'missing'];
-const SORT_METHODS = ['theme', 'sprite', 'name', 'rarity'];
-const UI_THEME_LABELS = { Candy: 'Gummy' };
-const EXPORT_THEME_LABELS = { Basic: 'NORMAL', Candy: 'GUMMY' };
-const TRADE_THEME_LABELS = { Basic: 'Base', Candy: 'Gummy' };
-const TRACKER_URL = 'https://cghxst.github.io/fnsprites/';
-const CROWN_ICON = '<svg class="crown-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M2 19h20v2H2v-2zM2 5l5 3.5L12 2l5 6.5L22 5v12H2V5z"/></svg>';
-
-const EXPORT_LAYOUT = {
-    border: 8,
-    sidePad: 20,
-    minCanvasW: 360,
-    compactHeaderW: 760,
-    headerH: 80,
-    compactHeaderH: 132,
-    colHeaderH: 35,
-    cardW: 80,
-    cardH: 100,
-    rowGap: 12,
-    cardGap: 8,
-    labelW: 120,
-    colGap: 60,
-    footerH: 60,
-    maxSingleColumnRows: 6,
-};
-
-/* ===================================================
-   State
-   =================================================== */
-
-const state = {
-    obtained: [],
-    mastered: [],
-    viewMode: false,
-    filters: { search: '', theme: 'all', status: 'all' },
-    settings: {
-        hideMastered: false,
-        sortOrder: 'theme',
-        showUnreleased: false,
-        lowFidelity: false,
-    },
-};
-
-/* ===================================================
-   DOM References
-   =================================================== */
+let catalog;
+let store;
 
 const dom = {
-    viewBanner: document.getElementById('viewBanner'),
-    grid: document.getElementById('spriteGrid'),
-    searchInput: document.getElementById('searchInput'),
-    themeFilter: document.getElementById('themeFilter'),
-    sortOrder: document.getElementById('sortOrder'),
-    statusPills: document.getElementById('statusPills'),
-    hideMastered: document.getElementById('hideMastered'),
-    showUnreleased: document.getElementById('showUnreleased'),
-    lowFidelity: document.getElementById('lowFidelity'),
-    exportDropdown: document.getElementById('exportDropdown'),
-    exportToggle: document.getElementById('exportToggle'),
-    copyDropdown: document.getElementById('copyDropdown'),
-    copyToggle: document.getElementById('copyToggle'),
-    shareBtn: document.getElementById('shareBtn'),
-    copyTradeTextBtn: document.getElementById('copyTradeTextBtn'),
-    copyTradeGridBtn: document.getElementById('copyTradeGridBtn'),
-    collectionRatio: document.getElementById('collectionRatio'),
-    collectionFill: document.getElementById('collectionFill'),
-    masteryRatio: document.getElementById('masteryRatio'),
-    masteryFill: document.getElementById('masteryFill'),
-    exportBackupBtn: document.getElementById('exportBackupBtn'),
-    importBtn: document.getElementById('importBtn'),
-    importInput: document.getElementById('importInput'),
+    sharedBanner: document.querySelector('#sharedBanner'),
+    collectionRatio: document.querySelector('#collectionRatio'),
+    collectionFill: document.querySelector('#collectionFill'),
+    masteryRatio: document.querySelector('#masteryRatio'),
+    masteryFill: document.querySelector('#masteryFill'),
+    searchInput: document.querySelector('#searchInput'),
+    themeFilter: document.querySelector('#themeFilter'),
+    groupOrder: document.querySelector('#groupOrder'),
+    statusTabs: document.querySelector('#statusTabs'),
+    hideMastered: document.querySelector('#hideMastered'),
+    showUnreleased: document.querySelector('#showUnreleased'),
+    lowFidelity: document.querySelector('#lowFidelity'),
+    exportMenu: document.querySelector('#exportMenu'),
+    exportToggle: document.querySelector('#exportToggle'),
+    shareButton: document.querySelector('#shareButton'),
+    moreMenu: document.querySelector('#moreMenu'),
+    moreToggle: document.querySelector('#moreToggle'),
+    copyTradeButton: document.querySelector('#copyTradeButton'),
+    copyGridButton: document.querySelector('#copyGridButton'),
+    backupButton: document.querySelector('#backupButton'),
+    importButton: document.querySelector('#importButton'),
+    importInput: document.querySelector('#importInput'),
+    collectionTitle: document.querySelector('#collectionTitle'),
+    resultCount: document.querySelector('#resultCount'),
+    spriteGroups: document.querySelector('#spriteGroups'),
+    emptyState: document.querySelector('#emptyState'),
+    toastRegion: document.querySelector('#toastRegion'),
 };
 
-/* ===================================================
-   Persistence
-   =================================================== */
-
-function persist(key, value) {
-    try {
-        localStorage.setItem(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
-    } catch (err) {
-        console.warn('Unable to save tracker state.', err);
-    }
-}
-
-function readStoredArray(key) {
-    try {
-        const value = JSON.parse(localStorage.getItem(key));
-        return Array.isArray(value) ? value : [];
-    } catch {
-        return [];
-    }
-}
-
-function uniqueValidIds(ids, validIds = getSpriteIdSet()) {
-    return [...new Set(ids)].filter(id => validIds.has(id));
-}
-
-function saveCollection() {
-    persist(KEYS.obtained, state.obtained);
-    persist(KEYS.mastered, state.mastered);
-}
-
-function load() {
-    const validIds = getSpriteIdSet();
-    state.obtained = uniqueValidIds(readStoredArray(KEYS.obtained), validIds);
-    state.mastered = uniqueValidIds(readStoredArray(KEYS.mastered), validIds)
-        .filter(id => state.obtained.includes(id));
-    state.filters.search = localStorage.getItem(KEYS.search) || '';
-    state.filters.theme = localStorage.getItem(KEYS.theme) || 'all';
-
-    let savedStatus = localStorage.getItem(KEYS.status) || 'all';
-    if (savedStatus === 'obtained') savedStatus = 'owned';
-    state.filters.status = STATUS_FILTERS.includes(savedStatus) ? savedStatus : 'all';
-
-    state.settings.hideMastered = localStorage.getItem(KEYS.hideMastered) === 'true';
-    
-    let savedSort = localStorage.getItem(KEYS.sortOrder);
-    if (!savedSort) {
-        const legacyGroup = localStorage.getItem('fn_state_group_theme');
-        savedSort = legacyGroup === 'false' ? 'sprite' : 'theme';
-    }
-    state.settings.sortOrder = SORT_METHODS.includes(savedSort) ? savedSort : 'theme';
-
-    state.settings.showUnreleased = localStorage.getItem(KEYS.showUnreleased) === 'true';
-    state.settings.lowFidelity = localStorage.getItem(KEYS.lowFidelity) === 'true';
-}
-
-function applyStateToDOM() {
-    dom.searchInput.value = state.filters.search;
-    dom.themeFilter.value = state.filters.theme;
-    dom.sortOrder.value = state.settings.sortOrder;
-    dom.hideMastered.checked = state.settings.hideMastered;
-    dom.showUnreleased.checked = state.settings.showUnreleased;
-    dom.lowFidelity.checked = state.settings.lowFidelity;
-    document.body.classList.toggle('low-fidelity', state.settings.lowFidelity);
-
-    dom.statusPills.querySelectorAll('.pill').forEach(pill => {
-        const match =
-            (pill.dataset.status === 'all' && state.filters.status === 'all') ||
-            (pill.dataset.status === 'owned' && state.filters.status === 'owned') ||
-            (pill.dataset.status === 'missing' && state.filters.status === 'missing');
-        pill.classList.toggle('active', match);
-        pill.setAttribute('aria-pressed', String(match));
-    });
-}
-
-/* ===================================================
-   Share Encoding / Decoding
-   =================================================== */
-
-const B64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-
-function encodeBits(bits) {
-    while (bits.length % 6 !== 0) {
-        bits += '0';
-    }
-    let code = '';
-    for (let i = 0; i < bits.length; i += 6) {
-        const val = parseInt(bits.substring(i, i + 6), 2);
-        code += B64_CHARS[val];
-    }
-    return code.replace(/A+$/, '');
-}
-
-function decodeBits(code) {
-    if (!code) return '';
-    let bits = '';
-    for (let i = 0; i < code.length; i++) {
-        const val = B64_CHARS.indexOf(code[i]);
-        if (val === -1) return '';
-        bits += val.toString(2).padStart(6, '0');
-    }
-    return bits;
-}
-
-function compressCollection(sprites, obtained, mastered) {
-    let obtainedBits = '';
-    let masteredBits = '';
-    
-    sprites.forEach(s => {
-        obtainedBits += obtained.includes(s.id) ? '1' : '0';
-        masteredBits += mastered.includes(s.id) ? '1' : '0';
-    });
-
-    const obtainedCode = encodeBits(obtainedBits);
-    const masteredCode = encodeBits(masteredBits);
-
-    if (!masteredCode) {
-        return obtainedCode;
-    }
-    return `${obtainedCode}~${masteredCode}`;
-}
-
-function decompressCollection(sprites, code) {
-    if (!code) return { obtained: [], mastered: [] };
-    
-    const parts = code.split('~');
-    if (parts.length > 2) {
-        return { obtained: [], mastered: [] };
-    }
-
-    const obtainedCode = parts[0];
-    const masteredCode = parts[1] || '';
-
-    if (!/^[A-Za-z0-9\-_]*$/.test(obtainedCode) || !/^[A-Za-z0-9\-_]*$/.test(masteredCode)) {
-        return { obtained: [], mastered: [] };
-    }
-
-    try {
-        const obtainedBits = decodeBits(obtainedCode);
-        const masteredBits = decodeBits(masteredCode);
-
-        const obtained = [];
-        const mastered = [];
-
-        sprites.forEach((s, idx) => {
-            const isObtained = obtainedBits[idx] === '1';
-            const isMastered = masteredBits[idx] === '1';
-
-            if (isObtained) {
-                obtained.push(s.id);
-                if (isMastered) {
-                    mastered.push(s.id);
-                }
-            }
-        });
-
-        return { obtained, mastered };
-    } catch {
-        return { obtained: [], mastered: [] };
-    }
-}
-
-/* ===================================================
-   Toast Notifications
-   =================================================== */
-
-function toast(message, type = 'info') {
-    const el = document.createElement('div');
-    el.className = `toast toast-${type}`;
-    el.textContent = message;
-    document.body.appendChild(el);
-    requestAnimationFrame(() => el.classList.add('visible'));
-    setTimeout(() => {
-        el.classList.remove('visible');
-        el.addEventListener('transitionend', () => el.remove(), { once: true });
-        setTimeout(() => el.remove(), 500);
-    }, 2500);
-}
-
-/* ===================================================
-   Sprite Helpers
-   =================================================== */
-
-function getFamilyKey(sprite) {
-    return sprite.id.split('_')[0];
-}
-
-function getSpriteIdSet(sprites = baseSprites) {
-    return new Set(sprites.map(sprite => sprite.id));
-}
-
-function getReleasedSprites() {
-    return baseSprites.filter(sprite => !sprite.unreleased);
-}
-
-function getFamilyKeys(sprites = getReleasedSprites()) {
-    return sprites.reduce((keys, sprite) => {
-        const key = getFamilyKey(sprite);
-        if (!keys.includes(key)) keys.push(key);
-        return keys;
-    }, []);
-}
-
-function getActiveThemes(sprites = getReleasedSprites()) {
-    return sprites
-        .reduce((themes, sprite) => {
-            if (!themes.includes(sprite.theme)) themes.push(sprite.theme);
-            return themes;
-        }, [])
-        .sort((a, b) => getOrderedIndex(THEME_ORDER, a) - getOrderedIndex(THEME_ORDER, b));
-}
-
-function getOrderedIndex(order, value) {
-    const index = order.indexOf(value);
-    return index === -1 ? Infinity : index;
-}
-
-function getCharName(charKey) {
-    const basicSprite = baseSprites.find(sprite => sprite.id === `${charKey}_basic`);
-    return basicSprite ? basicSprite.name : charKey.charAt(0).toUpperCase() + charKey.slice(1);
-}
-
-function getDisplayName(name) {
-    return name === 'Burnt Peanut' ? name : `${name} Sprite`;
-}
-
-function getUiThemeLabel(theme) {
-    return UI_THEME_LABELS[theme] || theme;
-}
-
-function getExportThemeLabel(theme) {
-    return EXPORT_THEME_LABELS[theme] || theme.toUpperCase();
-}
-
-function getTradeThemeLabel(theme) {
-    return TRADE_THEME_LABELS[theme] || theme;
-}
-
-function getCollectionCounts(sprites = getReleasedSprites()) {
-    return {
-        total: sprites.length,
-        collected: sprites.filter(sprite => isObtained(sprite.id)).length,
-        mastered: sprites.filter(sprite => isMastered(sprite.id)).length,
+function installIcons() {
+    const icons = {
+        searchIcon: ICONS.search,
+        exportIcon: ICONS.download,
+        exportChevron: ICONS.chevron,
+        shareIcon: ICONS.share,
+        moreIcon: ICONS.more,
     };
+    for (const [id, svg] of Object.entries(icons)) {
+        const element = document.getElementById(id);
+        if (element) element.innerHTML = svg;
+    }
 }
 
-function getFamilyThemeMap(sprites) {
-    return sprites.reduce((map, sprite) => {
-        const familyKey = getFamilyKey(sprite);
-        if (!map.has(familyKey)) map.set(familyKey, new Map());
-        map.get(familyKey).set(sprite.theme, sprite);
-        return map;
-    }, new Map());
-}
-
-function isObtained(id) {
-    return state.obtained.includes(id);
-}
-
-function isMastered(id) {
-    return state.mastered.includes(id);
-}
-
-function escapeHTML(value) {
-    return String(value).replace(/[&<>'"]/g, char => ({
+function escapeHtml(value) {
+    return String(value).replace(/[&<>'"]/g, character => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         "'": '&#39;',
         '"': '&quot;',
-    }[char]));
+    })[character]);
 }
 
-/* ===================================================
-   Progress
-   =================================================== */
+function toast(message, type = 'info') {
+    const element = document.createElement('div');
+    element.className = `toast toast-${type}`;
+    element.textContent = message;
+    dom.toastRegion.replaceChildren(element);
+    requestAnimationFrame(() => element.classList.add('is-visible'));
+    setTimeout(() => {
+        element.classList.remove('is-visible');
+        element.addEventListener('transitionend', () => element.remove(), { once: true });
+    }, 2600);
+}
 
-function updateProgress() {
-    const { total, collected, mastered } = getCollectionCounts();
+function counts() {
+    return {
+        total: catalog.released.length,
+        owned: catalog.released.filter(sprite => store.isOwned(sprite.id)).length,
+        mastered: catalog.released.filter(sprite => store.isMastered(sprite.id)).length,
+    };
+}
 
-    dom.collectionRatio.textContent = `${collected} / ${total}`;
-    dom.collectionFill.style.width = total > 0 ? `${(collected / total) * 100}%` : '0%';
+function filteredSprites() {
+    return catalog.sprites.filter(spriteMatchesFilters);
+}
+
+function spriteMatchesFilters(sprite) {
+    const { filters, settings } = store.state;
+    const search = filters.search.trim().toLocaleLowerCase();
+    if (!settings.showUnreleased && sprite.unreleased) return false;
+    if (settings.hideMastered && store.isMastered(sprite.id)) return false;
+    if (store.viewOnly && (!store.isOwned(sprite.id) || sprite.unreleased)) return false;
+    if (filters.theme !== 'all' && sprite.theme !== filters.theme) return false;
+    if (search && !`${sprite.name} ${sprite.theme} ${sprite.rarity}`.toLocaleLowerCase().includes(search)) return false;
+    if (!store.viewOnly && filters.status === 'owned' && !store.isOwned(sprite.id)) return false;
+    if (!store.viewOnly && filters.status === 'missing' && store.isOwned(sprite.id)) return false;
+    return true;
+}
+
+function cardMarkup(sprite) {
+    const owned = store.isOwned(sprite.id);
+    const mastered = store.isMastered(sprite.id);
+    const safeName = escapeHtml(sprite.name);
+    const classes = [
+        'sprite-card',
+        `rarity-${sprite.rarity}`,
+        `theme-${sprite.theme}`,
+        owned ? 'is-owned' : 'is-missing',
+        mastered ? 'is-mastered' : '',
+        sprite.unreleased ? 'is-unreleased' : '',
+    ].filter(Boolean).join(' ');
+    const stateLabel = sprite.unreleased ? 'Unreleased' : mastered ? 'Mastered' : owned ? 'Owned' : 'Missing';
+    const masteryButton = owned && !store.viewOnly
+        ? `<button type="button" class="mastery-button" aria-label="${mastered ? 'Remove mastery from' : 'Mark'} ${safeName}${mastered ? '' : ' as mastered'}" title="${mastered ? 'Remove mastery' : 'Mark as mastered'}">${ICONS.crown}</button>`
+        : '';
+    const art = store.viewOnly
+        ? `<div class="sprite-art" role="img" aria-label="${safeName}: ${stateLabel}">
+                <span class="card-state">${stateLabel}</span>
+                <img src="sprites/${encodeURIComponent(sprite.id)}.png" alt="" loading="lazy" decoding="async">
+                <span class="rarity-tag">${escapeHtml(sprite.rarity)}</span>
+            </div>`
+        : `<button type="button" class="sprite-art" aria-pressed="${owned}"
+                aria-label="${owned ? 'Remove' : 'Add'} ${safeName} ${owned ? 'from' : 'to'} collection">
+                <span class="card-state">${stateLabel}</span>
+                <img src="sprites/${encodeURIComponent(sprite.id)}.png" alt="" loading="lazy" decoding="async">
+                <span class="rarity-tag">${escapeHtml(sprite.rarity)}</span>
+            </button>`;
+
+    return `
+        <article class="${classes}" data-id="${escapeHtml(sprite.id)}">
+            ${art}
+            ${masteryButton}
+            <div class="sprite-name">
+                <strong>${safeName}</strong>
+                <span>${escapeHtml(displayTheme(sprite.theme))}</span>
+            </div>
+        </article>`;
+}
+
+function renderProgress() {
+    const { total, owned, mastered } = counts();
+    dom.collectionRatio.textContent = `${owned} / ${total}`;
     dom.masteryRatio.textContent = `${mastered} / ${total}`;
-    dom.masteryFill.style.width = total > 0 ? `${(mastered / total) * 100}%` : '0%';
+    dom.collectionFill.style.width = `${total ? (owned / total) * 100 : 0}%`;
+    dom.masteryFill.style.width = `${total ? (mastered / total) * 100 : 0}%`;
 }
-/* ===================================================
-   Filtering & Sorting
-   =================================================== */
 
-function filterSprites() {
-    const search = state.filters.search.trim().toLowerCase();
+function renderControls() {
+    const { filters, settings } = store.state;
+    dom.searchInput.value = filters.search;
+    dom.themeFilter.value = filters.theme;
+    dom.groupOrder.value = settings.group;
+    dom.hideMastered.checked = settings.hideMastered;
+    dom.showUnreleased.checked = settings.showUnreleased;
+    dom.lowFidelity.checked = settings.lowFidelity;
+    document.body.classList.toggle('low-fidelity', settings.lowFidelity);
 
-    return baseSprites.filter(sprite => {
-        if (state.settings.hideMastered && isMastered(sprite.id)) return false;
-        if (!state.settings.showUnreleased && sprite.unreleased) return false;
-        if (state.viewMode && (!isObtained(sprite.id) || sprite.unreleased)) return false;
-
-        const matchesSearch = !search || sprite.name.toLowerCase().includes(search);
-        const matchesTheme = state.filters.theme === 'all' || sprite.theme === state.filters.theme;
-
-        let matchesStatus = true;
-        if (!state.viewMode) {
-            const isOwned = isObtained(sprite.id);
-            if (state.filters.status === 'owned') matchesStatus = isOwned;
-            if (state.filters.status === 'missing') matchesStatus = !isOwned;
-        }
-
-        return matchesSearch && matchesTheme && matchesStatus;
+    dom.statusTabs.querySelectorAll('button').forEach(button => {
+        const active = button.dataset.status === filters.status;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+        button.disabled = store.viewOnly;
     });
 }
 
-function sortSprites(items, method) {
-    const sorted = [...items];
-    if (method === 'theme') {
-        return sorted.sort((a, b) => {
-            const idxA = getOrderedIndex(THEME_ORDER, a.theme);
-            const idxB = getOrderedIndex(THEME_ORDER, b.theme);
-            if (idxA !== idxB) return idxA - idxB;
-            return 0;
-        });
-    }
-    if (method === 'sprite') {
-        return sorted.sort((a, b) => {
-            const familyA = getFamilyKey(a);
-            const familyB = getFamilyKey(b);
-            if (familyA !== familyB) return familyA.localeCompare(familyB);
-            return getOrderedIndex(THEME_ORDER, a.theme) - getOrderedIndex(THEME_ORDER, b.theme);
-        });
-    }
-    if (method === 'name') {
-        return sorted.sort((a, b) => a.name.localeCompare(b.name));
-    }
-    if (method === 'rarity') {
-        return sorted.sort((a, b) => {
-            const idxA = getOrderedIndex(RARITY_ORDER, a.rarity);
-            const idxB = getOrderedIndex(RARITY_ORDER, b.rarity);
-            if (idxA !== idxB) return idxA - idxB;
-            return a.name.localeCompare(b.name);
-        });
-    }
-    return sorted;
+function renderCollection() {
+    const sorted = sortSprites(filteredSprites(), store.state.settings.group);
+    const groups = groupSprites(sorted, store.state.settings.group, catalog);
+    const showGroupLabels = store.state.settings.group !== 'name';
+
+    dom.collectionTitle.textContent = store.viewOnly
+        ? 'Shared collection'
+        : store.state.filters.status === 'owned'
+            ? 'Owned sprites'
+            : store.state.filters.status === 'missing'
+                ? 'Missing sprites'
+                : 'All sprites';
+    dom.resultCount.textContent = `${sorted.length} shown`;
+    dom.emptyState.hidden = sorted.length !== 0;
+
+    dom.spriteGroups.innerHTML = groups.map(group => `
+        <section class="sprite-group" aria-labelledby="group-${escapeHtml(group.key)}">
+            ${showGroupLabels ? `
+                <div class="group-heading">
+                    <h2 id="group-${escapeHtml(group.key)}">${escapeHtml(group.label)}</h2>
+                    <span>${group.sprites.length}</span>
+                </div>` : ''}
+            <div class="sprite-grid">
+                ${group.sprites.map(cardMarkup).join('')}
+            </div>
+        </section>
+    `).join('');
 }
 
-/* ===================================================
-   Rendering
-   =================================================== */
+function render() {
+    renderProgress();
+    renderControls();
+    renderCollection();
+}
 
-function populateThemeFilter() {
-    const themes = getActiveThemes(baseSprites);
-    const selectedTheme = themes.includes(state.filters.theme) ? state.filters.theme : 'all';
+function patchCollectionCard(change) {
+    if (change.type !== 'collection') return false;
+    const sprite = catalog.byId.get(change.id);
+    const current = dom.spriteGroups.querySelector(`[data-id="${change.id}"]`);
+    if (!sprite || !current || !spriteMatchesFilters(sprite)) return false;
 
+    const activeControl = current.contains(document.activeElement)
+        ? document.activeElement.classList.contains('mastery-button')
+            ? 'mastery'
+            : 'owned'
+        : null;
+    const template = document.createElement('template');
+    template.innerHTML = cardMarkup(sprite).trim();
+    const replacement = template.content.firstElementChild;
+    current.replaceWith(replacement);
+
+    if (activeControl === 'mastery') replacement.querySelector('.mastery-button')?.focus();
+    if (activeControl === 'owned') replacement.querySelector('.sprite-art')?.focus();
+    return true;
+}
+
+function handleStoreChange(_state, change) {
+    renderProgress();
+    if (patchCollectionCard(change)) return;
+    renderControls();
+    renderCollection();
+}
+
+function populateThemes() {
+    const current = store.state.filters.theme;
     dom.themeFilter.replaceChildren(
         new Option('All themes', 'all'),
-        ...themes.map(theme => new Option(getUiThemeLabel(theme), theme))
+        ...activeThemes(catalog.sprites).map(theme => new Option(displayTheme(theme), theme)),
     );
-    state.filters.theme = selectedTheme;
-}
-
-function renderGrid() {
-    let items = filterSprites();
-    items = sortSprites(items, state.settings.sortOrder);
-
-    const frag = document.createDocumentFragment();
-
-    for (const sprite of items) {
-        const obtained = isObtained(sprite.id);
-        const mastered = isMastered(sprite.id);
-
-        const card = document.createElement('div');
-        card.dataset.id = sprite.id;
-
-        const classes = ['card', `rarity-${sprite.rarity}`, `theme-${sprite.theme}`];
-        if (obtained) classes.push('obtained');
-        if (mastered) classes.push('mastered');
-        card.className = classes.join(' ');
-        if (!state.viewMode) {
-            card.tabIndex = 0;
-            card.setAttribute('role', 'button');
-            card.setAttribute('aria-pressed', String(obtained));
-            card.setAttribute('aria-label', `${obtained ? 'Remove' : 'Mark'} ${sprite.name} ${obtained ? 'from' : 'as part of'} your collection`);
-        }
-
-        card.innerHTML = buildCardHTML(sprite, obtained, mastered);
-        frag.appendChild(card);
+    if (![...dom.themeFilter.options].some(option => option.value === current)) {
+        store.state.filters.theme = 'all';
     }
-
-    dom.grid.innerHTML = '';
-    dom.grid.appendChild(frag);
-    fitCardNames();
-    updateProgress();
 }
 
-function buildCardHTML(sprite, obtained, mastered) {
-    const rarityLabel = sprite.rarity === 'Mythic' ? 'MYTHIC' : sprite.rarity.toUpperCase();
-    const imgPath = `sprites/${encodeURIComponent(sprite.id)}.png`;
-    const safeName = escapeHTML(sprite.name);
-    const safeRarity = escapeHTML(rarityLabel);
-
-    let badge = '';
-    if (sprite.unreleased) {
-        badge = '<div class="card-badge unreleased-badge">Unreleased</div>';
-    } else if (mastered) {
-        badge = '<div class="card-badge mastered-badge">Mastered</div>';
-    } else if (obtained) {
-        badge = '<div class="card-badge collected">Collected</div>';
+function closeMenus({ except = null, restoreFocus = false } = {}) {
+    for (const [menu, toggle] of [
+        [dom.exportMenu, dom.exportToggle],
+        [dom.moreMenu, dom.moreToggle],
+    ]) {
+        if (menu === except) continue;
+        const wasOpen = menu.classList.contains('is-open');
+        menu.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+        if (restoreFocus && wasOpen) toggle.focus();
     }
-
-    let crownAction = '';
-    if (obtained && !mastered && !state.viewMode) {
-        crownAction = `<button class="card-crown" type="button" title="Toggle mastery" aria-label="Mark ${safeName} as mastered">${CROWN_ICON}</button>`;
-    }
-
-    let crownDisplay = '';
-    if (mastered) {
-        crownDisplay = `<div class="card-crown-display">${CROWN_ICON}</div>`;
-    }
-
-    return `${badge}${crownAction}
-        <div class="card-display">
-            ${crownDisplay}
-            <img src="${imgPath}" alt="${safeName}" loading="lazy">
-            <div class="card-rarity">${safeRarity}</div>
-        </div>
-        <div class="card-name"><span>${safeName}</span></div>`;
 }
 
-function fitCardNames() {
-    dom.grid.querySelectorAll('.card-name span').forEach(span => {
-        const parent = span.parentElement;
-        if (!parent || parent.clientWidth === 0) return;
-        let size = 14;
-        span.style.fontSize = size + 'px';
-        while (span.scrollWidth > parent.clientWidth && size > 8) {
-            size -= 0.5;
-            span.style.fontSize = size + 'px';
-        }
-    });
+function toggleMenu(menu, toggle) {
+    const willOpen = !menu.classList.contains('is-open');
+    closeMenus({ except: menu });
+    menu.classList.toggle('is-open', willOpen);
+    toggle.setAttribute('aria-expanded', String(willOpen));
+    if (willOpen) menu.querySelector('.menu-popover button, .menu-popover input')?.focus();
+    else toggle.focus();
 }
 
-/* ===================================================
-   Collection Actions
-   =================================================== */
-
-function toggleObtained(id) {
-    if (isObtained(id)) {
-        state.obtained = state.obtained.filter(x => x !== id);
-        state.mastered = state.mastered.filter(x => x !== id);
-    } else {
-        state.obtained.push(id);
-    }
-    saveCollection();
-    renderGrid();
-}
-
-function toggleMastery(id) {
-    if (!isObtained(id)) return;
-    if (isMastered(id)) {
-        state.mastered = state.mastered.filter(x => x !== id);
-    } else {
-        state.mastered.push(id);
-    }
-    saveCollection();
-    renderGrid();
-}
-
-/* ===================================================
-   Canvas Export - Helpers
-   =================================================== */
-
-function getRarityGradient(rarity, theme) {
-    const map = {
-        Rare: ['#104273', '#081a35'],
-        Epic: ['#4d1566', '#1e052c'],
-        Legendary: ['#743e0a', '#301702'],
-        Mythic: ['#70531c', '#2e2107'],
-    };
-    if (rarity !== 'Special') return map[rarity] || map.Rare;
-
-    const themes = {
-        Basic: ['#1c2436', '#0c0f17'], Gold: ['#61460b', '#241a02'],
-        Candy: ['#6b183f', '#260514'], Galaxy: ['#1f1145', '#080314'],
-        Gem: ['#114c47', '#041a18'], Holofoil: ['#204454', '#09171f'],
-        Cube: ['#4c1d95', '#1e0b3d'],
-        Rift: ['#154b5e', '#04161c'],
-    };
-    return themes[theme] || themes.Basic;
-}
-
-function getRarityTagColors(rarity) {
-    const map = {
-        Rare: ['#004A8E', '#00FFFB'], Epic: ['#511D7F', '#ED2BFF'],
-        Legendary: ['#8E4122', '#FBC568'], Mythic: ['#80622A', '#FFF1A9'],
-        Special: ['#51f7cc', '#000000'],
-    };
-    return map[rarity] || map.Rare;
-}
-
-function getExportConfig(mode) {
-    const releasedSprites = getReleasedSprites();
-    const configs = {
-        collected: {
-            items: releasedSprites.filter(sprite => isObtained(sprite.id)),
-            titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'MY COLLECTION',
-            color: '#32cd32',
-            filename: 'fnsprites-collection', emptyMsg: 'No collected sprites to export!',
-        },
-        missing: {
-            items: releasedSprites.filter(sprite => !isObtained(sprite.id)),
-            titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: "I'M LOOKING FOR THESE!",
-            color: '#ef4444',
-            filename: 'fnsprites-missing', emptyMsg: "You aren't missing any released sprites!",
-        },
-        unmastered: {
-            items: releasedSprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id)),
-            titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'UNMASTERED SPRITES',
-            color: '#00f0ff',
-            filename: 'fnsprites-unmastered', emptyMsg: "You don't have any unmastered sprites!",
-        },
-        mastered: {
-            items: releasedSprites.filter(sprite => isObtained(sprite.id) && isMastered(sprite.id)),
-            titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'MASTERED SPRITES',
-            color: '#ffd700',
-            filename: 'fnsprites-mastered', emptyMsg: "You don't have any mastered sprites!",
-        },
-        trade: {
-            items: releasedSprites,
-            titleL1: 'FORTNITE SPRITES TRACKER:', titleL2: 'TRADE CARD',
-            color: '#ffd700',
-            filename: 'fnsprites-trade-card', emptyMsg: 'No sprites to export!',
-        },
-    };
-
-    const config = configs[mode];
-    if (!config || config.items.length === 0) {
-        toast(config?.emptyMsg || 'Nothing to export!', 'error');
-        return null;
-    }
-    return config;
-}
-
-function getExportCardState(sprite, mode) {
-    const isOwned = isObtained(sprite.id);
-    const mastered = isMastered(sprite.id);
-
-    if (mode === 'trade') return isOwned ? (mastered ? 'mastered' : 'owned') : 'missing_gray';
-    if (mode === 'collected') return isOwned ? (mastered ? 'mastered' : 'owned') : 'empty';
-    if (mode === 'missing') return !isOwned ? 'missing_color' : 'empty';
-    if (mode === 'mastered') return mastered ? 'mastered' : 'empty';
-    if (mode === 'unmastered') return isOwned && !mastered ? 'unmastered' : 'empty';
-    return 'empty';
-}
-
-function loadImage(item) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => resolve({ id: item.id, img, success: true });
-        img.onerror = () => resolve({ id: item.id, img, success: false });
-        img.src = item.src;
-    });
-}
-
-function drawCrown(ctx, cx, cy) {
-    ctx.save();
-    ctx.fillStyle = '#ffd700';
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 1.2;
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx - 7, cy + 5);
-    ctx.lineTo(cx + 7, cy + 5);
-    ctx.lineTo(cx + 7, cy - 2);
-    ctx.lineTo(cx + 3, cy + 1.5);
-    ctx.lineTo(cx, cy - 4.5);
-    ctx.lineTo(cx - 3, cy + 1.5);
-    ctx.lineTo(cx - 7, cy - 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
-}
-
-function drawMiniCard(ctx, sprite, x, y, w, h, cardState, imageMap) {
-    if (cardState === 'empty') {
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        drawRoundRect(ctx, x, y, w, h, 8);
-        ctx.stroke();
-        ctx.restore();
-        return;
-    }
-
-    const rarity = sprite.rarity || 'Rare';
-    const theme = sprite.theme || 'Basic';
-    const innerH = h - 22; // 100 - 22 = 78
-
-    const isMastered = cardState === 'mastered';
-    const isGrayed = cardState === 'missing_gray';
-    const isMissing = cardState === 'missing_gray' || cardState === 'missing_color';
-
-    /* Card base background */
-    ctx.fillStyle = '#0f141d';
-    ctx.beginPath();
-    drawRoundRect(ctx, x, y, w, h, 8);
-    ctx.fill();
-
-    /* Rarity background */
-    ctx.save();
-    ctx.beginPath();
-    drawRoundRect(ctx, x, y, w, innerH, 8);
-    ctx.clip();
-
-    const grad = ctx.createLinearGradient(x, y, x, y + innerH);
-    const [c1, c2] = getRarityGradient(rarity, theme);
-    grad.addColorStop(0, c1);
-    grad.addColorStop(1, c2);
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, y, w, innerH);
-
-    /* Special rainbow overlay */
-    if (rarity === 'Special') {
-        const rainbow = ctx.createLinearGradient(x, y, x + w, y + innerH);
-        rainbow.addColorStop(0, 'rgba(81,247,204,0.25)');
-        rainbow.addColorStop(0.5, 'rgba(227,116,238,0.35)');
-        rainbow.addColorStop(1, 'rgba(181,246,158,0.25)');
-        ctx.fillStyle = rainbow;
-        ctx.fillRect(x, y, w, innerH);
-    }
-
-    /* Highlight shine */
-    const shine = ctx.createLinearGradient(x, y, x, y + innerH);
-    shine.addColorStop(0, 'rgba(255,255,255,0.12)');
-    shine.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = shine;
-    ctx.fillRect(x, y, w, innerH);
-
-    if (isGrayed) {
-        ctx.fillStyle = 'rgba(11, 13, 20, 0.45)';
-        ctx.fillRect(x, y, w, innerH);
-    }
-    ctx.restore();
-
-    /* Sprite image */
-    const img = imageMap[sprite.id];
-    if (img && img.complete && img.naturalWidth > 0) {
-        ctx.save();
-        ctx.beginPath();
-        drawRoundRect(ctx, x, y, w, innerH, 8);
-        ctx.clip();
-
-        if (isGrayed) {
+async function copyText(text, successMessage) {
+    let textarea;
+    try {
+        if (navigator.clipboard?.writeText) {
             try {
-                ctx.filter = 'grayscale(100%) brightness(48%)';
-            } catch {}
+                await navigator.clipboard.writeText(text);
+                toast(successMessage, 'success');
+                return;
+            } catch {
+                // Fall through to the browser's legacy copy path.
+            }
         }
-        const maxDim = w * 0.82;
-        const ratio = Math.min(maxDim / img.width, maxDim / img.height);
-        const nw = img.width * ratio;
-        const nh = img.height * ratio;
-        ctx.drawImage(img, x + (w - nw) / 2, y + (innerH - nh) / 2, nw, nh);
-        ctx.restore();
 
-        if (isGrayed) {
-            ctx.fillStyle = 'rgba(15, 20, 30, 0.15)';
-            ctx.beginPath();
-            drawRoundRect(ctx, x, y, w, innerH, 8);
-            ctx.fill();
-        }
-    }
-
-    /* Status label */
-    ctx.save();
-    ctx.font = '900 8.5px "Oswald", sans-serif';
-    ctx.shadowColor = 'rgba(0,0,0,0.8)';
-    ctx.shadowBlur = 2;
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-
-    let labelText = 'COLLECTED';
-    let labelColor = '#22c55e';
-    if (isMastered) {
-        labelText = 'MASTERED';
-        labelColor = '#ffd700';
-    } else if (isMissing) {
-        labelText = 'MISSING';
-        labelColor = '#ef4444';
-    }
-
-    ctx.fillStyle = labelColor;
-    ctx.fillText(labelText, x + 5, y + 5);
-    ctx.restore();
-
-    /* Rarity tag (angled shape) */
-    const [tagBg, tagText] = getRarityTagColors(rarity);
-    ctx.save();
-    ctx.beginPath();
-    drawRoundRect(ctx, x, y, w, innerH, 8);
-    ctx.clip();
-
-    if (rarity === 'Special') {
-        const tg = ctx.createLinearGradient(x, y + innerH - 12, x + w * 0.6, y + innerH - 12);
-        tg.addColorStop(0, '#51f7cc');
-        tg.addColorStop(0.5, '#e374ee');
-        tg.addColorStop(1, '#b5f69e');
-        ctx.fillStyle = tg;
-    } else {
-        ctx.fillStyle = tagBg;
-    }
-    ctx.beginPath();
-    ctx.moveTo(x, y + innerH - 12);
-    ctx.lineTo(x + w * 0.48, y + innerH - 12);
-    ctx.lineTo(x + w * 0.58, y + innerH);
-    ctx.lineTo(x, y + innerH);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    ctx.fillStyle = tagText;
-    ctx.font = '900 8.5px "Oswald", sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(rarity === 'Mythic' ? 'MYTHIC' : rarity.toUpperCase(), x + 4, y + innerH - 6);
-
-    /* Name/Theme footer */
-    ctx.fillStyle = 'rgba(15,20,29,0.9)';
-    ctx.fillRect(x, y + innerH, w, 22);
-
-    ctx.fillStyle = isMissing ? '#ef4444' : '#ffffff';
-    let fontSize = 9.5;
-    const name = sprite.name.toUpperCase();
-    ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    while (ctx.measureText(name).width > w - 6 && fontSize > 6.5) {
-        fontSize -= 0.5;
-        ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
-    }
-    ctx.fillText(name, x + w / 2, y + innerH + 11);
-
-    /* Bottom accent + border */
-    let bottomAccentColor = tagBg;
-    let borderColor = '#1a2233';
-    if (isMastered) {
-        bottomAccentColor = '#ffd700';
-        borderColor = '#ffd700';
-    } else if (isMissing) {
-        bottomAccentColor = '#ef4444';
-    } else if (cardState === 'unmastered') {
-        bottomAccentColor = '#00f0ff';
-    }
-
-    ctx.fillStyle = bottomAccentColor;
-    ctx.fillRect(x, y + h - 3, w, 3);
-
-    ctx.strokeStyle = borderColor;
-    ctx.lineWidth = isMastered ? 2 : 1;
-    ctx.beginPath();
-    drawRoundRect(ctx, x, y, w, h, 8);
-    ctx.stroke();
-
-    /* Crown at top center */
-    if (isMastered) {
-        drawCrown(ctx, x + w / 2, y - 2);
+        textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        if (!document.execCommand('copy')) throw new Error('Copy command failed.');
+        toast(successMessage, 'success');
+    } catch (error) {
+        console.error(error);
+        toast('Could not copy to the clipboard.', 'error');
+    } finally {
+        textarea?.remove();
     }
 }
 
-/* ===================================================
-   Canvas Export - Status Icons & Trade Card Exporter
-   =================================================== */
-
-function drawRoundRect(ctx, x, y, width, height, radius) {
-    if (ctx.roundRect) {
-        ctx.roundRect(x, y, width, height, radius);
-    } else {
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + width - radius, y);
-        ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
-        ctx.lineTo(x + width, y + height - radius);
-        ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-        ctx.lineTo(x + radius, y + height);
-        ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
-        ctx.lineTo(x, y + radius);
-        ctx.quadraticCurveTo(x, y, x + radius, y);
-        ctx.closePath();
-    }
-}
-
-function exportImage(mode) {
-    const config = getExportConfig(mode);
-    if (!config) return;
-
-    const releasedSprites = getReleasedSprites();
-    const charKeys = getFamilyKeys(releasedSprites);
-    const familyThemeMap = getFamilyThemeMap(releasedSprites);
-    const allThemeColumns = getActiveThemes(releasedSprites).map(theme => ({
-        name: getExportThemeLabel(theme),
-        themeName: theme,
-    }));
-
-    const imagesToLoad = [
-        { id: 'mascot', src: 'siteimages/staticsprite.png' },
-        ...releasedSprites.map(sprite => ({ id: sprite.id, src: `sprites/${encodeURIComponent(sprite.id)}.png` })),
-    ];
-
-    toast('Generating image export...', 'info');
-
-    Promise.all(imagesToLoad.map(loadImage)).then(loadedImages => {
-        const imageMap = {};
-        loadedImages.forEach(res => {
-            if (res.success) {
-                imageMap[res.id] = res.img;
-            }
-        });
-
-        const activeCharKeys = charKeys.filter(charKey => {
-            return [...familyThemeMap.get(charKey).values()]
-                .some(sprite => getExportCardState(sprite, mode) !== 'empty');
-        });
-
-        const themeColumns = allThemeColumns.filter(t => {
-            return activeCharKeys.some(charKey => {
-                const sprite = familyThemeMap.get(charKey).get(t.themeName);
-                return sprite && getExportCardState(sprite, mode) !== 'empty';
-            });
-        });
-
-        const layout = EXPORT_LAYOUT;
-        const tableColumnCount = activeCharKeys.length > layout.maxSingleColumnRows ? 2 : 1;
-        const half = tableColumnCount === 1 ? activeCharKeys.length : Math.ceil(activeCharKeys.length / 2);
-        const leftColumnKeys = activeCharKeys.slice(0, half);
-        const rightColumnKeys = activeCharKeys.slice(half);
-
-        const maxRows = Math.max(leftColumnKeys.length, rightColumnKeys.length);
-        const rowH = layout.cardH + layout.rowGap;
-        const rowsH = maxRows * rowH;
-        const cardBlockW = themeColumns.length * layout.cardW + Math.max(0, themeColumns.length - 1) * layout.cardGap;
-        const colW = layout.labelW + cardBlockW;
-        const tableW = colW * tableColumnCount + layout.colGap * Math.max(0, tableColumnCount - 1);
-        const canvasW = Math.max(layout.minCanvasW, tableW + layout.border * 2 + layout.sidePad * 2);
-        const useCompactHeader = canvasW < layout.compactHeaderW;
-        const headerH = useCompactHeader ? layout.compactHeaderH : layout.headerH;
-        const canvasH = layout.border * 2 + headerH + layout.colHeaderH + rowsH + layout.footerH;
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = canvasW;
-        canvas.height = canvasH;
-
-        // Border gradient
-        let borderGrad;
-        if (mode === 'trade') {
-            borderGrad = ctx.createLinearGradient(0, 0, canvasW, canvasH);
-            borderGrad.addColorStop(0, '#ffd700');
-            borderGrad.addColorStop(1, '#22c55e');
-            ctx.fillStyle = borderGrad;
-        } else {
-            ctx.fillStyle = config.color;
-            borderGrad = config.color;
-        }
-        ctx.fillRect(0, 0, canvasW, canvasH);
-
-        // Inner Background
-        ctx.fillStyle = '#0b0d13';
-        ctx.fillRect(layout.border, layout.border, canvasW - layout.border * 2, canvasH - layout.border * 2);
-
-        // Header Background
-        ctx.fillStyle = '#181c25';
-        ctx.fillRect(layout.border, layout.border, canvasW - layout.border * 2, headerH);
-
-        // Header separator
-        ctx.strokeStyle = borderGrad;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(layout.border, layout.border + headerH);
-        ctx.lineTo(canvasW - layout.border, layout.border + headerH);
-        ctx.stroke();
-
-        // Header Stats / Progress Bars
-        const { total: totalCount, collected: ownedCount, mastered: masteredCount } = getCollectionCounts(releasedSprites);
-        const colPct = totalCount > 0 ? ownedCount / totalCount : 0;
-        const masPct = totalCount > 0 ? masteredCount / totalCount : 0;
-
-        const bw = 110;
-        const statGap = 25;
-        const mascotImg = imageMap['mascot'];
-        const fullTitle = `${config.titleL1} ${config.titleL2}`;
-
-        const fitFont = (text, maxWidth, startSize, minSize, style) => {
-            let size = startSize;
-            ctx.font = `${style} ${size}px "Oswald", sans-serif`;
-            while (ctx.measureText(text).width > maxWidth && size > minSize) {
-                size -= 0.5;
-                ctx.font = `${style} ${size}px "Oswald", sans-serif`;
-            }
-            return size;
-        };
-
-        const drawProgressBlock = (label, count, total, pct, x, y, color) => {
-            ctx.font = '900 12px "Oswald", sans-serif';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = color;
-            ctx.fillText(`${label}: ${count}/${total}`, x, y);
-            ctx.fillStyle = '#0e1117';
-            ctx.fillRect(x, y + 15, bw, 12);
-            ctx.strokeStyle = '#3b4253';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(x, y + 15, bw, 12);
-            ctx.fillStyle = color;
-            ctx.fillRect(x, y + 16, bw * pct, 10);
-        };
-
-        if (useCompactHeader) {
-            const topY = layout.border + 24;
-            const mascotSize = 24;
-            const mascotGap = mascotImg ? 8 : 0;
-            fitFont(config.titleL1, canvasW - layout.border * 2 - 60, 14, 10, 'italic 900');
-            const titleL1W = ctx.measureText(config.titleL1).width;
-            const titleGroupW = titleL1W + (mascotImg ? mascotSize + mascotGap : 0);
-            let groupX = (canvasW - titleGroupW) / 2;
-            if (mascotImg) {
-                ctx.drawImage(mascotImg, groupX, topY - mascotSize / 2, mascotSize, mascotSize);
-                groupX += mascotSize + mascotGap;
-            }
-            ctx.fillStyle = borderGrad;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(config.titleL1, groupX, topY);
-
-            fitFont(config.titleL2, canvasW - layout.border * 2 - 36, 20, 13, 'italic 900');
-            ctx.fillStyle = borderGrad;
-            ctx.textAlign = 'center';
-            ctx.fillText(config.titleL2, canvasW / 2, layout.border + 52);
-
-            const statsW = bw * 2 + statGap;
-            const statsX = (canvasW - statsW) / 2;
-            const statsY = layout.border + 86;
-            drawProgressBlock('COLLECTION', ownedCount, totalCount, colPct, statsX, statsY, '#22c55e');
-            drawProgressBlock('MASTERY', masteredCount, totalCount, masPct, statsX + bw + statGap, statsY, '#ffd700');
-        } else {
-            const statsRight = canvasW - layout.border - layout.sidePad;
-            const collectionX = statsRight - bw * 2 - statGap;
-            const masteryX = statsRight - bw;
-            const titleX = layout.border + layout.sidePad;
-            const mascotSize = 32;
-            const mascotGap = mascotImg ? 10 : 0;
-            const titleMaxW = collectionX - titleX - 20;
-
-            fitFont(fullTitle, titleMaxW - (mascotImg ? mascotSize + mascotGap : 0), 26, 16, 'italic 900');
-            ctx.fillStyle = borderGrad;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-
-            let textLeft = titleX;
-            if (mascotImg) {
-                ctx.drawImage(mascotImg, textLeft, layout.border + headerH / 2 - mascotSize / 2, mascotSize, mascotSize);
-                textLeft += mascotSize + mascotGap;
-            }
-            ctx.fillText(fullTitle, textLeft, layout.border + headerH / 2);
-
-            drawProgressBlock('COLLECTION', ownedCount, totalCount, colPct, collectionX, layout.border + 28, '#22c55e');
-            drawProgressBlock('MASTERY', masteredCount, totalCount, masPct, masteryX, layout.border + 28, '#ffd700');
-        }
-
-        const startTableY = layout.border + headerH + layout.colHeaderH;
-
-        // Column headers drawing helper
-        const drawColHeaders = (startX) => {
-            ctx.fillStyle = '#8891a5';
-            ctx.font = 'bold 12px "Oswald", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            themeColumns.forEach((t, i) => {
-                const cx = startX + layout.labelW + i * (layout.cardW + layout.cardGap) + layout.cardW / 2;
-                ctx.fillText(t.name, cx, startTableY - 8);
-            });
-        };
-
-        const leftTableX = layout.border + (canvasW - layout.border * 2 - tableW) / 2;
-        const rightTableX = leftTableX + colW + layout.colGap;
-
-        drawColHeaders(leftTableX);
-        if (rightColumnKeys.length > 0) {
-            drawColHeaders(rightTableX);
-        }
-
-
-
-        // Drawing a single character family row
-        const drawRow = (charKey, startX, y) => {
-            const name = getCharName(charKey);
-            const displayName = getDisplayName(name);
-
-            // Draw label
-            ctx.fillStyle = '#ffffff';
-            let fontSize = 14;
-            ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
-            ctx.textAlign = 'right';
-            ctx.textBaseline = 'middle';
-            while (ctx.measureText(displayName).width > layout.labelW - 12 && fontSize > 8) {
-                fontSize -= 0.5;
-                ctx.font = `bold ${fontSize}px "Oswald", sans-serif`;
-            }
-            ctx.fillText(displayName, startX + layout.labelW - 10, y + layout.cardH / 2);
-
-            // Draw cards
-            const rowCards = themeColumns.map(t => familyThemeMap.get(charKey).get(t.themeName));
-
-            rowCards.forEach((s, colIndex) => {
-                const cx = startX + layout.labelW + colIndex * (layout.cardW + layout.cardGap);
-
-                if (s) {
-                    const cardState = getExportCardState(s, mode);
-                    drawMiniCard(ctx, s, cx, y, layout.cardW, layout.cardH, cardState, imageMap);
-                } else {
-                    // Empty slot dashed outline
-                    ctx.save();
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-                    ctx.lineWidth = 1;
-                    ctx.setLineDash([4, 4]);
-                    ctx.beginPath();
-                    drawRoundRect(ctx, cx, y, layout.cardW, layout.cardH, 8);
-                    ctx.stroke();
-                    ctx.restore();
-                }
-            });
-        };
-
-        // Draw columns
-        leftColumnKeys.forEach((charKey, idx) => {
-            const y = startTableY + idx * rowH;
-            drawRow(charKey, leftTableX, y);
-        });
-
-        rightColumnKeys.forEach((charKey, idx) => {
-            const y = startTableY + idx * rowH;
-            drawRow(charKey, rightTableX, y);
-        });
-
-        // Footer
-        ctx.fillStyle = '#0e1117';
-        ctx.fillRect(layout.border, canvasH - layout.footerH - layout.border, canvasW - layout.border * 2, layout.footerH);
-
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px "Oswald", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('CGHXST.GITHUB.IO/FNSPRITES', canvasW / 2, canvasH - layout.border - layout.footerH / 2);
-
-        // Download
-        const link = document.createElement('a');
-        link.download = `${config.filename}.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
-        toast('Image exported successfully!', 'success');
-    });
-}
-
-/* ===================================================
-   Trade Text Generation
-   =================================================== */
-
-function generateTradeText() {
-    const releasedSprites = getReleasedSprites();
-    const charKeys = getFamilyKeys(releasedSprites);
-    const familyThemeMap = getFamilyThemeMap(releasedSprites);
-    const { total, collected, mastered } = getCollectionCounts(releasedSprites);
-
-    const buildSection = (title, selectSprites) => {
-        const lines = [];
-
-        charKeys.forEach(charKey => {
-            const name = getCharName(charKey);
-            const themeSprites = [...familyThemeMap.get(charKey).values()];
-            const selected = selectSprites(themeSprites);
-            if (selected.length === 0) return;
-
-            const list = selected.map(sprite => getTradeThemeLabel(sprite.theme)).join(', ');
-            lines.push(`  ▸ ${name} ➔ ${list}`);
-        });
-
-        return lines.length > 0 ? `【 ${title} 】\n${lines.join('\n')}` : '';
-    };
-
-    const sections = [
-        buildSection('LOOKING FOR', sprites => sprites.filter(sprite => !isObtained(sprite.id))),
-        buildSection('HAVE', sprites => sprites.filter(sprite => isObtained(sprite.id))),
-        buildSection('STILL NEED TO MASTER', sprites => sprites.filter(sprite => isObtained(sprite.id) && !isMastered(sprite.id))),
-        [
-            `Collected: ${collected}/${total}`,
-            `Mastered: ${mastered}/${total}`,
-            `Track yours: ${TRACKER_URL}`,
-        ].join('\n'),
-    ].filter(Boolean);
-
-    return sections.join('\n\n');
-}
-
-function generateTradeGridText() {
-    const releasedSprites = getReleasedSprites();
-    const activeThemes = getActiveThemes(releasedSprites);
-    const charKeys = getFamilyKeys(releasedSprites);
-    const familyThemeMap = getFamilyThemeMap(releasedSprites);
-    const { total, collected, mastered } = getCollectionCounts(releasedSprites);
-
-    let lines = [
-        '```',
-        '✅ Owned  👑 Mastered  ❌ Missing',
-        '',
-        `| ${activeThemes.map(getExportThemeLabel).join(' | ')} | Sprite`,
-        '-----------------------',
-    ];
-
-    charKeys.forEach(charKey => {
-        const rowStates = activeThemes.map(theme => {
-            const s = familyThemeMap.get(charKey).get(theme);
-            if (!s) return '⬛';
-            if (isMastered(s.id)) return '👑';
-            return isObtained(s.id) ? '✅' : '❌';
-        });
-
-        lines.push(`| ${rowStates.join(' | ')} | ${getCharName(charKey)}`);
+function bindCollectionEvents() {
+    dom.spriteGroups.addEventListener('click', event => {
+        if (store.viewOnly) return;
+        const card = event.target.closest('.sprite-card');
+        if (!card) return;
+        if (event.target.closest('.mastery-button')) store.toggleMastered(card.dataset.id);
+        else if (event.target.closest('.sprite-art')) store.toggleOwned(card.dataset.id);
     });
 
-    lines.push(
-        '',
-        `Collected: ${collected}/${total}`,
-        `Mastered: ${mastered}/${total}`,
-        `Track yours: ${TRACKER_URL}`,
-        '```'
-    );
-
-    return lines.join('\n');
-}
-
-function setDropdownOpen(dropdown, toggle, open) {
-    dropdown.classList.toggle('open', open);
-    toggle.setAttribute('aria-expanded', String(open));
-}
-
-function closeDropdowns() {
-    setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
-    setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
-}
-
-function copyText(text, successMsg, errorMsg) {
-    if (!navigator.clipboard?.writeText) {
-        toast(errorMsg, 'error');
-        return;
-    }
-
-    navigator.clipboard.writeText(text).then(() => {
-        toast(successMsg, 'success');
-    }).catch(() => {
-        toast(errorMsg, 'error');
-    });
-}
-
-/* ===================================================
-   Event Binding
-   =================================================== */
-
-function bindEvents() {
-    /* Image error delegation (using capture phase since error does not bubble) */
-    dom.grid.addEventListener('error', (e) => {
-        if (e.target.tagName === 'IMG') {
-            e.target.style.opacity = '0.2';
+    dom.spriteGroups.addEventListener('error', event => {
+        if (event.target instanceof HTMLImageElement) {
+            event.target.closest('.sprite-card')?.classList.add('image-missing');
         }
     }, true);
+}
 
-    /* Grid - event delegation */
-    dom.grid.addEventListener('click', (e) => {
-        if (state.viewMode) return;
-        const crown = e.target.closest('.card-crown');
-        const card = e.target.closest('.card');
-        if (!card) return;
-
-        const id = card.dataset.id;
-        if (crown) {
-            e.stopPropagation();
-            toggleMastery(id);
-        } else {
-            toggleObtained(id);
-        }
-    });
-
-    dom.grid.addEventListener('keydown', (e) => {
-        if (state.viewMode || e.target.closest('.card-crown')) return;
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-
-        const card = e.target.closest('.card');
-        if (!card) return;
-
-        e.preventDefault();
-        toggleObtained(card.dataset.id);
-    });
-
-    /* Search */
+function bindControlEvents() {
+    let searchTimer;
     dom.searchInput.addEventListener('input', () => {
-        state.filters.search = dom.searchInput.value;
-        persist(KEYS.search, state.filters.search);
-        renderGrid();
+        clearTimeout(searchTimer);
+        const value = dom.searchInput.value;
+        searchTimer = setTimeout(() => store.setFilter('search', value), 80);
     });
-
-    /* Theme filter */
-    dom.themeFilter.addEventListener('change', () => {
-        state.filters.theme = dom.themeFilter.value;
-        persist(KEYS.theme, state.filters.theme);
-        renderGrid();
+    dom.themeFilter.addEventListener('change', () => store.setFilter('theme', dom.themeFilter.value));
+    dom.groupOrder.addEventListener('change', () => {
+        if (GROUP_METHODS.includes(dom.groupOrder.value)) store.setSetting('group', dom.groupOrder.value);
     });
-
-    /* Sort order dropdown */
-    dom.sortOrder.addEventListener('change', () => {
-        state.settings.sortOrder = dom.sortOrder.value;
-        persist(KEYS.sortOrder, state.settings.sortOrder);
-        renderGrid();
+    dom.statusTabs.addEventListener('click', event => {
+        const button = event.target.closest('[data-status]');
+        if (button && STATUS_FILTERS.includes(button.dataset.status)) {
+            store.setFilter('status', button.dataset.status);
+        }
     });
+    dom.hideMastered.addEventListener('change', () => store.setSetting('hideMastered', dom.hideMastered.checked));
+    dom.showUnreleased.addEventListener('change', () => store.setSetting('showUnreleased', dom.showUnreleased.checked));
+    dom.lowFidelity.addEventListener('change', () => store.setSetting('lowFidelity', dom.lowFidelity.checked));
 
-    /* Status pills */
-    dom.statusPills.addEventListener('click', (e) => {
-        const pill = e.target.closest('.pill');
-        if (!pill || state.viewMode) return;
-        state.filters.status = pill.dataset.status;
-        persist(KEYS.status, state.filters.status);
-        applyStateToDOM();
-        renderGrid();
+    dom.exportToggle.addEventListener('click', event => {
+        event.stopPropagation();
+        toggleMenu(dom.exportMenu, dom.exportToggle);
     });
-
-    /* Toggle switches */
-    const switchKeys = ['hideMastered', 'showUnreleased', 'lowFidelity'];
-    switchKeys.forEach(key => {
-        dom[key].addEventListener('change', () => {
-            state.settings[key] = dom[key].checked;
-            persist(KEYS[key], state.settings[key]);
-            if (key === 'lowFidelity') {
-                document.body.classList.toggle('low-fidelity', dom[key].checked);
-            }
-            renderGrid();
+    dom.moreToggle.addEventListener('click', event => {
+        event.stopPropagation();
+        toggleMenu(dom.moreMenu, dom.moreToggle);
+    });
+    dom.exportMenu.addEventListener('click', event => {
+        const button = event.target.closest('[data-export]');
+        if (!button) return;
+        closeMenus({ restoreFocus: true });
+        exportBoard(button.dataset.export, catalog, store, toast).catch(error => {
+            console.error(error);
+            toast('Could not create that image.', 'error');
         });
     });
 
-    /* Export dropdown */
-    dom.exportToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
-        setDropdownOpen(dom.exportDropdown, dom.exportToggle, !dom.exportDropdown.classList.contains('open'));
+    dom.shareButton.addEventListener('click', () => {
+        const code = encodeShare(store.snapshot());
+        const url = new URL(location.href);
+        url.search = '';
+        url.searchParams.set('share', code);
+        copyText(url.toString(), 'Share link copied.');
     });
-
-    dom.exportDropdown.querySelectorAll('[data-export]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            exportImage(btn.dataset.export);
-            setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
-        });
+    dom.copyTradeButton.addEventListener('click', () => {
+        closeMenus({ restoreFocus: true });
+        copyText(tradeList(catalog, store), 'Trade list copied.');
     });
-
-    /* Copy dropdown */
-    dom.copyToggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
-        setDropdownOpen(dom.copyDropdown, dom.copyToggle, !dom.copyDropdown.classList.contains('open'));
+    dom.copyGridButton.addEventListener('click', () => {
+        closeMenus({ restoreFocus: true });
+        copyText(tradeGrid(catalog, store), 'Text grid copied.');
     });
-
-    document.addEventListener('click', (e) => {
-        if (!dom.exportDropdown.contains(e.target)) {
-            setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
-        }
-        if (!dom.copyDropdown.contains(e.target)) {
-            setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
-        }
+    dom.backupButton.addEventListener('click', () => {
+        closeMenus({ restoreFocus: true });
+        downloadBackup(store);
+        toast('Backup downloaded.', 'success');
     });
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeDropdowns();
-    });
-
-    /* Backup Export */
-    dom.exportBackupBtn.addEventListener('click', () => {
-        const data = {
-            obtained: state.obtained,
-            mastered: state.mastered
-        };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.download = 'fnsprites-backup.json';
-        link.href = url;
-        link.click();
-        URL.revokeObjectURL(url);
-        toast('Backup file exported!', 'success');
-        setDropdownOpen(dom.exportDropdown, dom.exportToggle, false);
-    });
-
-    /* Backup Import */
-    dom.importBtn.addEventListener('click', () => {
-        if (state.viewMode) {
-            toast('Cannot import in view-only mode!', 'error');
+    dom.importButton.addEventListener('click', () => {
+        closeMenus({ restoreFocus: true });
+        if (store.viewOnly) {
+            toast('Open your tracker before importing.', 'error');
             return;
         }
         dom.importInput.click();
     });
-
-    dom.importInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
+    dom.importInput.addEventListener('change', async () => {
+        const [file] = dom.importInput.files;
         if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            try {
-                const data = JSON.parse(event.target.result);
-                if (!data || !Array.isArray(data.obtained) || !Array.isArray(data.mastered)) {
-                    throw new Error('Invalid backup file format');
-                }
-
-                const validIds = getSpriteIdSet();
-                const obtained = uniqueValidIds(data.obtained, validIds);
-                const obtainedIds = new Set(obtained);
-                const mastered = uniqueValidIds(data.mastered, validIds)
-                    .filter(id => obtainedIds.has(id));
-
-                state.obtained = obtained;
-                state.mastered = mastered;
-
-                saveCollection();
-
-                renderGrid();
-                toast('Collection imported successfully!', 'success');
-            } catch (err) {
-                toast('Failed to import: invalid JSON format', 'error');
-                console.error(err);
-            }
+        try {
+            if (file.size > 1_000_000) throw new TypeError('Backup file is too large.');
+            const data = parseBackup(JSON.parse(await file.text()));
+            store.replaceCollection(data.owned, data.mastered);
+            toast('Collection imported.', 'success');
+        } catch {
+            toast('That backup file is not valid.', 'error');
+        } finally {
             dom.importInput.value = '';
-        };
-        reader.readAsText(file);
+        }
     });
 
-    /* Copy trade list */
-    dom.copyTradeTextBtn.addEventListener('click', () => {
-        copyText(generateTradeText(), 'Trade list copied to clipboard!', 'Failed to copy trade list');
-        setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
+    document.addEventListener('click', event => {
+        if (!event.target.closest('.menu')) closeMenus();
     });
-
-    /* Copy trade grid */
-    dom.copyTradeGridBtn.addEventListener('click', () => {
-        copyText(generateTradeGridText(), 'Trade grid copied to clipboard!', 'Failed to copy trade grid');
-        setDropdownOpen(dom.copyDropdown, dom.copyToggle, false);
-    });
-
-    /* Share */
-    dom.shareBtn.addEventListener('click', () => {
-        const code = compressCollection(baseSprites, state.obtained, state.mastered);
-        const url = `${location.origin}${location.pathname}?c=${code}`;
-        copyText(url, 'Share link copied to clipboard!', 'Failed to copy link');
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') closeMenus({ restoreFocus: true });
+        if (event.key === '/' && !event.target.matches('input, select, textarea')) {
+            event.preventDefault();
+            dom.searchInput.focus();
+        }
     });
 }
 
-/* ===================================================
-   Initialization
-   =================================================== */
-
-function init() {
-    if (typeof baseSprites === 'undefined') {
-        console.error('baseSprites is not defined.');
+function readSharedCollection() {
+    const params = new URLSearchParams(location.search);
+    const current = params.get('share');
+    const legacy = params.get('c');
+    const shared = current
+        ? decodeShare(current)
+        : legacy
+            ? decodeLegacyShare(legacy, catalog.sprites)
+            : null;
+    if (!shared) {
+        if (current || legacy) {
+            dom.sharedBanner.hidden = false;
+            dom.sharedBanner.classList.add('is-error');
+            dom.sharedBanner.querySelector('span').textContent = 'This shared collection link is invalid.';
+        }
         return;
     }
 
-    const params = new URLSearchParams(location.search);
-    const shareCode = params.get('c');
-
-    if (shareCode) {
-        state.viewMode = true;
-        const decoded = decompressCollection(baseSprites, shareCode);
-        state.obtained = decoded.obtained;
-        state.mastered = decoded.mastered;
-        dom.viewBanner.hidden = false;
-    } else {
-        load();
-    }
-
-    populateThemeFilter();
-    applyStateToDOM();
-    renderGrid();
-    bindEvents();
+    store.replaceCollection(shared.owned, shared.mastered, { viewOnly: true });
+    store.state.filters = { search: '', theme: 'all', status: 'all' };
+    store.state.settings.hideMastered = false;
+    store.state.settings.showUnreleased = false;
+    dom.sharedBanner.hidden = false;
+    dom.shareButton.hidden = true;
+    dom.moreMenu.hidden = true;
 }
 
-init();
+function showStartupError(error) {
+    console.error('Unable to start Sprites Tracker.', error);
+    const shell = document.querySelector('.app-shell') || document.body;
+    shell.replaceChildren();
+    const message = document.createElement('main');
+    message.className = 'fatal-state';
+    message.innerHTML = `
+        <strong>Unable to load the sprite catalog</strong>
+        <span>Refresh the page or try again later.</span>`;
+    shell.appendChild(message);
+}
+
+function start() {
+    try {
+        catalog = createCatalog(rawSprites);
+        store = new TrackerStore(catalog.ids);
+        installIcons();
+        populateThemes();
+        readSharedCollection();
+        store.subscribe(handleStoreChange);
+        bindCollectionEvents();
+        bindControlEvents();
+        render();
+    } catch (error) {
+        showStartupError(error);
+    }
+}
+
+start();
