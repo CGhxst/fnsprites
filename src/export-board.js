@@ -214,6 +214,10 @@ function modeHasContent(sprite, mode, store) {
     return cardState(sprite, mode, store) !== 'hidden';
 }
 
+export function exportThemes(mode, catalog, store) {
+    return activeThemes(catalog.released.filter(sprite => modeHasContent(sprite, mode, store)));
+}
+
 function downloadCanvas(canvas, filename) {
     return new Promise((resolve, reject) => {
         canvas.toBlob(blob => {
@@ -254,8 +258,11 @@ export async function exportBoard(mode, catalog, store, toast) {
     toast('Building your image…');
     if (document.fonts?.ready) await document.fonts.ready;
 
-    const themes = activeThemes(sprites);
     const relevantSprites = sprites.filter(sprite => modeHasContent(sprite, mode, store));
+    // Keep the board compact: a theme should only get a column when at least one
+    // card in this particular export can be shown in it. Using the full catalog
+    // here left blank columns in filtered collection/mastery exports.
+    const themes = exportThemes(mode, catalog, store);
     const images = new Map(await Promise.all([
         loadImage('brand', 'sprites/air_basic.png'),
         ...relevantSprites.map(sprite => loadImage(sprite.id, `sprites/${encodeURIComponent(sprite.id)}.png`)),
@@ -437,22 +444,32 @@ export function tradeGrid(catalog, store) {
     const sprites = catalog.released;
     const themes = activeThemes(sprites);
     const families = familyMap(sprites);
+    const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
+    const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
     const lines = [
-        'SPRITES TRACKER  [x] owned  [*] mastered  [ ] missing',
+        '```',
+        '✅ Owned  👑 Mastered  ❌ Missing',
         '',
-        `SPRITE | ${themes.map(exportTheme).join(' | ')}`,
+        `| ${themes.map(exportTheme).join(' | ')} | Sprite`,
+        '-----------------------',
     ];
 
     for (const [key, variants] of families) {
         const states = themes.map(theme => {
             const sprite = variants.get(theme);
-            if (!sprite) return '-';
-            if (store.isMastered(sprite.id)) return '*';
-            return store.isOwned(sprite.id) ? 'x' : ' ';
+            if (!sprite) return '⬛';
+            if (store.isMastered(sprite.id)) return '👑';
+            return store.isOwned(sprite.id) ? '✅' : '❌';
         });
-        lines.push(`${catalog.familyName(key)} | ${states.join(' | ')}`);
+        lines.push(`| ${states.join(' | ')} | ${catalog.familyName(key)}`);
     }
-    lines.push('', TRACKER_URL);
+    lines.push(
+        '',
+        `Collected: ${owned}/${sprites.length}`,
+        `Mastered: ${mastered}/${sprites.length}`,
+        `Track yours: ${TRACKER_URL}`,
+        '```',
+    );
     return lines.join('\n');
 }
 
