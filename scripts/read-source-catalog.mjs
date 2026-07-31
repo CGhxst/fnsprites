@@ -1,6 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { parse } from 'acorn';
 
+export function normalizeSourceCatalog(source) {
+    return `${source
+        .replace(/\r\n?/g, '\n')
+        .replace(/[ \t]+$/gm, '')
+        .trimEnd()}\n`;
+}
+
 function readLiteral(node, location) {
     if (node?.type === 'Literal') return node.value;
 
@@ -12,6 +19,7 @@ function readLiteral(node, location) {
     }
 
     if (node?.type === 'ObjectExpression') {
+        const keys = new Set();
         return Object.fromEntries(node.properties.map(property => {
             if (
                 property.type !== 'Property'
@@ -24,6 +32,8 @@ function readLiteral(node, location) {
             }
             const key = property.key.type === 'Identifier' ? property.key.name : property.key.value;
             if (typeof key !== 'string') throw new TypeError(`${location} contains an invalid key.`);
+            if (keys.has(key)) throw new TypeError(`${location} contains duplicate key "${key}".`);
+            keys.add(key);
             return [key, readLiteral(property.value, `${location}.${key}`)];
         }));
     }

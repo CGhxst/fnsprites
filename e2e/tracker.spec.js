@@ -1,6 +1,13 @@
 import { expect, test as base } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { createCatalog, familyMap } from '../src/catalog.js';
+import { sprites } from '../src/generated/sprites.js';
 import { decodeShare, encodeShare } from '../src/share.js';
+
+const catalog = createCatalog(sprites);
+const releasedCount = catalog.released.length;
+const familyCount = familyMap(catalog.released).size;
+const quackSprite = catalog.released.find(sprite => sprite.theme === 'Quack');
 
 const test = base.extend({
     page: async ({ page }, use) => {
@@ -23,11 +30,21 @@ test.beforeEach(async ({ page }) => {
 
 test('renders the released catalog with valid interactive structure', async ({ page }) => {
     await expect(page).toHaveTitle('Fortnite Sprites Tracker');
-    await expect(page.locator('.sprite-card')).toHaveCount(93);
-    await expect(page.locator('.sprite-group')).toHaveCount(23);
+    await expect(page.locator('.sprite-card')).toHaveCount(releasedCount);
+    await expect(page.locator('.sprite-group')).toHaveCount(familyCount);
     await expect(page.locator('button button')).toHaveCount(0);
     await expect(page.locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
     await expect(page.locator('#groupOrder')).toHaveValue('sprite');
+    if (quackSprite) {
+        await expect(page.locator('#themeFilter option[value="Quack"]')).toHaveText('Quack');
+        await expect(page.locator(`[data-id="${quackSprite.id}"]`)).toHaveCSS('--card-top', '#788f35');
+    }
+    const unstyledSpecialCards = await page.locator('.rarity-Special .sprite-art').evaluateAll(elements =>
+        elements
+            .filter(element => getComputedStyle(element).backgroundImage === 'none')
+            .map(element => element.closest('.sprite-card')?.dataset.id),
+    );
+    expect(unstyledSpecialCards).toEqual([]);
     const externalResources = await page.evaluate(() =>
         performance.getEntriesByType('resource')
             .map(entry => new URL(entry.name).origin)
@@ -50,11 +67,11 @@ test('owns, masters, filters, and restores a sprite', async ({ page }) => {
     const air = page.locator('[data-id="air_basic"]');
     await air.locator('.sprite-art').click();
     await expect(air).toHaveClass(/is-owned/);
-    await expect(page.locator('#collectionRatio')).toHaveText('1 / 93');
+    await expect(page.locator('#collectionRatio')).toHaveText(`1 / ${releasedCount}`);
 
     await air.locator('.mastery-button').click();
     await expect(air).toHaveClass(/is-mastered/);
-    await expect(page.locator('#masteryRatio')).toHaveText('1 / 93');
+    await expect(page.locator('#masteryRatio')).toHaveText(`1 / ${releasedCount}`);
 
     await page.reload();
     await expect(page.locator('[data-id="air_basic"]')).toHaveClass(/is-mastered/);
@@ -64,7 +81,10 @@ test('owns, masters, filters, and restores a sprite', async ({ page }) => {
 
 test('search is responsive and popovers restore keyboard focus', async ({ page }) => {
     await page.locator('#searchInput').fill('batman');
-    await expect(page.locator('.sprite-card')).toHaveCount(6);
+    const batmanCount = catalog.released.filter(sprite =>
+        `${sprite.name} ${sprite.theme} ${sprite.rarity}`.toLocaleLowerCase().includes('batman'),
+    ).length;
+    await expect(page.locator('.sprite-card')).toHaveCount(batmanCount);
 
     await page.locator('#moreToggle').click();
     await expect(page.locator('#copyTradeButton')).toBeFocused();
@@ -98,8 +118,8 @@ test('downloads, imports, and validates collection backups', async ({ page }) =>
             mastered: ['air_basic'],
         })),
     });
-    await expect(page.locator('#collectionRatio')).toHaveText('2 / 93');
-    await expect(page.locator('#masteryRatio')).toHaveText('1 / 93');
+    await expect(page.locator('#collectionRatio')).toHaveText(`2 / ${releasedCount}`);
+    await expect(page.locator('#masteryRatio')).toHaveText(`1 / ${releasedCount}`);
 
     await page.locator('#importInput').setInputFiles({
         name: 'invalid.json',
@@ -109,7 +129,7 @@ test('downloads, imports, and validates collection backups', async ({ page }) =>
     await expect(page.locator('.toast-error')).toContainText('not valid');
 });
 
-test('copies useful trade text and stable share links', async ({ page, context }) => {
+test('copies formatted trade exports and stable share links', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.locator('[data-id="air_basic"] .sprite-art').click();
 
@@ -118,6 +138,14 @@ test('copies useful trade text and stable share links', async ({ page, context }
     const tradeText = await page.evaluate(() => navigator.clipboard.readText());
     expect(tradeText).toContain('SPRITES TRACKER');
     expect(tradeText).toContain('Air: BASE');
+
+    await page.locator('#moreToggle').click();
+    await page.locator('#copyGridButton').click();
+    const tradeGrid = await page.evaluate(() => navigator.clipboard.readText());
+    expect(tradeGrid).toContain('✅ Owned  👑 Mastered  ❌ Missing  ⬛ Variant does not exist');
+    expect(tradeGrid).toMatch(/\| ✅ \|.*\| Air/);
+    expect(tradeGrid.startsWith('```')).toBe(true);
+    expect(tradeGrid.endsWith('```')).toBe(true);
 
     await page.locator('#shareButton').click();
     const shareText = await page.evaluate(() => navigator.clipboard.readText());
@@ -132,6 +160,9 @@ test('shows invalid shares and opens valid shares in view-only mode', async ({ p
     await page.goto('/?share=invalid!');
     await expect(page.locator('#sharedBanner')).toContainText('invalid');
     await expect(page.locator('#collectionTitle')).toHaveText('All sprites');
+
+    await page.goto('/?share=');
+    await expect(page.locator('#sharedBanner')).toContainText('invalid');
 
     const code = encodeShare({ owned: ['air_basic'], mastered: ['air_basic'] });
     expect(decodeShare(code)).toEqual({ owned: ['air_basic'], mastered: ['air_basic'] });
@@ -151,6 +182,7 @@ test('handles empty exports and downloads valid PNGs for every board mode', asyn
     await page.locator('[data-id="air_basic"] .mastery-button').click();
     await page.locator('[data-id="water_basic"] .sprite-art').click();
 
+    const widths = {};
     for (const mode of ['collected', 'missing', 'unmastered', 'mastered', 'trade']) {
         await page.locator('#exportToggle').click();
         const downloadPromise = page.waitForEvent('download');
@@ -169,10 +201,15 @@ test('handles empty exports and downloads valid PNGs for every board mode', asyn
         for await (const chunk of stream) chunks.push(chunk);
         const png = Buffer.concat(chunks);
         expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-        expect(png.readUInt32BE(16)).toBeGreaterThan(300);
+        widths[mode] = png.readUInt32BE(16);
+        expect(widths[mode]).toBeGreaterThan(200);
         expect(png.readUInt32BE(20)).toBeGreaterThan(200);
         await expect(page.locator('.toast-success')).toContainText('Image ready');
     }
+
+    expect(widths.collected).toBeLessThan(widths.trade);
+    expect(widths.unmastered).toBeLessThan(widths.trade);
+    expect(widths.mastered).toBeLessThan(widths.trade);
 });
 
 test('has no horizontal overflow at a 390px viewport', async ({ page }) => {

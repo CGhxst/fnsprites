@@ -17,6 +17,7 @@ export const THEME_ORDER = Object.freeze([
     'Galaxy',
     'Gem',
     'Holofoil',
+    'Quack',
     'Cube',
     'Rift',
 ]);
@@ -42,6 +43,34 @@ export const EXPORT_THEME_LABELS = Object.freeze({
     Basic: 'BASE',
     Candy: 'GUMMY',
 });
+
+const palette = (top, bottom) => Object.freeze([top, bottom]);
+
+const RARITY_PALETTES = Object.freeze({
+    Rare: palette('#12659d', '#08233d'),
+    Epic: palette('#71308d', '#271132'),
+    Legendary: palette('#925728', '#3b2109'),
+    Mythic: palette('#9d782c', '#3d2d09'),
+});
+
+const THEME_PALETTES = Object.freeze({
+    Basic: palette('#344354', '#121920'),
+    Gold: palette('#806523', '#292006'),
+    Candy: palette('#a03d6c', '#351020'),
+    Galaxy: palette('#493487', '#160d32'),
+    Gem: palette('#238273', '#092b27'),
+    Holofoil: palette('#43839a', '#102c38'),
+    Quack: palette('#788f35', '#202a0d'),
+    Cube: palette('#6434a3', '#210f3d'),
+    Rift: palette('#246f82', '#092731'),
+});
+
+export function spritePalette(sprite) {
+    if (sprite.rarity === 'Special') {
+        return THEME_PALETTES[sprite.theme] || THEME_PALETTES.Basic;
+    }
+    return RARITY_PALETTES[sprite.rarity] || RARITY_PALETTES.Rare;
+}
 
 export const ICONS = Object.freeze({
     crown: `
@@ -71,4 +100,3 @@ export const ICONS = Object.freeze({
             <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
         </svg>`,
 });
-

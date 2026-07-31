@@ -1,10 +1,13 @@
 import assert from 'node:assert/strict';
-import { readdir } from 'node:fs/promises';
+import { open, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readSourceCatalog } from './read-source-catalog.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+const maxImageDimension = 8192;
+const maxImageBytes = 8 * 1024 * 1024;
 const dataPath = path.join(root, 'sprites-data.js');
 const spritesPath = path.join(root, 'sprites');
 const sprites = await readSourceCatalog(dataPath);
@@ -26,9 +29,39 @@ for (const [index, sprite] of sprites.entries()) {
     ids.add(sprite.id);
 }
 
-const imageFiles = (await readdir(spritesPath))
-    .filter(file => file.toLowerCase().endsWith('.png'));
+const spriteEntries = await readdir(spritesPath, { withFileTypes: true });
+const unexpectedEntries = spriteEntries
+    .filter(entry => !entry.isFile() || !entry.name.toLowerCase().endsWith('.png'))
+    .map(entry => entry.name);
+assert.deepEqual(unexpectedEntries, [], `unsupported entries in sprites/: ${unexpectedEntries.join(', ')}`);
+
+const imageFiles = spriteEntries.map(entry => entry.name);
 const imageIds = new Set(imageFiles.map(file => path.basename(file, path.extname(file))));
+assert.equal(imageIds.size, imageFiles.length, 'sprite image ids must be unique');
+
+for (const file of imageFiles) {
+    const imagePath = path.join(spritesPath, file);
+    const fileInfo = await stat(imagePath);
+    assert.ok(fileInfo.size <= maxImageBytes, `sprite image exceeds ${maxImageBytes} bytes: ${file}`);
+    const header = Buffer.alloc(24);
+    const handle = await open(imagePath, 'r');
+    let bytesRead;
+    try {
+        ({ bytesRead } = await handle.read(header, 0, header.length, 0));
+    } finally {
+        await handle.close();
+    }
+    assert.equal(bytesRead, header.length, `sprite image is truncated: ${file}`);
+    assert.ok(header.subarray(0, pngSignature.length).equals(pngSignature), `sprite image is not a PNG: ${file}`);
+    assert.equal(header.toString('ascii', 12, 16), 'IHDR', `sprite image has no IHDR header: ${file}`);
+    const width = header.readUInt32BE(16);
+    const height = header.readUInt32BE(20);
+    assert.ok(width > 0 && height > 0, `sprite image has invalid dimensions: ${file}`);
+    assert.ok(
+        width <= maxImageDimension && height <= maxImageDimension,
+        `sprite image exceeds ${maxImageDimension}px: ${file}`,
+    );
+}
 
 const missingImages = [...ids].filter(id => !imageIds.has(id));
 const orphanedImages = [...imageIds].filter(id => !ids.has(id));

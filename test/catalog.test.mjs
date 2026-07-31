@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createCatalog, familyKey, groupSprites, sortSprites } from '../src/catalog.js';
+import { THEME_ORDER, spritePalette } from '../src/config.js';
 
 const sample = [
     { id: 'air_gold', name: 'Gold Air', theme: 'Gold', rarity: 'Special', unreleased: false },
@@ -31,4 +32,18 @@ test('sprite grouping keeps each family together in theme order', () => {
 test('catalog rejects duplicate ids', () => {
     assert.throws(() => createCatalog([sample[0], sample[0]]), /Duplicate sprite id/);
     assert.throws(() => createCatalog([]), /must not be empty/);
+});
+
+test('new and unknown themes keep stable ordering, naming, and palettes', () => {
+    const quackCatalog = createCatalog([
+        { id: 'duck_quack', name: 'Quack Duck', theme: 'Quack', rarity: 'Special', unreleased: false },
+    ]);
+    assert.ok(THEME_ORDER.indexOf('Quack') > THEME_ORDER.indexOf('Holofoil'));
+    assert.ok(THEME_ORDER.indexOf('Quack') < THEME_ORDER.indexOf('Cube'));
+    assert.equal(quackCatalog.familyName('duck'), 'Duck');
+    assert.deepEqual(spritePalette(quackCatalog.sprites[0]), ['#788f35', '#202a0d']);
+    assert.deepEqual(
+        spritePalette({ theme: 'Future', rarity: 'Special' }),
+        spritePalette({ theme: 'Basic', rarity: 'Special' }),
+    );
 });

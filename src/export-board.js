@@ -1,4 +1,4 @@
-import { TRACKER_URL } from './config.js';
+import { TRACKER_URL, spritePalette } from './config.js';
 import { activeThemes, exportTheme, familyMap } from './catalog.js';
 
 const MODE_CONFIG = Object.freeze({
@@ -34,27 +34,12 @@ const MODE_CONFIG = Object.freeze({
     },
 });
 
-const CARD_COLORS = Object.freeze({
-    Rare: ['#11629a', '#07233d'],
-    Epic: ['#6d2c87', '#25102f'],
-    Legendary: ['#8d5423', '#392009'],
-    Mythic: ['#9a7428', '#3b2b08'],
-});
-
-const THEME_COLORS = Object.freeze({
-    Basic: ['#334152', '#111820'],
-    Gold: ['#806523', '#292006'],
-    Candy: ['#a03d6c', '#351020'],
-    Galaxy: ['#493487', '#160d32'],
-    Gem: ['#238273', '#092b27'],
-    Holofoil: ['#43839a', '#102c38'],
-    Cube: ['#6434a3', '#210f3d'],
-    Rift: ['#246f82', '#092731'],
-});
-
 const LAYOUT = Object.freeze({
     outer: 18,
     header: 116,
+    compactHeader: 130,
+    compactTradeHeader: 158,
+    compactHeaderBreakpoint: 560,
     footer: 48,
     labelWidth: 116,
     cardWidth: 82,
@@ -146,9 +131,7 @@ function drawCard(ctx, sprite, state, image, x, y) {
         return;
     }
 
-    const [top, bottom] = sprite.rarity === 'Special'
-        ? THEME_COLORS[sprite.theme] || THEME_COLORS.Basic
-        : CARD_COLORS[sprite.rarity] || CARD_COLORS.Rare;
+    const [top, bottom] = spritePalette(sprite);
     const imageHeight = LAYOUT.cardHeight - 22;
     const muted = state === 'missing';
 
@@ -214,6 +197,15 @@ function modeHasContent(sprite, mode, store) {
     return cardState(sprite, mode, store) !== 'hidden';
 }
 
+export function exportThemes(sprites, mode, store) {
+    return activeThemes(sprites.filter(sprite => modeHasContent(sprite, mode, store)));
+}
+
+export function exportHeaderHeight(canvasWidth, mode) {
+    if (canvasWidth >= LAYOUT.compactHeaderBreakpoint) return LAYOUT.header;
+    return mode === 'trade' ? LAYOUT.compactTradeHeader : LAYOUT.compactHeader;
+}
+
 function downloadCanvas(canvas, filename) {
     return new Promise((resolve, reject) => {
         canvas.toBlob(blob => {
@@ -254,8 +246,8 @@ export async function exportBoard(mode, catalog, store, toast) {
     toast('Building your image…');
     if (document.fonts?.ready) await document.fonts.ready;
 
-    const themes = activeThemes(sprites);
     const relevantSprites = sprites.filter(sprite => modeHasContent(sprite, mode, store));
+    const themes = exportThemes(sprites, mode, store);
     const images = new Map(await Promise.all([
         loadImage('brand', 'sprites/air_basic.png'),
         ...relevantSprites.map(sprite => loadImage(sprite.id, `sprites/${encodeURIComponent(sprite.id)}.png`)),
@@ -274,11 +266,13 @@ export async function exportBoard(mode, catalog, store, toast) {
     const canvasWidth = LAYOUT.outer * 2
         + sectionWidth * sectionColumns
         + LAYOUT.sectionGap * Math.max(0, sectionColumns - 1);
+    const compactHeader = canvasWidth < LAYOUT.compactHeaderBreakpoint;
+    const headerHeight = exportHeaderHeight(canvasWidth, mode);
     const rowsHeight = rowsPerSection * LAYOUT.cardHeight
         + Math.max(0, rowsPerSection - 1) * LAYOUT.rowGap;
     const sectionHeight = LAYOUT.themeHeader + rowsHeight;
     const canvasHeight = LAYOUT.outer * 2
-        + LAYOUT.header
+        + headerHeight
         + sectionHeight * sectionRows
         + LAYOUT.sectionGap * Math.max(0, sectionRows - 1)
         + LAYOUT.footer;
@@ -300,26 +294,43 @@ export async function exportBoard(mode, catalog, store, toast) {
     ctx.fillRect(0, 0, canvasWidth, 5);
 
     const brandImage = images.get('brand');
-    if (brandImage) ctx.drawImage(brandImage, LAYOUT.outer, 25, 62, 62);
+    const brandSize = compactHeader ? 44 : 62;
+    const brandY = compactHeader ? 24 : 25;
+    if (brandImage) ctx.drawImage(brandImage, LAYOUT.outer, brandY, brandSize, brandSize);
 
+    const titleX = LAYOUT.outer + (compactHeader ? 56 : 76);
     ctx.fillStyle = '#f6f8fb';
-    ctx.font = '700 28px Oswald, sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
-    ctx.fillText('SPRITES TRACKER', LAYOUT.outer + 76, 53);
+    if (compactHeader) {
+        fitText(ctx, 'SPRITES TRACKER', canvasWidth - titleX - LAYOUT.outer, 20, 15);
+    } else {
+        ctx.font = '700 28px Oswald, sans-serif';
+    }
+    ctx.fillText('SPRITES TRACKER', titleX, compactHeader ? 43 : 53);
     ctx.fillStyle = config.accent;
-    ctx.font = '700 18px Oswald, sans-serif';
-    ctx.fillText(config.title, LAYOUT.outer + 76, 79);
+    ctx.font = `700 ${compactHeader ? 15 : 18}px Oswald, sans-serif`;
+    ctx.fillText(config.title, titleX, compactHeader ? 67 : 79);
 
     const total = sprites.length;
     const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
     const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#f6f8fb';
-    ctx.font = '600 15px system-ui, sans-serif';
-    ctx.fillText(`${owned}/${total} collected`, canvasWidth - LAYOUT.outer, 47);
-    ctx.fillStyle = '#9aa5b1';
-    ctx.fillText(`${mastered}/${total} mastered`, canvasWidth - LAYOUT.outer, 73);
+    if (compactHeader) {
+        ctx.font = '600 11px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#f6f8fb';
+        ctx.fillText(`${owned}/${total} collected`, LAYOUT.outer, 102);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#9aa5b1';
+        ctx.fillText(`${mastered}/${total} mastered`, canvasWidth - LAYOUT.outer, 102);
+    } else {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#f6f8fb';
+        ctx.font = '600 15px system-ui, sans-serif';
+        ctx.fillText(`${owned}/${total} collected`, canvasWidth - LAYOUT.outer, 47);
+        ctx.fillStyle = '#9aa5b1';
+        ctx.fillText(`${mastered}/${total} mastered`, canvasWidth - LAYOUT.outer, 73);
+    }
 
     if (mode === 'trade') {
         const legend = [
@@ -335,26 +346,26 @@ export async function exportBoard(mode, catalog, store, toast) {
             const labelWidth = ctx.measureText(label).width;
             legendX -= labelWidth;
             ctx.fillStyle = '#9aa5b1';
-            ctx.fillText(label, legendX, 96);
+            ctx.fillText(label, legendX, compactHeader ? 128 : 96);
             legendX -= 12;
             ctx.fillStyle = color;
-            ctx.fillRect(legendX, 92, 7, 7);
+            ctx.fillRect(legendX, compactHeader ? 124 : 92, 7, 7);
             legendX -= 14;
         }
     }
 
     ctx.strokeStyle = 'rgba(255,255,255,.12)';
     ctx.beginPath();
-    ctx.moveTo(LAYOUT.outer, LAYOUT.outer + LAYOUT.header - 10);
-    ctx.lineTo(canvasWidth - LAYOUT.outer, LAYOUT.outer + LAYOUT.header - 10);
+    ctx.moveTo(LAYOUT.outer, LAYOUT.outer + headerHeight - 10);
+    ctx.lineTo(canvasWidth - LAYOUT.outer, LAYOUT.outer + headerHeight - 10);
     ctx.stroke();
 
     for (let sectionIndex = 0; sectionIndex < sectionCount; sectionIndex += 1) {
         const sectionColumn = sectionIndex % sectionColumns;
         const sectionRow = Math.floor(sectionIndex / sectionColumns);
         const startX = LAYOUT.outer + sectionColumn * (sectionWidth + LAYOUT.sectionGap);
-        const startY = LAYOUT.outer
-            + LAYOUT.header
+            const startY = LAYOUT.outer
+            + headerHeight
             + sectionRow * (sectionHeight + LAYOUT.sectionGap)
             + LAYOUT.themeHeader;
 
@@ -437,22 +448,33 @@ export function tradeGrid(catalog, store) {
     const sprites = catalog.released;
     const themes = activeThemes(sprites);
     const families = familyMap(sprites);
+    const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
+    const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
+    const header = `| ${themes.map(exportTheme).join(' | ')} | Sprite`;
     const lines = [
-        'SPRITES TRACKER  [x] owned  [*] mastered  [ ] missing',
+        '```',
+        '✅ Owned  👑 Mastered  ❌ Missing  ⬛ Variant does not exist',
         '',
-        `SPRITE | ${themes.map(exportTheme).join(' | ')}`,
+        header,
+        '-'.repeat(header.length),
     ];
 
     for (const [key, variants] of families) {
         const states = themes.map(theme => {
             const sprite = variants.get(theme);
-            if (!sprite) return '-';
-            if (store.isMastered(sprite.id)) return '*';
-            return store.isOwned(sprite.id) ? 'x' : ' ';
+            if (!sprite) return '⬛';
+            if (store.isMastered(sprite.id)) return '👑';
+            return store.isOwned(sprite.id) ? '✅' : '❌';
         });
-        lines.push(`${catalog.familyName(key)} | ${states.join(' | ')}`);
+        lines.push(`| ${states.join(' | ')} | ${catalog.familyName(key)}`);
     }
-    lines.push('', TRACKER_URL);
+    lines.push(
+        '',
+        `Collected: ${owned}/${sprites.length}`,
+        `Mastered: ${mastered}/${sprites.length}`,
+        `Track yours: ${TRACKER_URL}`,
+        '```',
+    );
     return lines.join('\n');
 }
 

@@ -25,19 +25,9 @@
     --pink: #ff4f87;
     --yellow: #ffd43b;
     --blue: #70c7ff;
-    --danger: #ff6a72;
     --radius: 6px;
     --page-gutter: clamp(12px, 2.2vw, 30px);
     --transition: 140ms ease;
-
-    --rare: #12659d;
-    --rare-deep: #08233d;
-    --epic: #71308d;
-    --epic-deep: #271132;
-    --legendary: #925728;
-    --legendary-deep: #3b2109;
-    --mythic: #9d782c;
-    --mythic-deep: #3d2d09;
 }
 
 /* Reset and document defaults */
@@ -679,6 +669,7 @@ a {
     place-items: center;
     width: 100%;
     padding: 0;
+    background: linear-gradient(180deg, var(--card-top, #344354), var(--card-bottom, #121920));
     border: 0;
     overflow: hidden;
     color: inherit;
@@ -704,54 +695,6 @@ a {
     width: 84%;
     height: 84%;
     object-fit: contain;
-}
-
-.rarity-Rare .sprite-art {
-    background: linear-gradient(180deg, var(--rare), var(--rare-deep));
-}
-
-.rarity-Epic .sprite-art {
-    background: linear-gradient(180deg, var(--epic), var(--epic-deep));
-}
-
-.rarity-Legendary .sprite-art {
-    background: linear-gradient(180deg, var(--legendary), var(--legendary-deep));
-}
-
-.rarity-Mythic .sprite-art {
-    background: linear-gradient(180deg, var(--mythic), var(--mythic-deep));
-}
-
-.rarity-Special.theme-Basic .sprite-art {
-    background: linear-gradient(180deg, #344354, #121920);
-}
-
-.rarity-Special.theme-Gold .sprite-art {
-    background: linear-gradient(180deg, #806523, #292006);
-}
-
-.rarity-Special.theme-Candy .sprite-art {
-    background: linear-gradient(180deg, #a03d6c, #351020);
-}
-
-.rarity-Special.theme-Galaxy .sprite-art {
-    background: linear-gradient(180deg, #493487, #160d32);
-}
-
-.rarity-Special.theme-Gem .sprite-art {
-    background: linear-gradient(180deg, #238273, #092b27);
-}
-
-.rarity-Special.theme-Holofoil .sprite-art {
-    background: linear-gradient(180deg, #43839a, #102c38);
-}
-
-.rarity-Special.theme-Cube .sprite-art {
-    background: linear-gradient(180deg, #6434a3, #210f3d);
-}
-
-.rarity-Special.theme-Rift .sprite-art {
-    background: linear-gradient(180deg, #246f82, #092731);
 }
 
 .card-state {

@@ -44,6 +44,13 @@ export const sprites = [
         "unreleased": false
     },
     {
+        "id": "water_quack",
+        "name": "Quack Water",
+        "theme": "Quack",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
         "id": "earth_basic",
         "name": "Earth",
         "theme": "Basic",
@@ -86,6 +93,13 @@ export const sprites = [
         "unreleased": false
     },
     {
+        "id": "earth_quack",
+        "name": "Quack Earth",
+        "theme": "Quack",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
         "id": "fire_basic",
         "name": "Fire",
         "theme": "Basic",
@@ -124,6 +138,13 @@ export const sprites = [
         "id": "fire_rift",
         "name": "Cube Fire",
         "theme": "Cube",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "fire_quack",
+        "name": "Quack Fire",
+        "theme": "Quack",
         "rarity": "Special",
         "unreleased": false
     },
@@ -381,10 +402,24 @@ export const sprites = [
     },
     {
         "id": "zeropoint_holofoil",
-        "name": "Quack Zero Point",
+        "name": "Holofoil Zero Point",
         "theme": "Holofoil",
         "rarity": "Special",
-        "unreleased": true
+        "unreleased": false
+    },
+    {
+        "id": "zeropoint_quack",
+        "name": "Quack Zero Point",
+        "theme": "Quack",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "zeropoint_rift",
+        "name": "Cube Zero Point",
+        "theme": "Cube",
+        "rarity": "Special",
+        "unreleased": false
     },
     {
         "id": "theburntpeanut_basic",
@@ -562,6 +597,20 @@ export const sprites = [
         "unreleased": false
     },
     {
+        "id": "grim_gem",
+        "name": "Gem Grim",
+        "theme": "Gem",
+        "rarity": "Special",
+        "unreleased": true
+    },
+    {
+        "id": "grim_holofoil",
+        "name": "Holofoil Grim",
+        "theme": "Holofoil",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
         "id": "grim_rift",
         "name": "Cube Grim",
         "theme": "Cube",
@@ -695,13 +744,6 @@ export const sprites = [
         "unreleased": false
     },
     {
-        "id": "peely_basic",
-        "name": "Peely",
-        "theme": "Basic",
-        "rarity": "Rare",
-        "unreleased": false
-    },
-    {
         "id": "llama_basic",
         "name": "Llama",
         "theme": "Basic",
@@ -709,10 +751,80 @@ export const sprites = [
         "unreleased": false
     },
     {
+        "id": "llama_gold",
+        "name": "Gold Llama",
+        "theme": "Gold",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "llama_candy",
+        "name": "Gummy Llama",
+        "theme": "Candy",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "llama_galaxy",
+        "name": "Galaxy Llama",
+        "theme": "Galaxy",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "llama_gem",
+        "name": "Gem Llama",
+        "theme": "Gem",
+        "rarity": "Special",
+        "unreleased": true
+    },
+    {
+        "id": "peely_basic",
+        "name": "Peely",
+        "theme": "Basic",
+        "rarity": "Legendary",
+        "unreleased": false
+    },
+    {
+        "id": "peely_gold",
+        "name": "Gold Peely",
+        "theme": "Gold",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "peely_candy",
+        "name": "Gummy Peely",
+        "theme": "Candy",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "peely_galaxy",
+        "name": "Galaxy Peely",
+        "theme": "Galaxy",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "peely_holofoil",
+        "name": "Holofoil Peely",
+        "theme": "Holofoil",
+        "rarity": "Special",
+        "unreleased": false
+    },
+    {
+        "id": "ironmouse_basic",
+        "name": "Ironmouse",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": true
+    },
+    {
         "id": "wick_basic",
         "name": "John Wick",
         "theme": "Basic",
         "rarity": "Mythic",
-        "unreleased": true
+        "unreleased": false
     }
 ];

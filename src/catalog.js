@@ -54,7 +54,7 @@ export function createCatalog(rawSprites) {
     for (const sprite of sprites) {
         const key = familyKey(sprite);
         if (sprite.theme === 'Basic' || !familyNames.has(key)) {
-            familyNames.set(key, sprite.name.replace(/^(Gold|Gummy|Galaxy|Gem|Holofoil|Cube|Rift)\s+/i, ''));
+            familyNames.set(key, sprite.name.replace(/^(Gold|Gummy|Galaxy|Gem|Holofoil|Quack|Cube|Rift)\s+/i, ''));
         }
     }
 

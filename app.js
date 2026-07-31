@@ -1,6 +1,6 @@
 import { createCatalog, activeThemes, displayTheme, groupSprites, sortSprites } from './src/catalog.js';
 import { parseBackup } from './src/backup.js';
-import { GROUP_METHODS, ICONS, STATUS_FILTERS } from './src/config.js';
+import { GROUP_METHODS, ICONS, STATUS_FILTERS, spritePalette } from './src/config.js';
 import { downloadBackup, exportBoard, tradeGrid, tradeList } from './src/export-board.js';
 import { decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
 import { TrackerStore } from './src/store.js';
@@ -104,6 +104,7 @@ function cardMarkup(sprite) {
     const owned = store.isOwned(sprite.id);
     const mastered = store.isMastered(sprite.id);
     const safeName = escapeHtml(sprite.name);
+    const [cardTop, cardBottom] = spritePalette(sprite);
     const classes = [
         'sprite-card',
         `rarity-${sprite.rarity}`,
@@ -130,7 +131,8 @@ function cardMarkup(sprite) {
             </button>`;
 
     return `
-        <article class="${classes}" data-id="${escapeHtml(sprite.id)}">
+        <article class="${classes}" data-id="${escapeHtml(sprite.id)}"
+                style="--card-top: ${cardTop}; --card-bottom: ${cardBottom}">
             ${art}
             ${masteryButton}
             <div class="sprite-name">
@@ -403,15 +405,17 @@ function bindControlEvents() {
 
 function readSharedCollection() {
     const params = new URLSearchParams(location.search);
+    const hasCurrent = params.has('share');
+    const hasLegacy = params.has('c');
     const current = params.get('share');
     const legacy = params.get('c');
-    const shared = current
+    const shared = hasCurrent
         ? decodeShare(current)
-        : legacy
+        : hasLegacy
             ? decodeLegacyShare(legacy, catalog.sprites)
             : null;
     if (!shared) {
-        if (current || legacy) {
+        if (hasCurrent || hasLegacy) {
             dom.sharedBanner.hidden = false;
             dom.sharedBanner.classList.add('is-error');
             dom.sharedBanner.querySelector('span').textContent = 'This shared collection link is invalid.';

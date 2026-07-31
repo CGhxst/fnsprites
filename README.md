@@ -29,8 +29,8 @@ npm run check
 
 The scheduled sync imports only `sprites-data.js` and `sprites/` from upstream,
 parses the data without executing it, regenerates the application module, and
-validates data/image parity. It never merges upstream application code or site
-assets.
+validates data and image integrity. It never merges upstream application code
+or site assets.
 
 The bundled Oswald font is distributed under the SIL Open Font License in
 `fonts/OFL.txt`.
