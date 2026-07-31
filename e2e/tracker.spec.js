@@ -39,7 +39,7 @@ test('renders the released catalog with valid interactive structure', async ({ p
         await expect(page.locator('#themeFilter option[value="Quack"]')).toHaveText('Quack');
         await expect(page.locator(`[data-id="${quackSprite.id}"]`)).toHaveCSS('--card-top', '#788f35');
     }
-    const unstyledSpecialCards = await page.locator('.rarity-Special .sprite-art').evaluateAll(elements =>
+    const unstyledSpecialCards = await page.locator('.is-special-rarity .sprite-art').evaluateAll(elements =>
         elements
             .filter(element => getComputedStyle(element).backgroundImage === 'none')
             .map(element => element.closest('.sprite-card')?.dataset.id),
@@ -87,7 +87,7 @@ test('search is responsive and popovers restore keyboard focus', async ({ page }
     await expect(page.locator('.sprite-card')).toHaveCount(batmanCount);
 
     await page.locator('#moreToggle').click();
-    await expect(page.locator('#copyTradeButton')).toBeFocused();
+    await expect(page.locator('#copyGridButton')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.locator('#moreToggle')).toBeFocused();
     await expect(page.locator('#moreToggle')).toHaveAttribute('aria-expanded', 'false');
@@ -129,15 +129,9 @@ test('downloads, imports, and validates collection backups', async ({ page }) =>
     await expect(page.locator('.toast-error')).toContainText('not valid');
 });
 
-test('copies formatted trade exports and stable share links', async ({ page, context }) => {
+test('copies the formatted trade grid and stable share links', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.locator('[data-id="air_basic"] .sprite-art').click();
-
-    await page.locator('#moreToggle').click();
-    await page.locator('#copyTradeButton').click();
-    const tradeText = await page.evaluate(() => navigator.clipboard.readText());
-    expect(tradeText).toContain('SPRITES TRACKER');
-    expect(tradeText).toContain('Air: BASE');
 
     await page.locator('#moreToggle').click();
     await page.locator('#copyGridButton').click();
@@ -221,4 +215,17 @@ test('has no horizontal overflow at a 390px viewport', async ({ page }) => {
         body: document.body.scrollWidth,
     }));
     expect(dimensions).toEqual({ viewport: 390, page: 390, body: 390 });
+
+    for (const selector of ['#exportToggle', '#shareButton', '#moreToggle']) {
+        const centers = await page.locator(selector).evaluate(button => {
+            const buttonBox = button.getBoundingClientRect();
+            const iconBox = button.querySelector('svg').getBoundingClientRect();
+            return {
+                horizontal: (iconBox.left + iconBox.width / 2) - (buttonBox.left + buttonBox.width / 2),
+                vertical: (iconBox.top + iconBox.height / 2) - (buttonBox.top + buttonBox.height / 2),
+            };
+        });
+        expect(Math.abs(centers.horizontal)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(centers.vertical)).toBeLessThanOrEqual(0.5);
+    }
 });

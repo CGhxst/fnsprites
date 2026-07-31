@@ -419,31 +419,6 @@ export async function exportBoard(mode, catalog, store, toast) {
     toast('Image ready.', 'success');
 }
 
-export function tradeList(catalog, store) {
-    const sprites = catalog.released;
-    const families = familyMap(sprites);
-    const linesFor = predicate => [...families.entries()].flatMap(([key, themes]) => {
-        const matches = [...themes.values()].filter(predicate);
-        if (!matches.length) return [];
-        return `${catalog.familyName(key)}: ${matches.map(sprite => exportTheme(sprite.theme)).join(', ')}`;
-    });
-    const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
-    const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
-
-    return [
-        'SPRITES TRACKER',
-        '',
-        'LOOKING FOR',
-        ...linesFor(sprite => !store.isOwned(sprite.id)),
-        '',
-        'HAVE',
-        ...linesFor(sprite => store.isOwned(sprite.id)),
-        '',
-        `Collected ${owned}/${sprites.length} | Mastered ${mastered}/${sprites.length}`,
-        TRACKER_URL,
-    ].join('\n');
-}
-
 export function tradeGrid(catalog, store) {
     const sprites = catalog.released;
     const themes = activeThemes(sprites);

@@ -781,7 +781,7 @@ a {
     text-transform: uppercase;
 }
 
-.rarity-Special .rarity-tag {
+.is-special-rarity .rarity-tag {
     background: linear-gradient(90deg, var(--mint), var(--pink));
     color: #09100e;
 }
@@ -996,18 +996,29 @@ a {
 
     .action-button {
         width: 42px;
+        height: 42px;
         min-width: 42px;
         padding: 0;
-        font-size: 0;
     }
 
+    .action-button .button-label,
     .action-button .chevron {
         display: none;
     }
 
+    .icon-button {
+        width: 42px;
+        height: 42px;
+    }
+
     .button-icon {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
+    }
+
+    .icon-button span {
+        width: 20px;
+        height: 20px;
     }
 
     .menu-popover {

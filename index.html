@@ -98,35 +98,36 @@
                     <div class="menu" id="exportMenu">
                         <button type="button" class="action-button" id="exportToggle" aria-expanded="false" aria-controls="exportPopover">
                             <span class="button-icon" id="exportIcon" aria-hidden="true"></span>
-                            Export
+                            <span class="button-label">Export</span>
                             <span class="chevron" id="exportChevron" aria-hidden="true"></span>
                         </button>
                         <div class="menu-popover" id="exportPopover" aria-label="Export image boards">
                             <p class="menu-label">Image boards</p>
+                            <button type="button" data-export="trade">Trade board</button>
+                            <div class="menu-divider"></div>
                             <button type="button" data-export="collected">Collection</button>
                             <button type="button" data-export="missing">Missing</button>
                             <button type="button" data-export="unmastered">To master</button>
                             <button type="button" data-export="mastered">Mastered</button>
-                            <button type="button" data-export="trade">Trade board</button>
                         </div>
                     </div>
 
                     <button type="button" class="action-button action-primary" id="shareButton">
                         <span class="button-icon" id="shareIcon" aria-hidden="true"></span>
-                        Share
+                        <span class="button-label">Share</span>
                     </button>
 
                     <div class="menu" id="moreMenu">
-                        <button type="button" class="icon-button" id="moreToggle" aria-label="More collection tools" aria-expanded="false" aria-controls="morePopover">
+                        <button type="button" class="icon-button" id="moreToggle" aria-label="More tracker tools" aria-expanded="false" aria-controls="morePopover">
                             <span id="moreIcon" aria-hidden="true"></span>
                         </button>
-                        <div class="menu-popover" id="morePopover" aria-label="More collection tools">
-                            <p class="menu-label">Collection tools</p>
-                            <button type="button" id="copyTradeButton">Copy trade list</button>
-                            <button type="button" id="copyGridButton">Copy text grid</button>
+                        <div class="menu-popover" id="morePopover" aria-label="More tracker tools">
+                            <p class="menu-label">More tools</p>
+                            <button type="button" id="copyGridButton">Copy trade grid</button>
                             <div class="menu-divider"></div>
                             <button type="button" id="backupButton">Download backup</button>
                             <button type="button" id="importButton">Import backup</button>
+                            <div class="menu-divider"></div>
                             <label class="menu-toggle">
                                 <input type="checkbox" id="lowFidelity">
                                 <span>Reduce visual effects</span>

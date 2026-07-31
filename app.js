@@ -1,7 +1,7 @@
 import { createCatalog, activeThemes, displayTheme, groupSprites, sortSprites } from './src/catalog.js';
 import { parseBackup } from './src/backup.js';
 import { GROUP_METHODS, ICONS, STATUS_FILTERS, spritePalette } from './src/config.js';
-import { downloadBackup, exportBoard, tradeGrid, tradeList } from './src/export-board.js';
+import { downloadBackup, exportBoard, tradeGrid } from './src/export-board.js';
 import { decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
 import { TrackerStore } from './src/store.js';
 import { sprites as rawSprites } from './src/generated/sprites.js';
@@ -27,7 +27,6 @@ const dom = {
     shareButton: document.querySelector('#shareButton'),
     moreMenu: document.querySelector('#moreMenu'),
     moreToggle: document.querySelector('#moreToggle'),
-    copyTradeButton: document.querySelector('#copyTradeButton'),
     copyGridButton: document.querySelector('#copyGridButton'),
     backupButton: document.querySelector('#backupButton'),
     importButton: document.querySelector('#importButton'),
@@ -107,8 +106,7 @@ function cardMarkup(sprite) {
     const [cardTop, cardBottom] = spritePalette(sprite);
     const classes = [
         'sprite-card',
-        `rarity-${sprite.rarity}`,
-        `theme-${sprite.theme}`,
+        sprite.rarity === 'Special' ? 'is-special-rarity' : '',
         owned ? 'is-owned' : 'is-missing',
         mastered ? 'is-mastered' : '',
         sprite.unreleased ? 'is-unreleased' : '',
@@ -183,11 +181,13 @@ function renderCollection() {
     dom.resultCount.textContent = `${sorted.length} shown`;
     dom.emptyState.hidden = sorted.length !== 0;
 
-    dom.spriteGroups.innerHTML = groups.map(group => `
-        <section class="sprite-group" aria-labelledby="group-${escapeHtml(group.key)}">
+    dom.spriteGroups.innerHTML = groups.map((group, index) => `
+        <section class="sprite-group" ${showGroupLabels
+            ? `aria-labelledby="sprite-group-${index}"`
+            : `aria-label="${escapeHtml(group.label)}"`}>
             ${showGroupLabels ? `
                 <div class="group-heading">
-                    <h2 id="group-${escapeHtml(group.key)}">${escapeHtml(group.label)}</h2>
+                    <h2 id="sprite-group-${index}">${escapeHtml(group.label)}</h2>
                     <span>${group.sprites.length}</span>
                 </div>` : ''}
             <div class="sprite-grid">
@@ -355,13 +355,9 @@ function bindControlEvents() {
         url.searchParams.set('share', code);
         copyText(url.toString(), 'Share link copied.');
     });
-    dom.copyTradeButton.addEventListener('click', () => {
-        closeMenus({ restoreFocus: true });
-        copyText(tradeList(catalog, store), 'Trade list copied.');
-    });
     dom.copyGridButton.addEventListener('click', () => {
         closeMenus({ restoreFocus: true });
-        copyText(tradeGrid(catalog, store), 'Text grid copied.');
+        copyText(tradeGrid(catalog, store), 'Trade grid copied.');
     });
     dom.backupButton.addEventListener('click', () => {
         closeMenus({ restoreFocus: true });

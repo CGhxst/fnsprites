@@ -5,7 +5,6 @@ import {
     exportHeaderHeight,
     exportThemes,
     tradeGrid,
-    tradeList,
 } from '../src/export-board.js';
 
 const catalog = createCatalog([
@@ -17,13 +16,6 @@ const store = {
     isOwned: id => id === 'air_basic',
     isMastered: id => id === 'air_basic',
 };
-
-test('trade text describes owned and missing variants', () => {
-    const text = tradeList(catalog, store);
-    assert.match(text, /LOOKING FOR[\s\S]*Air: GOLD/);
-    assert.match(text, /HAVE[\s\S]*Air: BASE/);
-    assert.match(text, /Collected 1\/3 \| Mastered 1\/3/);
-});
 
 test('trade grid uses the formatted emoji output', () => {
     const text = tradeGrid(catalog, store);
