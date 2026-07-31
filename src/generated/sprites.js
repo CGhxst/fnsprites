@@ -776,7 +776,7 @@ export const sprites = [
         "name": "Gem Llama",
         "theme": "Gem",
         "rarity": "Special",
-        "unreleased": true
+        "unreleased": false
     },
     {
         "id": "peely_basic",

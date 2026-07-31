@@ -141,7 +141,7 @@ const baseSprites = [
 	{ id: "llama_gold", name: "Gold Llama", theme: "Gold", rarity: "Special", unreleased: false },
     { id: "llama_candy", name: "Gummy Llama", theme: "Candy", rarity: "Special", unreleased: false },
     { id: "llama_galaxy", name: "Galaxy Llama", theme: "Galaxy", rarity: "Special", unreleased: false },
-    { id: "llama_gem", name: "Gem Llama", theme: "Gem", rarity: "Special", unreleased: true },
+    { id: "llama_gem", name: "Gem Llama", theme: "Gem", rarity: "Special", unreleased: false },
     //	{ id: "llama_holofoil", name: "Holofoil Llama", theme: "Holofoil", rarity: "Special", unreleased: false },
 	//	{ id: "llama_rift", name: "Cube Llama", theme: "Cube", rarity: "Special", unreleased: false },
 
