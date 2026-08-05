@@ -154,7 +154,7 @@ const baseSprites = [
 	//	{ id: "peely_rift", name: "Cube Peely", theme: "Cube", rarity: "Special", unreleased: false },
 
 
-	{ id: "ironmouse_basic", name: "Ironmouse", theme: "Basic", rarity: "Mythic", unreleased: true },
+	{ id: "ironmouse_basic", name: "Ironmouse", theme: "Basic", rarity: "Mythic", unreleased: false },
 
 	{ id: "wick_basic", name: "John Wick", theme: "Basic", rarity: "Mythic", unreleased: false },
 

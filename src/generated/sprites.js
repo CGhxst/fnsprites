@@ -818,7 +818,7 @@ export const sprites = [
         "name": "Ironmouse",
         "theme": "Basic",
         "rarity": "Mythic",
-        "unreleased": true
+        "unreleased": false
     },
     {
         "id": "wick_basic",
