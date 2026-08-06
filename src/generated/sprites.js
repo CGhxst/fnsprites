@@ -366,8 +366,8 @@ export const sprites = [
         "name": "Gem Punk",
         "theme": "Gem",
         "rarity": "Special",
-        "unreleased": false,
-        "season": "Runners"
+        "unreleased": true,
+        "season": "Unknown"
     },
     {
         "id": "punk_rift",

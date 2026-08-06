@@ -52,7 +52,7 @@ const baseSprites = [
     { id: "punk_gold", name: "Gold Punk", theme: "Gold", rarity: "Special", unreleased: false, season: "Runners" },
     { id: "punk_candy", name: "Gummy Punk", theme: "Candy", rarity: "Special", unreleased: false, season: "Runners" },
     { id: "punk_galaxy", name: "Galaxy Punk", theme: "Galaxy", rarity: "Special", unreleased: false, season: "Runners" },
-    { id: "punk_gem", name: "Gem Punk", theme: "Gem", rarity: "Special", unreleased: false, season: "Runners" },
+    { id: "punk_gem", name: "Gem Punk", theme: "Gem", rarity: "Special", unreleased: true, season: "Unknown" },
     { id: "punk_rift", name: "Cube Punk", theme: "Cube", rarity: "Special", unreleased: false, season: "Runners" },
 
 	{ id: "king_basic", name: "King", theme: "Basic", rarity: "Epic", unreleased: false, season: "Runners" },
