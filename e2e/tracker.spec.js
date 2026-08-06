@@ -141,12 +141,18 @@ test('copies the formatted trade grid and stable share links', async ({ page, co
     expect(tradeGrid.startsWith('```')).toBe(true);
     expect(tradeGrid.endsWith('```')).toBe(true);
 
+    await page.getByRole('button', { name: 'Missing', exact: true }).click();
     await page.locator('#shareButton').click();
     const shareText = await page.evaluate(() => navigator.clipboard.readText());
     const shareUrl = new URL(shareText);
-    expect(decodeShare(shareUrl.searchParams.get('share'))).toEqual({
+    expect(shareUrl.searchParams.get('share')).toBeNull();
+    expect(shareUrl.searchParams.get('c')).toBeNull();
+    const shareCode = shareUrl.searchParams.get('s');
+    expect(shareCode.length).toBeLessThanOrEqual(32);
+    expect(decodeShare(shareCode, catalog.sprites)).toEqual({
         owned: ['air_basic'],
         mastered: [],
+        status: 'missing',
     });
 });
 
@@ -158,13 +164,82 @@ test('shows invalid shares and opens valid shares in view-only mode', async ({ p
     await page.goto('/?share=');
     await expect(page.locator('#sharedBanner')).toContainText('invalid');
 
-    const code = encodeShare({ owned: ['air_basic'], mastered: ['air_basic'] });
-    expect(decodeShare(code)).toEqual({ owned: ['air_basic'], mastered: ['air_basic'] });
-    await page.goto(`/?share=${code}`);
-    await expect(page.locator('#collectionTitle')).toHaveText('Shared collection');
+    const legacyCode = Buffer.from(JSON.stringify({
+        v: 2,
+        o: ['air_basic', 'removed_basic'],
+        m: ['air_basic', 'removed_basic'],
+    })).toString('base64url');
+    await page.goto(`/?share=${legacyCode}`);
+    await expect(page.locator('#sharedBanner')).toContainText(`1/${releasedCount} collected`);
+    await expect(page.locator('#sharedBanner')).toContainText('1 mastered');
+    await page.locator('#compareButton').click();
+    await expect(page.locator('#compareHint')).toBeVisible();
+    await expect(page.locator('#compareHint')).toContainText('tracker is empty');
+    await expect(page.locator('.toast-error')).toContainText('Add your sprites');
+
+    await page.evaluate(() => {
+        localStorage.setItem('fn_state_status_filter', 'owned');
+        localStorage.setItem('fn_obtained_sprites', JSON.stringify(['air_gold']));
+    });
+    const code = encodeShare(
+        { owned: ['air_basic'], mastered: ['air_basic'] },
+        catalog.sprites,
+        'missing',
+    );
+    expect(decodeShare(code, catalog.sprites)).toEqual({
+        owned: ['air_basic'],
+        mastered: ['air_basic'],
+        status: 'missing',
+    });
+    await page.goto(`/?s=${code}`);
+    await expect(page.locator('#collectionTitle')).toHaveText('Sprites they need');
+    await expect(page.locator('#sharedBanner')).toContainText(`1/${releasedCount} collected`);
+    await expect(page.locator('#sharedBanner')).toContainText('1 mastered');
+    await expect(page.locator('.sprite-card')).toHaveCount(releasedCount - 1);
+    expect(await page.locator('.sprite-art').evaluateAll(elements =>
+        elements.every(element => element.getAttribute('role') === 'img'),
+    )).toBe(true);
+
+    await page.locator('#compareButton').click();
+    await expect(page.locator('#collectionTitle')).toHaveText('Trade matches');
+    await expect(page.locator('#statusTabs')).toBeHidden();
+    await expect(page.locator('#quickFilters')).toBeHidden();
+    await expect(page.locator('.trade-pane.is-theirs .trade-pane-heading strong')).toHaveText('1');
+    await expect(page.locator('.trade-pane.is-yours .trade-pane-heading strong')).toHaveText('1');
+    await expect(page.locator('.sprite-card')).toHaveCount(2);
+    await expect(page.locator('.trade-pane.is-theirs [data-id="air_basic"] .card-state')).toHaveText('They offer');
+    await expect(page.locator('.trade-pane.is-yours [data-id="air_gold"] .card-state')).toHaveText('You offer');
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(await page.evaluate(() =>
+        document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    )).toBeLessThanOrEqual(0);
+    expect((await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa'])
+        .analyze()).violations).toEqual([]);
+    await page.locator('#compareButton').click();
+    await expect(page.locator('#collectionTitle')).toHaveText('Sprites they need');
+    await expect(page.locator('#quickFilters')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Owned', exact: true }).click();
+    await expect(page.locator('#collectionTitle')).toHaveText('Sprites they have');
     await expect(page.locator('.sprite-card')).toHaveCount(1);
-    await expect(page.locator('.sprite-art')).toHaveAttribute('role', 'img');
-    await expect(page.locator('#shareButton')).toBeHidden();
+
+    await page.getByRole('button', { name: 'Missing', exact: true }).click();
+    await expect(page.locator('#collectionTitle')).toHaveText('Sprites they need');
+    await expect(page.locator('.sprite-card')).toHaveCount(releasedCount - 1);
+    await expect(page.locator('#shareButton')).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('fn_state_status_filter'))).toBe('owned');
+    expect(await page.evaluate(() => localStorage.getItem('fn_obtained_sprites'))).toBe('["air_gold"]');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const overflow = await page.evaluate(() =>
+        document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(0);
+    const accessibility = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa'])
+        .analyze();
+    expect(accessibility.violations).toEqual([]);
 });
 
 test('handles empty exports and downloads valid PNGs for every board mode', async ({ page }) => {

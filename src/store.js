@@ -123,7 +123,7 @@ export class TrackerStore {
             theme: STORAGE_KEYS.theme,
             status: STORAGE_KEYS.status,
         }[name];
-        write(key, value);
+        if (!this.viewOnly) write(key, value);
         this.notify({ type: 'filter', name });
     }
 
@@ -136,7 +136,7 @@ export class TrackerStore {
             lowFidelity: STORAGE_KEYS.lowFidelity,
             group: STORAGE_KEYS.sort,
         }[name];
-        write(key, value);
+        if (!this.viewOnly) write(key, value);
         this.notify({ type: 'setting', name });
     }
 

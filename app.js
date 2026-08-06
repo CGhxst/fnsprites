@@ -1,13 +1,15 @@
 import { createCatalog, activeThemes, displayTheme, groupSprites, sortSprites } from './src/catalog.js';
 import { parseBackup } from './src/backup.js';
+import { compareCollections } from './src/compare.js';
 import { GROUP_METHODS, ICONS, STATUS_FILTERS, spritePalette } from './src/config.js';
 import { downloadBackup, exportBoard, tradeGrid } from './src/export-board.js';
-import { decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
+import { decodeLegacyJsonShare, decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
 import { TrackerStore } from './src/store.js';
 import { sprites as rawSprites } from './src/generated/sprites.js';
 
 let catalog;
 let store;
+let comparison;
 
 const dom = {
     sharedBanner: document.querySelector('#sharedBanner'),
@@ -19,6 +21,7 @@ const dom = {
     themeFilter: document.querySelector('#themeFilter'),
     groupOrder: document.querySelector('#groupOrder'),
     statusTabs: document.querySelector('#statusTabs'),
+    quickFilters: document.querySelector('#quickFilters'),
     hideMastered: document.querySelector('#hideMastered'),
     showUnreleased: document.querySelector('#showUnreleased'),
     lowFidelity: document.querySelector('#lowFidelity'),
@@ -35,6 +38,8 @@ const dom = {
     resultCount: document.querySelector('#resultCount'),
     spriteGroups: document.querySelector('#spriteGroups'),
     emptyState: document.querySelector('#emptyState'),
+    emptyTitle: document.querySelector('#emptyTitle'),
+    emptyMessage: document.querySelector('#emptyMessage'),
     toastRegion: document.querySelector('#toastRegion'),
 };
 
@@ -91,17 +96,21 @@ function spriteMatchesFilters(sprite) {
     const search = filters.search.trim().toLocaleLowerCase();
     if (!settings.showUnreleased && sprite.unreleased) return false;
     if (settings.hideMastered && store.isMastered(sprite.id)) return false;
-    if (store.viewOnly && (!store.isOwned(sprite.id) || sprite.unreleased)) return false;
     if (filters.theme !== 'all' && sprite.theme !== filters.theme) return false;
     if (search && !`${sprite.name} ${sprite.theme} ${sprite.rarity}`.toLocaleLowerCase().includes(search)) return false;
-    if (!store.viewOnly && filters.status === 'owned' && !store.isOwned(sprite.id)) return false;
-    if (!store.viewOnly && filters.status === 'missing' && store.isOwned(sprite.id)) return false;
+    if (filters.status === 'owned' && !store.isOwned(sprite.id)) return false;
+    if (filters.status === 'missing' && store.isOwned(sprite.id)) return false;
+    if (comparison?.active && !comparison.theirs.has(sprite.id) && !comparison.yours.has(sprite.id)) return false;
     return true;
 }
 
 function cardMarkup(sprite) {
-    const owned = store.isOwned(sprite.id);
-    const mastered = store.isMastered(sprite.id);
+    const tradeSide = comparison?.active
+        ? comparison.theirs.has(sprite.id) ? 'theirs' : comparison.yours.has(sprite.id) ? 'yours' : null
+        : null;
+    const comparing = Boolean(tradeSide);
+    const owned = comparing || store.isOwned(sprite.id);
+    const mastered = !comparing && store.isMastered(sprite.id);
     const safeName = escapeHtml(sprite.name);
     const [cardTop, cardBottom] = spritePalette(sprite);
     const classes = [
@@ -109,9 +118,12 @@ function cardMarkup(sprite) {
         sprite.rarity === 'Special' ? 'is-special-rarity' : '',
         owned ? 'is-owned' : 'is-missing',
         mastered ? 'is-mastered' : '',
+        tradeSide ? `trade-${tradeSide}` : '',
         sprite.unreleased ? 'is-unreleased' : '',
     ].filter(Boolean).join(' ');
-    const stateLabel = sprite.unreleased ? 'Unreleased' : mastered ? 'Mastered' : owned ? 'Owned' : 'Missing';
+    const stateLabel = comparing
+        ? tradeSide === 'theirs' ? 'They offer' : 'You offer'
+        : sprite.unreleased ? 'Unreleased' : mastered ? 'Mastered' : owned ? 'Owned' : 'Missing';
     const masteryButton = owned && !store.viewOnly
         ? `<button type="button" class="mastery-button" aria-label="${mastered ? 'Remove mastery from' : 'Mark'} ${safeName}${mastered ? '' : ' as mastered'}" title="${mastered ? 'Remove mastery' : 'Mark as mastered'}">${ICONS.crown}</button>`
         : '';
@@ -162,32 +174,30 @@ function renderControls() {
         const active = button.dataset.status === filters.status;
         button.classList.toggle('is-active', active);
         button.setAttribute('aria-pressed', String(active));
-        button.disabled = store.viewOnly;
     });
+
+    const comparing = Boolean(comparison?.active);
+    dom.statusTabs.hidden = comparing;
+    dom.quickFilters.hidden = comparing;
+
+    const compareButton = document.querySelector('#compareButton');
+    if (compareButton) {
+        compareButton.textContent = comparing ? 'Hide trade matches' : 'Compare trades';
+        compareButton.setAttribute('aria-pressed', String(comparing));
+    }
 }
 
-function renderCollection() {
-    const sorted = sortSprites(filteredSprites(), store.state.settings.group);
-    const groups = groupSprites(sorted, store.state.settings.group, catalog);
+function groupMarkup(sprites, idPrefix) {
+    const groups = groupSprites(sprites, store.state.settings.group, catalog);
     const showGroupLabels = store.state.settings.group !== 'name';
 
-    dom.collectionTitle.textContent = store.viewOnly
-        ? 'Shared collection'
-        : store.state.filters.status === 'owned'
-            ? 'Owned sprites'
-            : store.state.filters.status === 'missing'
-                ? 'Missing sprites'
-                : 'All sprites';
-    dom.resultCount.textContent = `${sorted.length} shown`;
-    dom.emptyState.hidden = sorted.length !== 0;
-
-    dom.spriteGroups.innerHTML = groups.map((group, index) => `
+    return groups.map((group, index) => `
         <section class="sprite-group" ${showGroupLabels
-            ? `aria-labelledby="sprite-group-${index}"`
+            ? `aria-labelledby="${idPrefix}-group-${index}"`
             : `aria-label="${escapeHtml(group.label)}"`}>
             ${showGroupLabels ? `
                 <div class="group-heading">
-                    <h2 id="sprite-group-${index}">${escapeHtml(group.label)}</h2>
+                    <h2 id="${idPrefix}-group-${index}">${escapeHtml(group.label)}</h2>
                     <span>${group.sprites.length}</span>
                 </div>` : ''}
             <div class="sprite-grid">
@@ -195,6 +205,54 @@ function renderCollection() {
             </div>
         </section>
     `).join('');
+}
+
+function comparisonMarkup(sorted) {
+    return `<div class="trade-columns">
+        ${[
+            ['theirs', 'They can offer', comparison.theirs],
+            ['yours', 'You can offer', comparison.yours],
+        ].map(([side, title, ids]) => {
+            const sprites = sorted.filter(sprite => ids.has(sprite.id));
+            return `<section class="trade-pane is-${side}" aria-labelledby="trade-${side}-title">
+                <div class="trade-pane-heading">
+                    <h2 id="trade-${side}-title">${title}</h2>
+                    <strong>${sprites.length}</strong>
+                </div>
+                ${sprites.length
+                    ? groupMarkup(sprites, `trade-${side}`)
+                    : '<p class="trade-pane-empty">No matches on this side.</p>'}
+            </section>`;
+        }).join('')}
+    </div>`;
+}
+
+function renderCollection() {
+    const sorted = sortSprites(filteredSprites(), store.state.settings.group);
+
+    dom.collectionTitle.textContent = comparison?.active
+        ? 'Trade matches'
+        : store.viewOnly
+        ? store.state.filters.status === 'owned'
+            ? 'Sprites they have'
+            : store.state.filters.status === 'missing'
+                ? 'Sprites they need'
+                : 'Shared collection'
+        : store.state.filters.status === 'owned'
+            ? 'Owned sprites'
+            : store.state.filters.status === 'missing'
+                ? 'Missing sprites'
+                : 'All sprites';
+    dom.resultCount.textContent = `${sorted.length} shown`;
+    dom.emptyState.hidden = sorted.length !== 0;
+    dom.emptyTitle.textContent = comparison?.active ? 'No trade matches' : 'No sprites found';
+    dom.emptyMessage.textContent = comparison?.active
+        ? 'Neither locker has a sprite the other one is missing.'
+        : 'Try a different search or filter.';
+
+    dom.spriteGroups.innerHTML = comparison?.active
+        ? comparisonMarkup(sorted)
+        : groupMarkup(sorted, 'sprite');
 }
 
 function render() {
@@ -349,10 +407,10 @@ function bindControlEvents() {
     });
 
     dom.shareButton.addEventListener('click', () => {
-        const code = encodeShare(store.snapshot());
+        const code = encodeShare(store.snapshot(), catalog.sprites, store.state.filters.status);
         const url = new URL(location.href);
         url.search = '';
-        url.searchParams.set('share', code);
+        url.searchParams.set('s', code);
         copyText(url.toString(), 'Share link copied.');
     });
     dom.copyGridButton.addEventListener('click', () => {
@@ -387,6 +445,26 @@ function bindControlEvents() {
         }
     });
 
+    dom.sharedBanner.addEventListener('click', event => {
+        if (!event.target.closest('#compareButton') || !comparison) return;
+        const hint = document.querySelector('#compareHint');
+        if (comparison.yourOwned.size === 0) {
+            hint.hidden = false;
+            toast('Your tracker is empty. Add your sprites before comparing.', 'error');
+            return;
+        }
+        hint.hidden = true;
+        if (comparison.active) {
+            comparison.active = false;
+            store.state.filters.status = comparison.returnStatus;
+        } else {
+            comparison.returnStatus = store.state.filters.status;
+            comparison.active = true;
+            store.state.filters.status = 'all';
+        }
+        render();
+    });
+
     document.addEventListener('click', event => {
         if (!event.target.closest('.menu')) closeMenus();
     });
@@ -401,17 +479,18 @@ function bindControlEvents() {
 
 function readSharedCollection() {
     const params = new URLSearchParams(location.search);
-    const hasCurrent = params.has('share');
-    const hasLegacy = params.has('c');
-    const current = params.get('share');
-    const legacy = params.get('c');
-    const shared = hasCurrent
-        ? decodeShare(current)
-        : hasLegacy
-            ? decodeLegacyShare(legacy, catalog.sprites)
-            : null;
+    const hasPacked = params.has('s');
+    const hasJson = params.has('share');
+    const hasBitset = params.has('c');
+    const shared = hasPacked
+        ? decodeShare(params.get('s'), catalog.sprites)
+        : hasJson
+            ? decodeLegacyJsonShare(params.get('share'))
+            : hasBitset
+                ? decodeLegacyShare(params.get('c'), catalog.sprites)
+                : null;
     if (!shared) {
-        if (hasCurrent || hasLegacy) {
+        if (hasPacked || hasJson || hasBitset) {
             dom.sharedBanner.hidden = false;
             dom.sharedBanner.classList.add('is-error');
             dom.sharedBanner.querySelector('span').textContent = 'This shared collection link is invalid.';
@@ -419,13 +498,36 @@ function readSharedCollection() {
         return;
     }
 
-    store.replaceCollection(shared.owned, shared.mastered, { viewOnly: true });
-    store.state.filters = { search: '', theme: 'all', status: 'all' };
+    const yourCollection = store.snapshot();
+    const matches = compareCollections(yourCollection.owned, shared.owned, catalog.released);
+    comparison = {
+        active: false,
+        returnStatus: shared.status ?? 'all',
+        yourOwned: new Set(yourCollection.owned),
+        yours: new Set(matches.youCanOffer),
+        theirs: new Set(matches.theyCanOffer),
+    };
+
+    store.state.filters = { search: '', theme: 'all', status: shared.status ?? 'all' };
     store.state.settings.hideMastered = false;
     store.state.settings.showUnreleased = false;
+    store.replaceCollection(shared.owned, shared.mastered, { viewOnly: true });
+
+    const total = catalog.released.length;
+    const ownedCount = catalog.released.filter(sprite => store.isOwned(sprite.id)).length;
+    const masteredCount = catalog.released.filter(sprite => store.isMastered(sprite.id)).length;
+
     dom.sharedBanner.hidden = false;
-    dom.shareButton.hidden = true;
-    dom.moreMenu.hidden = true;
+    dom.sharedBanner.innerHTML = `
+        <div class="shared-summary">
+            <span>Viewing shared collection &bull; <strong>${ownedCount}/${total}</strong> collected &bull; <strong>${masteredCount}</strong> mastered</span>
+            <span class="compare-hint" id="compareHint" role="status" hidden>Your tracker is empty. Add your sprites first, then reopen this link.</span>
+        </div>
+        <div class="shared-actions">
+            <button type="button" id="compareButton" aria-pressed="false">Compare trades</button>
+            <a href="./">Open my tracker</a>
+        </div>
+    `;
 }
 
 function showStartupError(error) {

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createCatalog } from '../src/catalog.js';
 import {
     exportHeaderHeight,
+    exportLayout,
     exportThemes,
     tradeGrid,
 } from '../src/export-board.js';
@@ -57,4 +58,13 @@ test('narrow image exports reserve a non-overlapping compact header', () => {
     assert.equal(exportHeaderHeight(324, 'collected'), 130);
     assert.equal(exportHeaderHeight(324, 'trade'), 158);
     assert.equal(exportHeaderHeight(560, 'collected'), 116);
+});
+
+test('growing catalogs stay in balanced readable export columns', () => {
+    const layout = exportLayout(25, 8, 'trade');
+    assert.equal(layout.sectionCount, 2);
+    assert.equal(layout.sectionColumns, 2);
+    assert.equal(layout.rowsPerSection, 13);
+    assert.equal(layout.canvasWidth, 1738);
+    assert.equal(layout.canvasHeight, 1674);
 });

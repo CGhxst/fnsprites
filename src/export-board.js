@@ -125,7 +125,42 @@ function drawEmptySlot(ctx, x, y) {
     ctx.restore();
 }
 
-function drawCard(ctx, sprite, state, image, x, y) {
+function drawCheckBadge(ctx, x, y) {
+    ctx.save();
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(x, y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - 4, y);
+    ctx.lineTo(x - 1, y + 3.5);
+    ctx.lineTo(x + 4.5, y - 3);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawLock(ctx, x, y) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    const bodyWidth = 14;
+    const bodyHeight = 11;
+    const bodyX = x - bodyWidth / 2;
+    const bodyY = y - 1;
+    roundRect(ctx, bodyX, bodyY, bodyWidth, bodyHeight, 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.arc(x, bodyY, 5.5, Math.PI, 0);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawCard(ctx, sprite, state, image, x, y, mode) {
     if (state === 'hidden') {
         drawEmptySlot(ctx, x, y);
         return;
@@ -133,18 +168,23 @@ function drawCard(ctx, sprite, state, image, x, y) {
 
     const [top, bottom] = spritePalette(sprite);
     const imageHeight = LAYOUT.cardHeight - 22;
-    const muted = state === 'missing';
+    const tradeMissing = state === 'missing' && mode === 'trade';
 
     ctx.save();
     roundRect(ctx, x, y, LAYOUT.cardWidth, LAYOUT.cardHeight, 6);
     ctx.clip();
 
-    const gradient = ctx.createLinearGradient(0, y, 0, y + imageHeight);
-    gradient.addColorStop(0, top);
-    gradient.addColorStop(1, bottom);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(x, y, LAYOUT.cardWidth, imageHeight);
-    ctx.fillStyle = '#10151b';
+    if (tradeMissing) {
+        ctx.fillStyle = '#141822';
+        ctx.fillRect(x, y, LAYOUT.cardWidth, imageHeight);
+    } else {
+        const gradient = ctx.createLinearGradient(0, y, 0, y + imageHeight);
+        gradient.addColorStop(0, top);
+        gradient.addColorStop(1, bottom);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, y, LAYOUT.cardWidth, imageHeight);
+    }
+    ctx.fillStyle = tradeMissing ? '#10131a' : '#10151b';
     ctx.fillRect(x, y + imageHeight, LAYOUT.cardWidth, 22);
 
     if (image) {
@@ -153,7 +193,7 @@ function drawCard(ctx, sprite, state, image, x, y) {
         const scale = Math.min(maxWidth / image.naturalWidth, maxHeight / image.naturalHeight);
         const width = image.naturalWidth * scale;
         const height = image.naturalHeight * scale;
-        if (muted) ctx.filter = 'grayscale(1) brightness(.42)';
+        if (tradeMissing) ctx.filter = 'brightness(0.18) grayscale(1)';
         ctx.drawImage(
             image,
             x + (LAYOUT.cardWidth - width) / 2,
@@ -164,11 +204,6 @@ function drawCard(ctx, sprite, state, image, x, y) {
         ctx.filter = 'none';
     }
 
-    if (muted) {
-        ctx.fillStyle = 'rgba(7,10,14,.32)';
-        ctx.fillRect(x, y, LAYOUT.cardWidth, imageHeight);
-    }
-
     const accent = state === 'mastered'
         ? '#ffd43b'
         : state === 'missing'
@@ -177,20 +212,37 @@ function drawCard(ctx, sprite, state, image, x, y) {
                 ? '#70c7ff'
                 : '#65fbd2';
     ctx.fillStyle = accent;
-    ctx.fillRect(x, y + LAYOUT.cardHeight - 3, LAYOUT.cardWidth, 3);
+    ctx.fillRect(x, y + LAYOUT.cardHeight - 5, LAYOUT.cardWidth, 5);
 
     fitText(ctx, sprite.name.toUpperCase(), LAYOUT.cardWidth - 8, 10, 6.5);
-    ctx.fillStyle = muted ? '#8893a0' : '#f6f8fb';
+    ctx.fillStyle = '#f6f8fb';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(sprite.name.toUpperCase(), x + LAYOUT.cardWidth / 2, y + imageHeight + 10);
     ctx.restore();
 
-    ctx.strokeStyle = state === 'mastered' ? '#ffd43b' : 'rgba(255,255,255,.11)';
-    ctx.lineWidth = state === 'mastered' ? 2 : 1;
+    if (state === 'mastered') {
+        ctx.strokeStyle = '#ffd43b';
+        ctx.lineWidth = 2.5;
+    } else if (state === 'missing' && mode === 'missing') {
+        ctx.strokeStyle = 'rgba(255, 79, 135, 0.6)';
+        ctx.lineWidth = 2;
+    } else if (state === 'owned') {
+        ctx.strokeStyle = 'rgba(101, 251, 210, 0.5)';
+        ctx.lineWidth = 2;
+    } else if (state === 'unmastered') {
+        ctx.strokeStyle = 'rgba(112, 199, 255, 0.5)';
+        ctx.lineWidth = 2;
+    } else {
+        ctx.strokeStyle = 'rgba(255,255,255,.08)';
+        ctx.lineWidth = 1;
+    }
     roundRect(ctx, x, y, LAYOUT.cardWidth, LAYOUT.cardHeight, 6);
     ctx.stroke();
-    if (state === 'mastered') drawCrown(ctx, x + LAYOUT.cardWidth - 10, y + 10);
+
+    if (state === 'mastered') drawCrown(ctx, x + LAYOUT.cardWidth - 11, y + 11);
+    if (state === 'owned' || state === 'unmastered') drawCheckBadge(ctx, x + LAYOUT.cardWidth - 11, y + 11);
+    if (tradeMissing) drawLock(ctx, x + LAYOUT.cardWidth / 2, y + imageHeight / 2 - 2);
 }
 
 function modeHasContent(sprite, mode, store) {
@@ -204,6 +256,35 @@ export function exportThemes(sprites, mode, store) {
 export function exportHeaderHeight(canvasWidth, mode) {
     if (canvasWidth >= LAYOUT.compactHeaderBreakpoint) return LAYOUT.header;
     return mode === 'trade' ? LAYOUT.compactTradeHeader : LAYOUT.compactHeader;
+}
+
+export function exportLayout(familyCount, themeCount, mode) {
+    const sectionColumns = familyCount > LAYOUT.maxRowsPerSection
+        ? LAYOUT.maxSectionColumns
+        : 1;
+    const sectionCount = Math.min(familyCount, sectionColumns);
+    const rowsPerSection = Math.ceil(familyCount / sectionCount);
+    const cardsWidth = themeCount * LAYOUT.cardWidth
+        + Math.max(0, themeCount - 1) * LAYOUT.cardGap;
+    const sectionWidth = LAYOUT.labelWidth + cardsWidth;
+    const canvasWidth = LAYOUT.outer * 2
+        + sectionWidth * sectionColumns
+        + LAYOUT.sectionGap * Math.max(0, sectionColumns - 1);
+    const headerHeight = exportHeaderHeight(canvasWidth, mode);
+    const rowsHeight = rowsPerSection * LAYOUT.cardHeight
+        + Math.max(0, rowsPerSection - 1) * LAYOUT.rowGap;
+    const sectionHeight = LAYOUT.themeHeader + rowsHeight;
+    const canvasHeight = LAYOUT.outer * 2 + headerHeight + sectionHeight + LAYOUT.footer;
+
+    return {
+        canvasHeight,
+        canvasWidth,
+        headerHeight,
+        rowsPerSection,
+        sectionColumns,
+        sectionCount,
+        sectionWidth,
+    };
 }
 
 function downloadCanvas(canvas, filename) {
@@ -257,25 +338,17 @@ export async function exportBoard(mode, catalog, store, toast) {
         throw new Error(`Missing export images: ${missingImages.map(sprite => sprite.id).join(', ')}`);
     }
 
-    const sectionCount = Math.ceil(familyKeys.length / LAYOUT.maxRowsPerSection);
-    const sectionColumns = Math.min(sectionCount, LAYOUT.maxSectionColumns);
-    const sectionRows = Math.ceil(sectionCount / sectionColumns);
-    const rowsPerSection = Math.ceil(familyKeys.length / sectionCount);
-    const cardsWidth = themes.length * LAYOUT.cardWidth + Math.max(0, themes.length - 1) * LAYOUT.cardGap;
-    const sectionWidth = LAYOUT.labelWidth + cardsWidth;
-    const canvasWidth = LAYOUT.outer * 2
-        + sectionWidth * sectionColumns
-        + LAYOUT.sectionGap * Math.max(0, sectionColumns - 1);
+    const layout = exportLayout(familyKeys.length, themes.length, mode);
+    const {
+        canvasHeight,
+        canvasWidth,
+        headerHeight,
+        rowsPerSection,
+        sectionColumns,
+        sectionCount,
+        sectionWidth,
+    } = layout;
     const compactHeader = canvasWidth < LAYOUT.compactHeaderBreakpoint;
-    const headerHeight = exportHeaderHeight(canvasWidth, mode);
-    const rowsHeight = rowsPerSection * LAYOUT.cardHeight
-        + Math.max(0, rowsPerSection - 1) * LAYOUT.rowGap;
-    const sectionHeight = LAYOUT.themeHeader + rowsHeight;
-    const canvasHeight = LAYOUT.outer * 2
-        + headerHeight
-        + sectionHeight * sectionRows
-        + LAYOUT.sectionGap * Math.max(0, sectionRows - 1)
-        + LAYOUT.footer;
     if (
         canvasWidth > LAYOUT.maxCanvasDimension
         || canvasHeight > LAYOUT.maxCanvasDimension
@@ -362,11 +435,9 @@ export async function exportBoard(mode, catalog, store, toast) {
 
     for (let sectionIndex = 0; sectionIndex < sectionCount; sectionIndex += 1) {
         const sectionColumn = sectionIndex % sectionColumns;
-        const sectionRow = Math.floor(sectionIndex / sectionColumns);
         const startX = LAYOUT.outer + sectionColumn * (sectionWidth + LAYOUT.sectionGap);
-            const startY = LAYOUT.outer
+        const startY = LAYOUT.outer
             + headerHeight
-            + sectionRow * (sectionHeight + LAYOUT.sectionGap)
             + LAYOUT.themeHeader;
 
         ctx.textAlign = 'center';
@@ -401,7 +472,7 @@ export async function exportBoard(mode, catalog, store, toast) {
                     drawEmptySlot(ctx, x, y);
                     return;
                 }
-                drawCard(ctx, sprite, cardState(sprite, mode, store), images.get(sprite.id), x, y);
+                drawCard(ctx, sprite, cardState(sprite, mode, store), images.get(sprite.id), x, y, mode);
             });
         });
     }

@@ -81,7 +81,7 @@
             </div>
 
             <div class="secondary-controls">
-                <div class="quick-filters">
+                <div class="quick-filters" id="quickFilters">
                     <label class="switch">
                         <input type="checkbox" id="hideMastered">
                         <span aria-hidden="true"></span>
@@ -96,7 +96,7 @@
 
                 <div class="actions">
                     <div class="menu" id="exportMenu">
-                        <button type="button" class="action-button" id="exportToggle" aria-expanded="false" aria-controls="exportPopover">
+                        <button type="button" class="action-button" id="exportToggle" aria-label="Export image boards" aria-expanded="false" aria-controls="exportPopover">
                             <span class="button-icon" id="exportIcon" aria-hidden="true"></span>
                             <span class="button-label">Export</span>
                             <span class="chevron" id="exportChevron" aria-hidden="true"></span>
@@ -112,7 +112,7 @@
                         </div>
                     </div>
 
-                    <button type="button" class="action-button action-primary" id="shareButton">
+                    <button type="button" class="action-button action-primary" id="shareButton" aria-label="Share collection">
                         <span class="button-icon" id="shareIcon" aria-hidden="true"></span>
                         <span class="button-label">Share</span>
                     </button>
@@ -146,8 +146,8 @@
             </div>
             <div id="spriteGroups"></div>
             <div class="empty-state" id="emptyState" hidden>
-                <strong>No sprites found</strong>
-                <span>Try a different search or filter.</span>
+                <strong id="emptyTitle">No sprites found</strong>
+                <span id="emptyMessage">Try a different search or filter.</span>
             </div>
         </main>
     </div>

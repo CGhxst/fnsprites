@@ -48,6 +48,24 @@ test('store sanitizes restored data', () => {
     assert.deepEqual([...store.state.mastered], ['air_basic']);
 });
 
+test('view-only interactions do not overwrite saved tracker preferences', () => {
+    globalThis.localStorage = new MemoryStorage({
+        fn_state_status_filter: 'owned',
+        fn_state_sort_order: 'theme',
+    });
+    const store = new TrackerStore(new Set(['air_basic', 'water_basic']));
+    store.replaceCollection(['air_basic'], [], { viewOnly: true });
+    store.setFilter('status', 'missing');
+    store.setSetting('group', 'rarity');
+    store.toggleOwned('water_basic');
+
+    assert.equal(store.state.filters.status, 'missing');
+    assert.equal(store.state.settings.group, 'rarity');
+    assert.equal(store.isOwned('water_basic'), false);
+    assert.equal(globalThis.localStorage.getItem('fn_state_status_filter'), 'owned');
+    assert.equal(globalThis.localStorage.getItem('fn_state_sort_order'), 'theme');
+});
+
 test('store starts with defaults when browser storage is unavailable', () => {
     const warn = console.warn;
     console.warn = () => {};
