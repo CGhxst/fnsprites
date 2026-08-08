@@ -976,5 +976,45 @@ export const sprites = [
         "rarity": "Mythic",
         "unreleased": false,
         "season": "Runners"
+    },
+    {
+        "id": "xray_basic",
+        "name": "X-Ray",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "pond_basic",
+        "name": "Pond",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "honey_basic",
+        "name": "Honey",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_basic",
+        "name": "Dumpster Dive",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "bullet_basic",
+        "name": "Bullet",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
     }
 ];

@@ -159,4 +159,11 @@ const baseSprites = [
 	{ id: "ironmouse_basic", name: "Ironmouse", theme: "Basic", rarity: "Mythic", unreleased: false, season: "Runners" },
 
 	{ id: "wick_basic", name: "John Wick", theme: "Basic", rarity: "Mythic", unreleased: false, season: "Runners" },
+
+	{ id: "xray_basic", name: "X-Ray", theme: "Basic", rarity: "Mythic", unreleased: true, season: "Override" },
+	{ id: "pond_basic", name: "Pond", theme: "Basic", rarity: "Mythic", unreleased: true, season: "Override" },
+	{ id: "honey_basic", name: "Honey", theme: "Basic", rarity: "Mythic", unreleased: true, season: "Override" },
+	{ id: "dumpster_basic", name: "Dumpster Dive", theme: "Basic", rarity: "Mythic", unreleased: true, season: "Override" },
+	{ id: "bullet_basic", name: "Bullet", theme: "Basic", rarity: "Mythic", unreleased: true, season: "Override" },
+
 ];
