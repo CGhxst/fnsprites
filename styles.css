@@ -459,6 +459,7 @@ a {
     outline-offset: 2px;
 }
 
+.select-button,
 .action-button,
 .icon-button {
     display: inline-flex;
@@ -474,6 +475,30 @@ a {
     font-weight: 600;
     text-transform: uppercase;
     transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.select-button {
+    gap: 8px;
+    width: 100%;
+    min-width: 150px;
+    padding: 0 12px;
+    cursor: pointer;
+    text-transform: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.select-button .button-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.select-button:hover {
+    background: var(--panel-hover);
+    border-color: var(--line-strong);
 }
 
 .action-button {

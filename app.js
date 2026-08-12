@@ -19,7 +19,14 @@ const dom = {
     masteryFill: document.querySelector('#masteryFill'),
     searchInput: document.querySelector('#searchInput'),
     themeFilter: document.querySelector('#themeFilter'),
-    seasonFilter: document.querySelector('#seasonFilter'),
+    seasonMenu: document.querySelector('#seasonMenu'),
+    seasonToggle: document.querySelector('#seasonToggle'),
+    seasonLabel: document.querySelector('#seasonLabel'),
+    seasonChevron: document.querySelector('#seasonChevron'),
+    seasonPopover: document.querySelector('#seasonPopover'),
+    seasonPicker: document.querySelector('#seasonPicker'),
+    selectAllSeasons: document.querySelector('#selectAllSeasons'),
+    clearSeasons: document.querySelector('#clearSeasons'),
     groupOrder: document.querySelector('#groupOrder'),
     statusTabs: document.querySelector('#statusTabs'),
     quickFilters: document.querySelector('#quickFilters'),
@@ -28,9 +35,6 @@ const dom = {
     lowFidelity: document.querySelector('#lowFidelity'),
     exportMenu: document.querySelector('#exportMenu'),
     exportToggle: document.querySelector('#exportToggle'),
-    exportSeasonPicker: document.querySelector('#exportSeasonPicker'),
-    selectAllExportSeasons: document.querySelector('#selectAllExportSeasons'),
-    clearExportSeasons: document.querySelector('#clearExportSeasons'),
     shareButton: document.querySelector('#shareButton'),
     moreMenu: document.querySelector('#moreMenu'),
     moreToggle: document.querySelector('#moreToggle'),
@@ -50,6 +54,7 @@ const dom = {
 function installIcons() {
     const icons = {
         searchIcon: ICONS.search,
+        seasonChevron: ICONS.chevron,
         exportIcon: ICONS.download,
         exportChevron: ICONS.chevron,
         shareIcon: ICONS.share,
@@ -101,7 +106,7 @@ function spriteMatchesFilters(sprite) {
     if (!settings.showUnreleased && sprite.unreleased) return false;
     if (settings.hideMastered && store.isMastered(sprite.id)) return false;
     if (filters.theme !== 'all' && sprite.theme !== filters.theme) return false;
-    if (filters.season !== 'all' && sprite.season !== filters.season) return false;
+    if (!store.isSeasonSelected(sprite.season)) return false;
     if (search && !`${sprite.name} ${sprite.theme} ${sprite.rarity} ${sprite.season}`.toLocaleLowerCase().includes(search)) return false;
     if (filters.status === 'owned' && !store.isOwned(sprite.id)) return false;
     if (filters.status === 'missing' && store.isOwned(sprite.id)) return false;
@@ -175,7 +180,7 @@ function renderControls() {
     const { filters, settings } = store.state;
     dom.searchInput.value = filters.search;
     dom.themeFilter.value = filters.theme;
-    if (dom.seasonFilter) dom.seasonFilter.value = filters.season;
+    updateSeasonLabel();
     dom.groupOrder.value = settings.group;
     dom.hideMastered.checked = settings.hideMastered;
     dom.showUnreleased.checked = settings.showUnreleased;
@@ -277,8 +282,14 @@ function renderCollection() {
 function updateSharedBanner() {
     if (!dom.sharedBanner || dom.sharedBanner.hidden || dom.sharedBanner.classList.contains('is-error')) return;
     const comparing = Boolean(comparison?.active);
-    const season = store.state.filters.season;
-    const seasonText = season !== 'all' ? ` (${escapeHtml(season)} Season)` : '';
+    const selectedSeasons = activeSeasons(catalog.sprites).filter(s => store.isSeasonSelected(s));
+    const allSeasons = activeSeasons(catalog.sprites);
+    let seasonText = '';
+    if (selectedSeasons.length === 1 && allSeasons.length > 1) {
+        seasonText = ` (${escapeHtml(selectedSeasons[0])} Season)`;
+    } else if (selectedSeasons.length < allSeasons.length) {
+        seasonText = ` (${selectedSeasons.length} Seasons)`;
+    }
 
     const summarySpan = dom.sharedBanner.querySelector('.shared-summary > span');
     if (!summarySpan) return;
@@ -343,28 +354,16 @@ function populateThemes() {
 }
 
 function populateSeasons() {
-    if (!dom.seasonFilter) return;
-    const current = store.state.filters.season;
-    dom.seasonFilter.replaceChildren(
-        new Option('All seasons', 'all'),
-        ...activeSeasons(catalog.sprites).map(season => new Option(`Season: ${season}`, season)),
-    );
-    if (![...dom.seasonFilter.options].some(option => option.value === current)) {
-        store.state.filters.season = 'all';
-    }
-}
-
-function populateExportSeasons() {
-    if (!dom.exportSeasonPicker) return;
+    if (!dom.seasonPicker) return;
     const seasons = activeSeasons(catalog.sprites);
-    dom.exportSeasonPicker.replaceChildren(
+    dom.seasonPicker.replaceChildren(
         ...seasons.map(season => {
             const label = document.createElement('label');
             label.className = 'menu-toggle';
             const input = document.createElement('input');
             input.type = 'checkbox';
             input.value = season;
-            input.checked = store.isExportSeasonSelected(season);
+            input.checked = store.isSeasonSelected(season);
             const span = document.createElement('span');
             span.textContent = season;
             label.appendChild(input);
@@ -372,18 +371,36 @@ function populateExportSeasons() {
             return label;
         }),
     );
+    updateSeasonLabel();
+}
+
+function updateSeasonLabel() {
+    if (!dom.seasonLabel) return;
+    const all = activeSeasons(catalog.sprites);
+    const selected = all.filter(s => store.isSeasonSelected(s));
+
+    if (store.state.filters.season === null || selected.length === all.length) {
+        dom.seasonLabel.textContent = 'All seasons';
+    } else if (selected.length === 1) {
+        dom.seasonLabel.textContent = `Season: ${selected[0]}`;
+    } else if (selected.length === 0) {
+        dom.seasonLabel.textContent = '0 seasons';
+    } else {
+        dom.seasonLabel.textContent = `${selected.length} seasons`;
+    }
 }
 
 function closeMenus({ except = null, restoreFocus = false } = {}) {
     for (const [menu, toggle] of [
+        [dom.seasonMenu, dom.seasonToggle],
         [dom.exportMenu, dom.exportToggle],
         [dom.moreMenu, dom.moreToggle],
     ]) {
-        if (menu === except) continue;
+        if (!menu || menu === except) continue;
         const wasOpen = menu.classList.contains('is-open');
         menu.classList.remove('is-open');
-        toggle.setAttribute('aria-expanded', 'false');
-        if (restoreFocus && wasOpen) toggle.focus();
+        toggle?.setAttribute('aria-expanded', 'false');
+        if (restoreFocus && wasOpen && toggle) toggle.focus();
     }
 }
 
@@ -449,8 +466,37 @@ function bindControlEvents() {
         searchTimer = setTimeout(() => store.setFilter('search', value), 80);
     });
     dom.themeFilter.addEventListener('change', () => store.setFilter('theme', dom.themeFilter.value));
-    if (dom.seasonFilter) {
-        dom.seasonFilter.addEventListener('change', () => store.setFilter('season', dom.seasonFilter.value));
+    if (dom.seasonToggle) {
+        dom.seasonToggle.addEventListener('click', event => {
+            event.stopPropagation();
+            toggleMenu(dom.seasonMenu, dom.seasonToggle);
+        });
+    }
+    if (dom.seasonPicker) {
+        dom.seasonPicker.addEventListener('change', event => {
+            const input = event.target.closest('input[type="checkbox"]');
+            if (input) {
+                store.toggleSeason(input.value, input.checked, activeSeasons(catalog.sprites));
+                updateSeasonLabel();
+            }
+        });
+        dom.seasonPicker.addEventListener('click', event => {
+            event.stopPropagation();
+        });
+    }
+    if (dom.selectAllSeasons) {
+        dom.selectAllSeasons.addEventListener('click', event => {
+            event.stopPropagation();
+            store.selectAllSeasons();
+            populateSeasons();
+        });
+    }
+    if (dom.clearSeasons) {
+        dom.clearSeasons.addEventListener('click', event => {
+            event.stopPropagation();
+            store.clearSeasons();
+            populateSeasons();
+        });
     }
     dom.groupOrder.addEventListener('change', () => {
         if (GROUP_METHODS.includes(dom.groupOrder.value)) store.setSetting('group', dom.groupOrder.value);
@@ -469,31 +515,6 @@ function bindControlEvents() {
         event.stopPropagation();
         toggleMenu(dom.exportMenu, dom.exportToggle);
     });
-    if (dom.exportSeasonPicker) {
-        dom.exportSeasonPicker.addEventListener('change', event => {
-            const input = event.target.closest('input[type="checkbox"]');
-            if (input) {
-                store.toggleExportSeason(input.value, input.checked, activeSeasons(catalog.sprites));
-            }
-        });
-        dom.exportSeasonPicker.addEventListener('click', event => {
-            event.stopPropagation();
-        });
-    }
-    if (dom.selectAllExportSeasons) {
-        dom.selectAllExportSeasons.addEventListener('click', event => {
-            event.stopPropagation();
-            store.selectAllExportSeasons(activeSeasons(catalog.sprites));
-            populateExportSeasons();
-        });
-    }
-    if (dom.clearExportSeasons) {
-        dom.clearExportSeasons.addEventListener('click', event => {
-            event.stopPropagation();
-            store.clearExportSeasons();
-            populateExportSeasons();
-        });
-    }
     dom.moreToggle.addEventListener('click', event => {
         event.stopPropagation();
         toggleMenu(dom.moreMenu, dom.moreToggle);
@@ -514,8 +535,11 @@ function bindControlEvents() {
         const url = new URL(location.href);
         url.search = '';
         url.searchParams.set('s', code);
-        if (store.state.filters.season !== 'all') {
-            url.searchParams.set('season', store.state.filters.season);
+        if (store.state.filters.season !== null) {
+            const selected = [...store.state.filters.season];
+            if (selected.length > 0) {
+                url.searchParams.set('season', selected.join(','));
+            }
         }
         copyText(url.toString(), 'Share link copied.');
     });
@@ -616,7 +640,11 @@ function readSharedCollection() {
 
     const initialSeason = params.get('season') || 'all';
     const validSeasons = activeSeasons(catalog.sprites);
-    const seasonFilter = validSeasons.includes(initialSeason) ? initialSeason : 'all';
+    let seasonFilter = null;
+    if (initialSeason !== 'all') {
+        const parts = initialSeason.split(',').map(s => s.trim()).filter(s => validSeasons.includes(s));
+        if (parts.length > 0) seasonFilter = new Set(parts);
+    }
 
     store.state.filters = { search: '', theme: 'all', season: seasonFilter, status: shared.status ?? 'all' };
     store.state.settings.hideMastered = false;
@@ -656,7 +684,6 @@ function start() {
         installIcons();
         populateThemes();
         populateSeasons();
-        populateExportSeasons();
         readSharedCollection();
         store.subscribe(handleStoreChange);
         bindCollectionEvents();

@@ -332,9 +332,9 @@ export async function exportBoard(mode, catalog, store, toast) {
     if (!config) return;
 
     const availableSeasons = activeSeasons(catalog.sprites);
-    const selectedSeasons = store?.state?.exportSeasons === null || store?.state?.exportSeasons === undefined
-        ? availableSeasons
-        : [...store.state.exportSeasons];
+    const selectedSeasons = availableSeasons.filter(season =>
+        store?.isSeasonSelected ? store.isSeasonSelected(season) : true,
+    );
 
     const showUnreleased = store?.state?.settings?.showUnreleased || false;
     const sprites = catalog.sprites.filter(sprite => {
@@ -551,9 +551,9 @@ export async function exportBoard(mode, catalog, store, toast) {
 
 export function tradeGrid(catalog, store) {
     const availableSeasons = activeSeasons(catalog.sprites);
-    const selectedSeasons = store?.state?.exportSeasons === null || store?.state?.exportSeasons === undefined
-        ? availableSeasons
-        : [...store.state.exportSeasons];
+    const selectedSeasons = availableSeasons.filter(season =>
+        store?.isSeasonSelected ? store.isSeasonSelected(season) : true,
+    );
     const showUnreleased = store?.state?.settings?.showUnreleased || false;
     const sprites = catalog.sprites.filter(sprite => {
         if (!showUnreleased && sprite.unreleased) return false;

@@ -4,7 +4,6 @@ export const STORAGE_KEYS = Object.freeze({
     search: 'fn_state_search',
     theme: 'fn_state_theme',
     season: 'fn_state_season',
-    exportSeasons: 'fn_state_export_seasons',
     status: 'fn_state_status_filter',
     hideMastered: 'fn_state_hide_mastered',
     sort: 'fn_state_sort_order',

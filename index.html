@@ -61,12 +61,22 @@
                     </select>
                 </label>
 
-                <label class="select-field">
-                    <span class="sr-only">Filter by season</span>
-                    <select id="seasonFilter">
-                        <option value="all">All seasons</option>
-                    </select>
-                </label>
+                <div class="menu" id="seasonMenu">
+                    <button type="button" class="select-button" id="seasonToggle" aria-label="Filter by season" aria-expanded="false" aria-controls="seasonPopover">
+                        <span class="button-label" id="seasonLabel">All seasons</span>
+                        <span class="chevron" id="seasonChevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="menu-popover" id="seasonPopover" aria-label="Filter by season">
+                        <div class="menu-label-row">
+                            <span class="menu-label">Seasons</span>
+                            <div class="quick-links">
+                                <button type="button" id="selectAllSeasons">All</button>
+                                <button type="button" id="clearSeasons">Clear</button>
+                            </div>
+                        </div>
+                        <div class="export-season-picker" id="seasonPicker"></div>
+                    </div>
+                </div>
 
                 <label class="select-field">
                     <span class="sr-only">Group sprites</span>
@@ -108,15 +118,6 @@
                             <span class="chevron" id="exportChevron" aria-hidden="true"></span>
                         </button>
                         <div class="menu-popover" id="exportPopover" aria-label="Export image boards">
-                            <div class="menu-label-row">
-                                <span class="menu-label">Seasons to include</span>
-                                <div class="quick-links">
-                                    <button type="button" id="selectAllExportSeasons">All</button>
-                                    <button type="button" id="clearExportSeasons">Clear</button>
-                                </div>
-                            </div>
-                            <div class="export-season-picker" id="exportSeasonPicker"></div>
-                            <div class="menu-divider"></div>
                             <p class="menu-label">Image boards</p>
                             <button type="button" data-export="trade">Trade board</button>
                             <div class="menu-divider"></div>

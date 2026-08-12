@@ -61,19 +61,31 @@ export class TrackerStore {
         const storedStatus = readString(STORAGE_KEYS.status);
         const savedStatus = storedStatus === 'obtained' ? 'owned' : storedStatus;
 
-        const savedExportSeasonsRaw = readString(STORAGE_KEYS.exportSeasons);
-        const exportSeasons = savedExportSeasonsRaw !== null
-            ? new Set(readArray(STORAGE_KEYS.exportSeasons))
-            : null;
+        const savedSeasonRaw = readString(STORAGE_KEYS.season);
+        let seasonFilter = null;
+        if (savedSeasonRaw && savedSeasonRaw !== 'all' && savedSeasonRaw !== '"all"' && savedSeasonRaw !== 'sprite' && savedSeasonRaw !== 'season') {
+            try {
+                const parsed = JSON.parse(savedSeasonRaw);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    const valid = parsed.filter(s => s && s !== 'all' && s !== 'sprite' && s !== 'season');
+                    seasonFilter = valid.length > 0 ? new Set(valid) : null;
+                } else if (typeof parsed === 'string' && parsed !== 'all' && parsed !== 'sprite' && parsed !== 'season') {
+                    seasonFilter = new Set([parsed]);
+                }
+            } catch {
+                if (typeof savedSeasonRaw === 'string' && savedSeasonRaw !== 'all' && savedSeasonRaw !== 'sprite' && savedSeasonRaw !== 'season') {
+                    seasonFilter = new Set([savedSeasonRaw]);
+                }
+            }
+        }
 
         this.state = {
             owned,
             mastered,
-            exportSeasons,
             filters: {
                 search: readString(STORAGE_KEYS.search) || '',
                 theme: readString(STORAGE_KEYS.theme) || 'all',
-                season: readString(STORAGE_KEYS.season) || 'all',
+                season: seasonFilter,
                 status: STATUS_FILTERS.includes(savedStatus) ? savedStatus : 'all',
             },
             settings: {
@@ -85,34 +97,47 @@ export class TrackerStore {
         };
     }
 
-    isExportSeasonSelected(season) {
-        if (this.state.exportSeasons === null) return true;
-        return this.state.exportSeasons.has(season);
+    isSeasonSelected(season) {
+        if (!this.state.filters.season || this.state.filters.season === 'all') return true;
+        if (typeof this.state.filters.season.has === 'function') {
+            if (this.state.filters.season.size === 0 || this.state.filters.season.has('all')) return true;
+            return this.state.filters.season.has(season);
+        }
+        return true;
     }
 
-    toggleExportSeason(season, active, availableSeasons = []) {
-        if (this.state.exportSeasons === null) {
-            this.state.exportSeasons = new Set(availableSeasons);
+    toggleSeason(season, active, allSeasons = []) {
+        if (this.state.filters.season === null) {
+            this.state.filters.season = new Set(allSeasons);
         }
         if (active) {
-            this.state.exportSeasons.add(season);
+            this.state.filters.season.add(season);
         } else {
-            this.state.exportSeasons.delete(season);
+            this.state.filters.season.delete(season);
         }
-        if (!this.viewOnly) write(STORAGE_KEYS.exportSeasons, [...this.state.exportSeasons]);
-        this.notify({ type: 'export-seasons-changed' });
+        this.persistSeasonFilter();
+        this.notify({ type: 'filter', name: 'season' });
     }
 
-    selectAllExportSeasons(allSeasons) {
-        this.state.exportSeasons = new Set(allSeasons);
-        if (!this.viewOnly) write(STORAGE_KEYS.exportSeasons, [...this.state.exportSeasons]);
-        this.notify({ type: 'export-seasons-changed' });
+    selectAllSeasons() {
+        this.state.filters.season = null;
+        this.persistSeasonFilter();
+        this.notify({ type: 'filter', name: 'season' });
     }
 
-    clearExportSeasons() {
-        this.state.exportSeasons = new Set();
-        if (!this.viewOnly) write(STORAGE_KEYS.exportSeasons, []);
-        this.notify({ type: 'export-seasons-changed' });
+    clearSeasons() {
+        this.state.filters.season = new Set();
+        this.persistSeasonFilter();
+        this.notify({ type: 'filter', name: 'season' });
+    }
+
+    persistSeasonFilter() {
+        if (this.viewOnly) return;
+        if (this.state.filters.season === null) {
+            write(STORAGE_KEYS.season, 'all');
+        } else {
+            write(STORAGE_KEYS.season, [...this.state.filters.season]);
+        }
     }
 
     subscribe(listener) {
@@ -154,14 +179,25 @@ export class TrackerStore {
 
     setFilter(name, value) {
         if (!(name in this.state.filters)) return;
+        if (name === 'season') {
+            if (value === 'all' || value === null) {
+                this.state.filters.season = null;
+            } else if (Array.isArray(value)) {
+                this.state.filters.season = new Set(value);
+            } else if (typeof value === 'string') {
+                this.state.filters.season = new Set(value.split(',').map(s => s.trim()).filter(Boolean));
+            }
+            this.persistSeasonFilter();
+            this.notify({ type: 'filter', name: 'season' });
+            return;
+        }
         this.state.filters[name] = value;
         const key = {
             search: STORAGE_KEYS.search,
             theme: STORAGE_KEYS.theme,
-            season: STORAGE_KEYS.season,
             status: STORAGE_KEYS.status,
         }[name];
-        if (!this.viewOnly) write(key, value);
+        if (!this.viewOnly && key) write(key, value);
         this.notify({ type: 'filter', name });
     }
 
