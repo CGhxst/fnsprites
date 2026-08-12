@@ -35,10 +35,18 @@ const dom = {
     lowFidelity: document.querySelector('#lowFidelity'),
     exportMenu: document.querySelector('#exportMenu'),
     exportToggle: document.querySelector('#exportToggle'),
+    tradeMenu: document.querySelector('#tradeMenu'),
+    tradeToggle: document.querySelector('#tradeToggle'),
+    myTradeCode: document.querySelector('#myTradeCode'),
+    copyTradeCodeButton: document.querySelector('#copyTradeCodeButton'),
+    friendTradeInput: document.querySelector('#friendTradeInput'),
+    compareTradeButton: document.querySelector('#compareTradeButton'),
     shareButton: document.querySelector('#shareButton'),
     moreMenu: document.querySelector('#moreMenu'),
     moreToggle: document.querySelector('#moreToggle'),
     copyGridButton: document.querySelector('#copyGridButton'),
+    copyCodeButton: document.querySelector('#copyCodeButton'),
+    loadCodeButton: document.querySelector('#loadCodeButton'),
     backupButton: document.querySelector('#backupButton'),
     importButton: document.querySelector('#importButton'),
     importInput: document.querySelector('#importInput'),
@@ -58,6 +66,8 @@ function installIcons() {
         seasonChevron: ICONS.chevron,
         exportIcon: ICONS.download,
         exportChevron: ICONS.chevron,
+        tradeIcon: ICONS.trade,
+        tradeChevron: ICONS.chevron,
         shareIcon: ICONS.share,
         moreIcon: ICONS.more,
     };
@@ -182,6 +192,7 @@ function renderControls() {
     dom.searchInput.value = filters.search;
     dom.themeFilter.value = filters.theme;
     updateSeasonLabel();
+    updateTradeCode();
     dom.groupOrder.value = settings.group;
     dom.hideMastered.checked = settings.hideMastered;
     dom.showUnreleased.checked = settings.showUnreleased;
@@ -336,8 +347,15 @@ function patchCollectionCard(change) {
     return true;
 }
 
+function updateTradeCode() {
+    if (dom.myTradeCode) {
+        dom.myTradeCode.value = encodeShare(store.snapshot(), catalog.sprites, store.state.filters.status);
+    }
+}
+
 function handleStoreChange(_state, change) {
     renderProgress();
+    updateTradeCode();
     if (patchCollectionCard(change)) return;
     renderControls();
     renderCollection();
@@ -395,6 +413,7 @@ function closeMenus({ except = null, restoreFocus = false } = {}) {
     for (const [menu, toggle] of [
         [dom.seasonMenu, dom.seasonToggle],
         [dom.exportMenu, dom.exportToggle],
+        [dom.tradeMenu, dom.tradeToggle],
         [dom.moreMenu, dom.moreToggle],
     ]) {
         if (!menu || menu === except) continue;
@@ -410,8 +429,13 @@ function toggleMenu(menu, toggle) {
     closeMenus({ except: menu });
     menu.classList.toggle('is-open', willOpen);
     toggle.setAttribute('aria-expanded', String(willOpen));
-    if (willOpen) menu.querySelector('.menu-popover button, .menu-popover input')?.focus();
-    else toggle.focus();
+    if (willOpen) {
+        requestAnimationFrame(() => {
+            menu.querySelector('.menu-popover button, .menu-popover input')?.focus();
+        });
+    } else {
+        toggle.focus();
+    }
 }
 
 async function copyText(text, successMessage) {
@@ -516,6 +540,13 @@ function bindControlEvents() {
         event.stopPropagation();
         toggleMenu(dom.exportMenu, dom.exportToggle);
     });
+    if (dom.tradeToggle) {
+        dom.tradeToggle.addEventListener('click', event => {
+            event.stopPropagation();
+            updateTradeCode();
+            toggleMenu(dom.tradeMenu, dom.tradeToggle);
+        });
+    }
     dom.moreToggle.addEventListener('click', event => {
         event.stopPropagation();
         toggleMenu(dom.moreMenu, dom.moreToggle);
@@ -544,10 +575,125 @@ function bindControlEvents() {
         }
         copyText(url.toString(), 'Share link copied.');
     });
+
+    if (dom.copyTradeCodeButton) {
+        dom.copyTradeCodeButton.addEventListener('click', () => {
+            if (dom.myTradeCode?.value) {
+                copyText(dom.myTradeCode.value, 'Trade code copied.');
+            } else {
+                toast('Collect at least one sprite to get a trade code.', 'error');
+            }
+        });
+    }
+
+    function parseTradeCodeOrUrl(input) {
+        if (!input || typeof input !== 'string') return null;
+        const trimmed = input.trim();
+        if (!trimmed) return null;
+        try {
+            if (trimmed.includes('://') || trimmed.includes('?')) {
+                const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+                return url.searchParams.get('s') || url.searchParams.get('share') || url.searchParams.get('c');
+            }
+        } catch {
+            // Not a URL, treat as code
+        }
+        return trimmed;
+    }
+
+    function applyFriendTradeCode() {
+        if (!dom.friendTradeInput) return;
+        const raw = dom.friendTradeInput.value;
+        const code = parseTradeCodeOrUrl(raw);
+        if (!code) {
+            toast('Please enter a valid trade code or link.', 'error');
+            return;
+        }
+        const decoded = decodeShare(code, catalog.sprites)
+            || decodeLegacyJsonShare(code)
+            || decodeLegacyShare(code, catalog.sprites);
+        if (!decoded) {
+            toast('That trade code or link is not valid.', 'error');
+            return;
+        }
+        const yourOwned = store.state.owned;
+        const theirsOwned = decoded.owned;
+        const matches = compareCollections(yourOwned, theirsOwned, catalog.released);
+        const yours = new Set(matches.youCanOffer);
+        const theirs = new Set(matches.theyCanOffer);
+
+        comparison = {
+            active: true,
+            returnStatus: store.state.filters.status,
+            yours,
+            theirs,
+            yourOwned: new Set(yourOwned),
+        };
+        store.state.filters.status = 'all';
+
+        if (dom.sharedBanner) {
+            dom.sharedBanner.hidden = false;
+            dom.sharedBanner.classList.remove('is-error');
+            dom.sharedBanner.innerHTML = `
+                <div class="shared-summary">
+                    <span>Comparing trades &bull; <strong>You can offer ${yours.size}</strong> &bull; <strong>They can offer ${theirs.size}</strong></span>
+                    <span class="compare-hint" id="compareHint" role="status" ${yourOwned.size === 0 ? '' : 'hidden'}>Your tracker is empty. Add your sprites to see trade matches.</span>
+                </div>
+                <div class="shared-actions">
+                    <button type="button" id="compareButton" aria-pressed="true">Hide trade matches</button>
+                </div>
+            `;
+        }
+
+        closeMenus({ restoreFocus: true });
+        render();
+        toast('Loaded trade comparison.', 'success');
+    }
+
+    if (dom.compareTradeButton) {
+        dom.compareTradeButton.addEventListener('click', applyFriendTradeCode);
+    }
+    if (dom.friendTradeInput) {
+        dom.friendTradeInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                applyFriendTradeCode();
+            }
+        });
+    }
     dom.copyGridButton.addEventListener('click', () => {
         closeMenus({ restoreFocus: true });
         copyText(tradeGrid(catalog, store), 'Trade grid copied.');
     });
+    if (dom.copyCodeButton) {
+        dom.copyCodeButton.addEventListener('click', () => {
+            closeMenus({ restoreFocus: true });
+            const code = encodeShare(store.snapshot(), catalog.sprites, 'all');
+            if (!code) {
+                toast('Collect at least one sprite to get a locker code.', 'error');
+                return;
+            }
+            copyText(code, 'Locker code copied.');
+        });
+    }
+    if (dom.loadCodeButton) {
+        dom.loadCodeButton.addEventListener('click', () => {
+            closeMenus({ restoreFocus: true });
+            if (store.viewOnly) {
+                toast('Open your tracker before importing.', 'error');
+                return;
+            }
+            const input = window.prompt('Paste a backup trade code or share link to restore your collection:');
+            if (input === null) return;
+            try {
+                const data = parseBackup(input, catalog.sprites);
+                store.replaceCollection(data.owned, data.mastered);
+                toast('Collection restored from code.', 'success');
+            } catch {
+                toast('That backup code or link is not valid.', 'error');
+            }
+        });
+    }
     dom.backupButton.addEventListener('click', () => {
         closeMenus({ restoreFocus: true });
         downloadBackup(store);
@@ -566,7 +712,7 @@ function bindControlEvents() {
         if (!file) return;
         try {
             if (file.size > 1_000_000) throw new TypeError('Backup file is too large.');
-            const data = parseBackup(JSON.parse(await file.text()));
+            const data = parseBackup(await file.text(), catalog.sprites);
             store.replaceCollection(data.owned, data.mastered);
             toast('Collection imported.', 'success');
         } catch {

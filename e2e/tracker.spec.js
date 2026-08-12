@@ -141,6 +141,14 @@ test('copies the formatted trade grid and stable share links', async ({ page, co
     expect(tradeGrid.startsWith('```')).toBe(true);
     expect(tradeGrid.endsWith('```')).toBe(true);
 
+    await page.locator('#moreToggle').click();
+    await page.locator('#copyCodeButton').click();
+    const codeText = await page.evaluate(() => navigator.clipboard.readText());
+    expect(decodeShare(codeText, catalog.sprites)).toEqual({
+        owned: ['air_basic'],
+        mastered: [],
+    });
+
     await page.getByRole('button', { name: 'Missing', exact: true }).click();
     await page.locator('#shareButton').click();
     const shareText = await page.evaluate(() => navigator.clipboard.readText());

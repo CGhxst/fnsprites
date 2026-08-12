@@ -106,4 +106,8 @@ export const ICONS = Object.freeze({
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>
         </svg>`,
+    trade: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`,
 });

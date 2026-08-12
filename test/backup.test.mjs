@@ -25,3 +25,12 @@ test('backup parser rejects malformed data and removes duplicate ids', () => {
         mastered: ['air_basic'],
     });
 });
+
+test('backup parser parses raw JSON strings and share codes', () => {
+    const jsonString = JSON.stringify({ owned: ['air_basic'], mastered: ['air_basic'] });
+    assert.deepEqual(parseBackup(jsonString), {
+        owned: ['air_basic'],
+        mastered: ['air_basic'],
+    });
+    assert.throws(() => parseBackup('{ invalid json'), /invalid json backup content/i);
+});

@@ -128,7 +128,28 @@
                         </div>
                     </div>
 
-                    <button type="button" class="action-button action-primary" id="shareButton" aria-label="Share collection">
+                    <div class="menu" id="tradeMenu">
+                        <button type="button" class="action-button action-primary" id="tradeToggle" aria-label="Trade sprites" aria-expanded="false" aria-controls="tradePopover">
+                            <span class="button-icon" id="tradeIcon" aria-hidden="true"></span>
+                            <span class="button-label">Trade</span>
+                            <span class="chevron" id="tradeChevron" aria-hidden="true"></span>
+                        </button>
+                        <div class="menu-popover trade-popover" id="tradePopover" aria-label="Trade sprites with friends">
+                            <p class="menu-label">Your Trade Code</p>
+                            <div class="trade-code-box">
+                                <input type="text" id="myTradeCode" readonly placeholder="Select sprites first..." aria-label="Your trade code">
+                                <button type="button" id="copyTradeCodeButton" class="action-button action-primary">Copy</button>
+                            </div>
+                            <div class="menu-divider"></div>
+                            <p class="menu-label">Compare Lockers</p>
+                            <div class="trade-input-box">
+                                <input type="text" id="friendTradeInput" placeholder="Paste trade code or link..." aria-label="Friend's trade code or link">
+                                <button type="button" id="compareTradeButton" class="action-button">Compare</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="action-button" id="shareButton" aria-label="Share collection">
                         <span class="button-icon" id="shareIcon" aria-hidden="true"></span>
                         <span class="button-label">Share</span>
                     </button>
@@ -141,8 +162,11 @@
                             <p class="menu-label">More tools</p>
                             <button type="button" id="copyGridButton">Copy trade grid</button>
                             <div class="menu-divider"></div>
-                            <button type="button" id="backupButton">Download backup</button>
-                            <button type="button" id="importButton">Import backup</button>
+                            <p class="menu-label">Backup & Restore</p>
+                            <button type="button" id="copyCodeButton">Copy locker code</button>
+                            <button type="button" id="loadCodeButton">Load backup code</button>
+                            <button type="button" id="backupButton">Download backup file</button>
+                            <button type="button" id="importButton">Import backup file</button>
                             <div class="menu-divider"></div>
                             <label class="menu-toggle">
                                 <input type="checkbox" id="lowFidelity">
