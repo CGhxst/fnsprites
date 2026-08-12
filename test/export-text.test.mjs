@@ -23,10 +23,10 @@ test('trade grid uses the formatted emoji output', () => {
     assert.equal(text, `\`\`\`
 ✅ Owned  👑 Mastered  ❌ Missing  ⬛ Variant does not exist
 
-| BASE | GOLD | Sprite
-----------------------
-| 👑 | ❌ | Air
-| ❌ | ⬛ | Water
+BASE|GOLD
+---------
+👑|❌ Air
+❌|⬛ Water
 
 Collected: 1/3
 Mastered: 1/3

@@ -564,7 +564,7 @@ export function tradeGrid(catalog, store) {
     const families = familyMap(sprites);
     const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
     const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
-    const header = `| ${themes.map(exportTheme).join(' | ')} | Sprite`;
+    const header = themes.map(exportTheme).join('|');
     const seasonNote = selectedSeasons.length < availableSeasons.length
         ? [`Seasons: ${selectedSeasons.join(', ')}`]
         : [];
@@ -584,7 +584,7 @@ export function tradeGrid(catalog, store) {
             if (store.isMastered(sprite.id)) return '👑';
             return store.isOwned(sprite.id) ? '✅' : '❌';
         });
-        lines.push(`| ${states.join(' | ')} | ${catalog.familyName(key)}`);
+        lines.push(`${states.join('|')} ${catalog.familyName(key)}`);
     }
     lines.push(
         '',

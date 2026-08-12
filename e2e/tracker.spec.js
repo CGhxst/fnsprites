@@ -137,7 +137,7 @@ test('copies the formatted trade grid and stable share links', async ({ page, co
     await page.locator('#copyGridButton').click();
     const tradeGrid = await page.evaluate(() => navigator.clipboard.readText());
     expect(tradeGrid).toContain('✅ Owned  👑 Mastered  ❌ Missing  ⬛ Variant does not exist');
-    expect(tradeGrid).toMatch(/\| ✅ \|.*\| Air/);
+    expect(tradeGrid).toMatch(/✅\|.*Air/);
     expect(tradeGrid.startsWith('```')).toBe(true);
     expect(tradeGrid.endsWith('```')).toBe(true);
 
