@@ -66,9 +66,9 @@ export class TrackerStore {
         if (savedSeasonRaw && savedSeasonRaw !== 'all' && savedSeasonRaw !== '"all"' && savedSeasonRaw !== 'sprite' && savedSeasonRaw !== 'season') {
             try {
                 const parsed = JSON.parse(savedSeasonRaw);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    const valid = parsed.filter(s => s && s !== 'all' && s !== 'sprite' && s !== 'season');
-                    seasonFilter = valid.length > 0 ? new Set(valid) : null;
+                if (Array.isArray(parsed)) {
+                    const valid = parsed.filter(s => typeof s === 'string' && s !== 'all' && s !== 'sprite' && s !== 'season');
+                    seasonFilter = new Set(valid);
                 } else if (typeof parsed === 'string' && parsed !== 'all' && parsed !== 'sprite' && parsed !== 'season') {
                     seasonFilter = new Set([parsed]);
                 }

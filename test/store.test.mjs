@@ -105,3 +105,22 @@ test('store manages season filter selection, select all, and clear', () => {
     assert.equal(store.isSeasonSelected('Runners'), true);
     assert.equal(store.isSeasonSelected('Override'), true);
 });
+
+test('store restores saved season selections across reloads', () => {
+    const storage = new MemoryStorage({
+        fn_state_season: JSON.stringify(['Runners']),
+    });
+    globalThis.localStorage = storage;
+    const store = new TrackerStore(new Set(['air_basic']));
+
+    assert.equal(store.isSeasonSelected('Runners'), true);
+    assert.equal(store.isSeasonSelected('Override'), false);
+
+    const emptyStorage = new MemoryStorage({
+        fn_state_season: JSON.stringify([]),
+    });
+    globalThis.localStorage = emptyStorage;
+    const clearedStore = new TrackerStore(new Set(['air_basic']));
+    assert.equal(clearedStore.isSeasonSelected('Runners'), false);
+    assert.equal(clearedStore.isSeasonSelected('Override'), false);
+});
