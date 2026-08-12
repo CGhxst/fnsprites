@@ -364,7 +364,7 @@ function populateExportSeasons() {
             const input = document.createElement('input');
             input.type = 'checkbox';
             input.value = season;
-            input.checked = store.isExportSeasonSelected(season, seasons);
+            input.checked = store.isExportSeasonSelected(season);
             const span = document.createElement('span');
             span.textContent = season;
             label.appendChild(input);
