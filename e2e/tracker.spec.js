@@ -1,6 +1,6 @@
 import { expect, test as base } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { activeSeasons, createCatalog, familyMap } from '../src/catalog.js';
+import { activeSeasons, createCatalog } from '../src/catalog.js';
 import { sprites } from '../src/generated/sprites.js';
 import { decodeShare, encodeShare } from '../src/share.js';
 

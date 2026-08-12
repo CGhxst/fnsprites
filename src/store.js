@@ -85,7 +85,7 @@ export class TrackerStore {
         };
     }
 
-    isExportSeasonSelected(season, availableSeasons = []) {
+    isExportSeasonSelected(season, _availableSeasons = []) {
         if (this.state.exportSeasons === null) return true;
         return this.state.exportSeasons.has(season);
     }
