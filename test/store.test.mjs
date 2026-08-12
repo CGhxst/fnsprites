@@ -86,3 +86,22 @@ test('store starts with defaults when browser storage is unavailable', () => {
         console.warn = warn;
     }
 });
+
+test('store manages season filter selection, select all, and clear', () => {
+    globalThis.localStorage = new MemoryStorage();
+    const store = new TrackerStore(new Set(['air_basic', 'water_basic']));
+
+    assert.equal(store.isSeasonSelected('Runners'), true);
+
+    store.toggleSeason('Override', false, ['Runners', 'Override']);
+    assert.equal(store.isSeasonSelected('Runners'), true);
+    assert.equal(store.isSeasonSelected('Override'), false);
+
+    store.clearSeasons();
+    assert.equal(store.isSeasonSelected('Runners'), false);
+    assert.equal(store.isSeasonSelected('Override'), false);
+
+    store.selectAllSeasons();
+    assert.equal(store.isSeasonSelected('Runners'), true);
+    assert.equal(store.isSeasonSelected('Override'), true);
+});

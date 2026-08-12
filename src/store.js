@@ -99,8 +99,7 @@ export class TrackerStore {
 
     isSeasonSelected(season) {
         if (!this.state.filters.season || this.state.filters.season === 'all') return true;
-        if (typeof this.state.filters.season.has === 'function') {
-            if (this.state.filters.season.size === 0 || this.state.filters.season.has('all')) return true;
+        if (this.state.filters.season instanceof Set) {
             return this.state.filters.season.has(season);
         }
         return true;
