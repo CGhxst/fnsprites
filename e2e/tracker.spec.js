@@ -1,12 +1,12 @@
 import { expect, test as base } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { createCatalog, familyMap } from '../src/catalog.js';
+import { activeSeasons, createCatalog, familyMap } from '../src/catalog.js';
 import { sprites } from '../src/generated/sprites.js';
 import { decodeShare, encodeShare } from '../src/share.js';
 
 const catalog = createCatalog(sprites);
 const releasedCount = catalog.released.length;
-const familyCount = familyMap(catalog.released).size;
+const seasonCount = activeSeasons(catalog.released).length;
 const quackSprite = catalog.released.find(sprite => sprite.theme === 'Quack');
 
 const test = base.extend({
@@ -31,10 +31,10 @@ test.beforeEach(async ({ page }) => {
 test('renders the released catalog with valid interactive structure', async ({ page }) => {
     await expect(page).toHaveTitle('Fortnite Sprites Tracker');
     await expect(page.locator('.sprite-card')).toHaveCount(releasedCount);
-    await expect(page.locator('.sprite-group')).toHaveCount(familyCount);
+    await expect(page.locator('.sprite-group')).toHaveCount(seasonCount);
     await expect(page.locator('button button')).toHaveCount(0);
     await expect(page.locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
-    await expect(page.locator('#groupOrder')).toHaveValue('sprite');
+    await expect(page.locator('#groupOrder')).toHaveValue('season');
     if (quackSprite) {
         await expect(page.locator('#themeFilter option[value="Quack"]')).toHaveText('Quack');
         await expect(page.locator(`[data-id="${quackSprite.id}"]`)).toHaveCSS('--card-top', '#788f35');

@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createCatalog, familyKey, groupSprites, sortSprites } from '../src/catalog.js';
+import { activeSeasons, createCatalog, familyKey, groupSprites, sortSprites } from '../src/catalog.js';
 import { THEME_ORDER, spritePalette } from '../src/config.js';
 
 const sample = [
-    { id: 'air_gold', name: 'Gold Air', theme: 'Gold', rarity: 'Special', unreleased: false },
-    { id: 'water_basic', name: 'Water', theme: 'Basic', rarity: 'Rare', unreleased: false },
-    { id: 'air_basic', name: 'Air', theme: 'Basic', rarity: 'Rare', unreleased: false },
-    { id: 'water_gold', name: 'Gold Water', theme: 'Gold', rarity: 'Special', unreleased: true },
+    { id: 'air_gold', name: 'Gold Air', theme: 'Gold', rarity: 'Special', unreleased: false, season: 'Runners' },
+    { id: 'water_basic', name: 'Water', theme: 'Basic', rarity: 'Rare', unreleased: false, season: 'Runners' },
+    { id: 'air_basic', name: 'Air', theme: 'Basic', rarity: 'Rare', unreleased: false, season: 'Override' },
+    { id: 'water_gold', name: 'Gold Water', theme: 'Gold', rarity: 'Special', unreleased: true, season: 'Override' },
 ];
 
 test('catalog indexes released sprites and family names', () => {
@@ -15,6 +15,7 @@ test('catalog indexes released sprites and family names', () => {
     assert.equal(catalog.released.length, 3);
     assert.equal(catalog.familyName('air'), 'Air');
     assert.equal(catalog.byId.get('water_gold').unreleased, true);
+    assert.equal(catalog.byId.get('air_basic').season, 'Override');
 });
 
 test('familyKey uses the final id segment as the variant', () => {
@@ -27,6 +28,14 @@ test('sprite grouping keeps each family together in theme order', () => {
     const groups = groupSprites(sorted, 'sprite', catalog);
     assert.deepEqual(groups.map(group => group.key), ['air', 'water']);
     assert.deepEqual(groups[0].sprites.map(sprite => sprite.theme), ['Basic', 'Gold']);
+});
+
+test('sprite grouping by season groups items correctly', () => {
+    const catalog = createCatalog(sample);
+    const sorted = sortSprites(catalog.sprites, 'season');
+    const groups = groupSprites(sorted, 'season', catalog);
+    assert.deepEqual(groups.map(group => group.key), ['Runners', 'Override']);
+    assert.equal(activeSeasons(catalog.sprites).length, 2);
 });
 
 test('catalog rejects duplicate ids', () => {

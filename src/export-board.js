@@ -1,5 +1,5 @@
 import { TRACKER_URL, spritePalette } from './config.js';
-import { activeThemes, exportTheme, familyMap } from './catalog.js';
+import { activeSeasons, activeThemes, exportTheme, familyMap, seasonBadgeInfo } from './catalog.js';
 
 const MODE_CONFIG = Object.freeze({
     collected: {
@@ -160,7 +160,7 @@ function drawLock(ctx, x, y) {
     ctx.restore();
 }
 
-function drawCard(ctx, sprite, state, image, x, y, mode) {
+function drawCard(ctx, sprite, state, image, x, y, mode, seasonImage = null) {
     if (state === 'hidden') {
         drawEmptySlot(ctx, x, y);
         return;
@@ -243,6 +243,23 @@ function drawCard(ctx, sprite, state, image, x, y, mode) {
     if (state === 'mastered') drawCrown(ctx, x + LAYOUT.cardWidth - 11, y + 11);
     if (state === 'owned' || state === 'unmastered') drawCheckBadge(ctx, x + LAYOUT.cardWidth - 11, y + 11);
     if (tradeMissing) drawLock(ctx, x + LAYOUT.cardWidth / 2, y + imageHeight / 2 - 2);
+
+    const img = Array.isArray(seasonImage) ? seasonImage[1] : seasonImage;
+    if (img && typeof img === 'object' && 'naturalWidth' in img) {
+        const badgeSize = 20;
+        const badgeX = x + 4;
+        const badgeY = y + 4;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 4;
+        ctx.beginPath();
+        ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(9, 12, 16, 0.85)';
+        ctx.fill();
+        ctx.clip();
+        ctx.drawImage(img, badgeX, badgeY, badgeSize, badgeSize);
+        ctx.restore();
+    }
 }
 
 function modeHasContent(sprite, mode, store) {
@@ -314,13 +331,25 @@ export async function exportBoard(mode, catalog, store, toast) {
     const config = MODE_CONFIG[mode];
     if (!config) return;
 
-    const sprites = catalog.released;
+    const availableSeasons = activeSeasons(catalog.sprites);
+    const selectedSeasons = store?.state?.exportSeasons === null || store?.state?.exportSeasons === undefined
+        ? availableSeasons
+        : [...store.state.exportSeasons];
+
+    const showUnreleased = store?.state?.settings?.showUnreleased || false;
+    const sprites = catalog.sprites.filter(sprite => {
+        if (!showUnreleased && sprite.unreleased) return false;
+        if (!selectedSeasons.includes(sprite.season)) return false;
+        return true;
+    });
+
     const families = familyMap(sprites);
     const familyKeys = [...families.keys()].filter(key =>
         [...families.get(key).values()].some(sprite => modeHasContent(sprite, mode, store)),
     );
     if (familyKeys.length === 0) {
-        toast(config.empty, 'error');
+        const isFiltered = selectedSeasons.length < availableSeasons.length;
+        toast(isFiltered ? 'No matching sprites found for the selected season(s).' : config.empty, 'error');
         return;
     }
 
@@ -329,10 +358,27 @@ export async function exportBoard(mode, catalog, store, toast) {
 
     const relevantSprites = sprites.filter(sprite => modeHasContent(sprite, mode, store));
     const themes = exportThemes(sprites, mode, store);
-    const images = new Map(await Promise.all([
-        loadImage('brand', 'sprites/air_basic.png'),
-        ...relevantSprites.map(sprite => loadImage(sprite.id, `sprites/${encodeURIComponent(sprite.id)}.png`)),
-    ]));
+    const uniqueSeasons = [...new Set(relevantSprites.map(s => s.season))];
+    const [imagesArray, seasonImagesArray] = await Promise.all([
+        Promise.all([
+            loadImage('brand', 'sprites/air_basic.png'),
+            ...relevantSprites.map(sprite => loadImage(sprite.id, `sprites/${encodeURIComponent(sprite.id)}.png`)),
+        ]),
+        Promise.all(
+            uniqueSeasons.map(async season => {
+                const info = seasonBadgeInfo(season);
+                let [, img] = await loadImage(`season_${season}`, info.src);
+                if (!img) {
+                    const [, fallback] = await loadImage(`season_fallback_${season}`, info.fallbackSrc);
+                    img = fallback;
+                }
+                return [season, img];
+            }),
+        ),
+    ]);
+    const images = new Map(imagesArray);
+    const seasonImages = new Map(seasonImagesArray);
+
     const missingImages = relevantSprites.filter(sprite => !images.get(sprite.id));
     if (missingImages.length) {
         throw new Error(`Missing export images: ${missingImages.map(sprite => sprite.id).join(', ')}`);
@@ -383,7 +429,14 @@ export async function exportBoard(mode, catalog, store, toast) {
     ctx.fillText('SPRITES TRACKER', titleX, compactHeader ? 43 : 53);
     ctx.fillStyle = config.accent;
     ctx.font = `700 ${compactHeader ? 15 : 18}px Oswald, sans-serif`;
-    ctx.fillText(config.title, titleX, compactHeader ? 67 : 79);
+    let seasonLabel = '';
+    if (selectedSeasons.length === 1 && availableSeasons.length > 1) {
+        seasonLabel = ` • ${selectedSeasons[0].toUpperCase()}`;
+    } else if (selectedSeasons.length < availableSeasons.length) {
+        seasonLabel = ` • ${selectedSeasons.length} SEASONS`;
+    }
+    const displayTitle = `${config.title}${seasonLabel}`;
+    ctx.fillText(displayTitle, titleX, compactHeader ? 67 : 79);
 
     const total = sprites.length;
     const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
@@ -472,7 +525,7 @@ export async function exportBoard(mode, catalog, store, toast) {
                     drawEmptySlot(ctx, x, y);
                     return;
                 }
-                drawCard(ctx, sprite, cardState(sprite, mode, store), images.get(sprite.id), x, y, mode);
+                drawCard(ctx, sprite, cardState(sprite, mode, store), images.get(sprite.id), x, y, mode, seasonImages.get(sprite.season));
             });
         });
     }
@@ -486,20 +539,39 @@ export async function exportBoard(mode, catalog, store, toast) {
     ctx.textBaseline = 'middle';
     ctx.fillText('CGHXST.GITHUB.IO/FNSPRITES', canvasWidth / 2, footerY + LAYOUT.footer / 2);
 
-    await downloadCanvas(canvas, config.filename);
+    let seasonSuffix = '';
+    if (selectedSeasons.length === 1 && availableSeasons.length > 1) {
+        seasonSuffix = `-${selectedSeasons[0].toLowerCase()}`;
+    } else if (selectedSeasons.length < availableSeasons.length) {
+        seasonSuffix = `-custom`;
+    }
+    await downloadCanvas(canvas, `${config.filename}${seasonSuffix}`);
     toast('Image ready.', 'success');
 }
 
 export function tradeGrid(catalog, store) {
-    const sprites = catalog.released;
+    const availableSeasons = activeSeasons(catalog.sprites);
+    const selectedSeasons = store?.state?.exportSeasons === null || store?.state?.exportSeasons === undefined
+        ? availableSeasons
+        : [...store.state.exportSeasons];
+    const showUnreleased = store?.state?.settings?.showUnreleased || false;
+    const sprites = catalog.sprites.filter(sprite => {
+        if (!showUnreleased && sprite.unreleased) return false;
+        if (!selectedSeasons.includes(sprite.season)) return false;
+        return true;
+    });
     const themes = activeThemes(sprites);
     const families = familyMap(sprites);
     const owned = sprites.filter(sprite => store.isOwned(sprite.id)).length;
     const mastered = sprites.filter(sprite => store.isMastered(sprite.id)).length;
     const header = `| ${themes.map(exportTheme).join(' | ')} | Sprite`;
+    const seasonNote = selectedSeasons.length < availableSeasons.length
+        ? [`Seasons: ${selectedSeasons.join(', ')}`]
+        : [];
     const lines = [
         '```',
         '✅ Owned  👑 Mastered  ❌ Missing  ⬛ Variant does not exist',
+        ...seasonNote,
         '',
         header,
         '-'.repeat(header.length),

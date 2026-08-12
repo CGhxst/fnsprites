@@ -12,8 +12,6 @@
     <script type="module" src="app.js"></script>
 </head>
 <body>
-    <div class="identity-stripe" aria-hidden="true"></div>
-
     <aside class="shared-banner" id="sharedBanner" hidden>
         <span>Viewing a shared collection</span>
         <a href="./">Open my tracker</a>
@@ -64,8 +62,16 @@
                 </label>
 
                 <label class="select-field">
+                    <span class="sr-only">Filter by season</span>
+                    <select id="seasonFilter">
+                        <option value="all">All seasons</option>
+                    </select>
+                </label>
+
+                <label class="select-field">
                     <span class="sr-only">Group sprites</span>
                     <select id="groupOrder">
+                        <option value="season" selected>Group by season</option>
                         <option value="sprite">Group by sprite</option>
                         <option value="theme">Group by theme</option>
                         <option value="rarity">Group by rarity</option>
@@ -102,6 +108,15 @@
                             <span class="chevron" id="exportChevron" aria-hidden="true"></span>
                         </button>
                         <div class="menu-popover" id="exportPopover" aria-label="Export image boards">
+                            <div class="menu-label-row">
+                                <span class="menu-label">Seasons to include</span>
+                                <div class="quick-links">
+                                    <button type="button" id="selectAllExportSeasons">All</button>
+                                    <button type="button" id="clearExportSeasons">Clear</button>
+                                </div>
+                            </div>
+                            <div class="export-season-picker" id="exportSeasonPicker"></div>
+                            <div class="menu-divider"></div>
                             <p class="menu-label">Image boards</p>
                             <button type="button" data-export="trade">Trade board</button>
                             <div class="menu-divider"></div>

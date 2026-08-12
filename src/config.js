@@ -3,6 +3,8 @@ export const STORAGE_KEYS = Object.freeze({
     mastered: 'fn_mastered_sprites',
     search: 'fn_state_search',
     theme: 'fn_state_theme',
+    season: 'fn_state_season',
+    exportSeasons: 'fn_state_export_seasons',
     status: 'fn_state_status_filter',
     hideMastered: 'fn_state_hide_mastered',
     sort: 'fn_state_sort_order',
@@ -22,6 +24,12 @@ export const THEME_ORDER = Object.freeze([
     'Rift',
 ]);
 
+export const SEASON_ORDER = Object.freeze([
+    'Runners',
+    'Override',
+    'Unknown',
+]);
+
 export const RARITY_ORDER = Object.freeze([
     'Mythic',
     'Legendary',
@@ -31,7 +39,7 @@ export const RARITY_ORDER = Object.freeze([
 ]);
 
 export const STATUS_FILTERS = Object.freeze(['all', 'owned', 'missing']);
-export const GROUP_METHODS = Object.freeze(['sprite', 'theme', 'rarity', 'name']);
+export const GROUP_METHODS = Object.freeze(['sprite', 'theme', 'season', 'rarity', 'name']);
 export const TRACKER_URL = 'https://cghxst.github.io/fnsprites/';
 
 export const THEME_LABELS = Object.freeze({

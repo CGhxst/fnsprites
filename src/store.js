@@ -56,26 +56,63 @@ export class TrackerStore {
         }
 
         const legacyGroupSetting = readString('fn_state_group_theme');
-        const legacySort = legacyGroupSetting === 'true' ? 'theme' : 'sprite';
+        const legacySort = legacyGroupSetting === 'true' ? 'theme' : 'season';
         const savedSort = readString(STORAGE_KEYS.sort) || legacySort;
         const storedStatus = readString(STORAGE_KEYS.status);
         const savedStatus = storedStatus === 'obtained' ? 'owned' : storedStatus;
 
+        const savedExportSeasonsRaw = readString(STORAGE_KEYS.exportSeasons);
+        const exportSeasons = savedExportSeasonsRaw !== null
+            ? new Set(readArray(STORAGE_KEYS.exportSeasons))
+            : null;
+
         this.state = {
             owned,
             mastered,
+            exportSeasons,
             filters: {
                 search: readString(STORAGE_KEYS.search) || '',
                 theme: readString(STORAGE_KEYS.theme) || 'all',
+                season: readString(STORAGE_KEYS.season) || 'all',
                 status: STATUS_FILTERS.includes(savedStatus) ? savedStatus : 'all',
             },
             settings: {
                 hideMastered: readBoolean(STORAGE_KEYS.hideMastered),
                 showUnreleased: readBoolean(STORAGE_KEYS.showUnreleased),
                 lowFidelity: readBoolean(STORAGE_KEYS.lowFidelity),
-                group: GROUP_METHODS.includes(savedSort) ? savedSort : 'sprite',
+                group: GROUP_METHODS.includes(savedSort) ? savedSort : 'season',
             },
         };
+    }
+
+    isExportSeasonSelected(season, availableSeasons = []) {
+        if (this.state.exportSeasons === null) return true;
+        return this.state.exportSeasons.has(season);
+    }
+
+    toggleExportSeason(season, active, availableSeasons = []) {
+        if (this.state.exportSeasons === null) {
+            this.state.exportSeasons = new Set(availableSeasons);
+        }
+        if (active) {
+            this.state.exportSeasons.add(season);
+        } else {
+            this.state.exportSeasons.delete(season);
+        }
+        if (!this.viewOnly) write(STORAGE_KEYS.exportSeasons, [...this.state.exportSeasons]);
+        this.notify({ type: 'export-seasons-changed' });
+    }
+
+    selectAllExportSeasons(allSeasons) {
+        this.state.exportSeasons = new Set(allSeasons);
+        if (!this.viewOnly) write(STORAGE_KEYS.exportSeasons, [...this.state.exportSeasons]);
+        this.notify({ type: 'export-seasons-changed' });
+    }
+
+    clearExportSeasons() {
+        this.state.exportSeasons = new Set();
+        if (!this.viewOnly) write(STORAGE_KEYS.exportSeasons, []);
+        this.notify({ type: 'export-seasons-changed' });
     }
 
     subscribe(listener) {
@@ -121,6 +158,7 @@ export class TrackerStore {
         const key = {
             search: STORAGE_KEYS.search,
             theme: STORAGE_KEYS.theme,
+            season: STORAGE_KEYS.season,
             status: STORAGE_KEYS.status,
         }[name];
         if (!this.viewOnly) write(key, value);

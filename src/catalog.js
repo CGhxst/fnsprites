@@ -1,4 +1,4 @@
-import { EXPORT_THEME_LABELS, RARITY_ORDER, THEME_LABELS, THEME_ORDER } from './config.js';
+import { EXPORT_THEME_LABELS, RARITY_ORDER, SEASON_ORDER, THEME_LABELS, THEME_ORDER } from './config.js';
 
 const REQUIRED_FIELDS = ['id', 'name', 'theme', 'rarity', 'unreleased'];
 
@@ -46,6 +46,7 @@ export function createCatalog(rawSprites) {
             theme: String(sprite.theme).trim(),
             rarity: String(sprite.rarity).trim(),
             unreleased: sprite.unreleased === true,
+            season: sprite.season ? String(sprite.season).trim() : 'Unknown',
         });
     });
 
@@ -82,6 +83,21 @@ export function activeThemes(sprites) {
         .sort((a, b) => orderedIndex(THEME_ORDER, a) - orderedIndex(THEME_ORDER, b) || a.localeCompare(b));
 }
 
+export function activeSeasons(sprites) {
+    return [...new Set(sprites.map(sprite => sprite.season || 'Unknown'))]
+        .sort((a, b) => orderedIndex(SEASON_ORDER, a) - orderedIndex(SEASON_ORDER, b) || a.localeCompare(b));
+}
+
+export function seasonBadgeInfo(season) {
+    const cleanSeason = String(season || 'Unknown').trim();
+    const slug = cleanSeason.toLowerCase().replace(/[^a-z0-9]/g, '');
+    return {
+        name: cleanSeason,
+        src: `siteimages/s_${slug}.png`,
+        fallbackSrc: 'siteimages/s_unknown.png',
+    };
+}
+
 export function familyMap(sprites) {
     const map = new Map();
     for (const sprite of sprites) {
@@ -96,6 +112,11 @@ export function sortSprites(sprites, method) {
     return [...sprites].sort((a, b) => {
         if (method === 'theme') {
             return orderedIndex(THEME_ORDER, a.theme) - orderedIndex(THEME_ORDER, b.theme)
+                || a.name.localeCompare(b.name);
+        }
+        if (method === 'season') {
+            return orderedIndex(SEASON_ORDER, a.season) - orderedIndex(SEASON_ORDER, b.season)
+                || orderedIndex(THEME_ORDER, a.theme) - orderedIndex(THEME_ORDER, b.theme)
                 || a.name.localeCompare(b.name);
         }
         if (method === 'rarity') {
@@ -123,6 +144,9 @@ export function groupSprites(sprites, method, catalog) {
         if (method === 'sprite') {
             key = familyKey(sprite);
             label = catalog.familyName(key);
+        } else if (method === 'season') {
+            key = sprite.season || 'Unknown';
+            label = `Season: ${key}`;
         } else if (method === 'rarity') {
             key = sprite.rarity;
             label = sprite.rarity;

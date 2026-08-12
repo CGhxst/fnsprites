@@ -1,4 +1,4 @@
-import { createCatalog, activeThemes, displayTheme, groupSprites, sortSprites } from './src/catalog.js';
+import { createCatalog, activeSeasons, activeThemes, displayTheme, groupSprites, seasonBadgeInfo, sortSprites } from './src/catalog.js';
 import { parseBackup } from './src/backup.js';
 import { compareCollections } from './src/compare.js';
 import { GROUP_METHODS, ICONS, STATUS_FILTERS, spritePalette } from './src/config.js';
@@ -19,6 +19,7 @@ const dom = {
     masteryFill: document.querySelector('#masteryFill'),
     searchInput: document.querySelector('#searchInput'),
     themeFilter: document.querySelector('#themeFilter'),
+    seasonFilter: document.querySelector('#seasonFilter'),
     groupOrder: document.querySelector('#groupOrder'),
     statusTabs: document.querySelector('#statusTabs'),
     quickFilters: document.querySelector('#quickFilters'),
@@ -27,6 +28,9 @@ const dom = {
     lowFidelity: document.querySelector('#lowFidelity'),
     exportMenu: document.querySelector('#exportMenu'),
     exportToggle: document.querySelector('#exportToggle'),
+    exportSeasonPicker: document.querySelector('#exportSeasonPicker'),
+    selectAllExportSeasons: document.querySelector('#selectAllExportSeasons'),
+    clearExportSeasons: document.querySelector('#clearExportSeasons'),
     shareButton: document.querySelector('#shareButton'),
     moreMenu: document.querySelector('#moreMenu'),
     moreToggle: document.querySelector('#moreToggle'),
@@ -97,7 +101,8 @@ function spriteMatchesFilters(sprite) {
     if (!settings.showUnreleased && sprite.unreleased) return false;
     if (settings.hideMastered && store.isMastered(sprite.id)) return false;
     if (filters.theme !== 'all' && sprite.theme !== filters.theme) return false;
-    if (search && !`${sprite.name} ${sprite.theme} ${sprite.rarity}`.toLocaleLowerCase().includes(search)) return false;
+    if (filters.season !== 'all' && sprite.season !== filters.season) return false;
+    if (search && !`${sprite.name} ${sprite.theme} ${sprite.rarity} ${sprite.season}`.toLocaleLowerCase().includes(search)) return false;
     if (filters.status === 'owned' && !store.isOwned(sprite.id)) return false;
     if (filters.status === 'missing' && store.isOwned(sprite.id)) return false;
     if (comparison?.active && !comparison.theirs.has(sprite.id) && !comparison.yours.has(sprite.id)) return false;
@@ -127,17 +132,23 @@ function cardMarkup(sprite) {
     const masteryButton = owned && !store.viewOnly
         ? `<button type="button" class="mastery-button" aria-label="${mastered ? 'Remove mastery from' : 'Mark'} ${safeName}${mastered ? '' : ' as mastered'}" title="${mastered ? 'Remove mastery' : 'Mark as mastered'}">${ICONS.crown}</button>`
         : '';
+    const seasonInfo = seasonBadgeInfo(sprite.season);
+    const seasonTag = `<span class="season-badge" title="Season: ${escapeHtml(seasonInfo.name)}">
+        <img src="${seasonInfo.src}" alt="${escapeHtml(seasonInfo.name)}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='${seasonInfo.fallbackSrc}';">
+    </span>`;
     const art = store.viewOnly
         ? `<div class="sprite-art" role="img" aria-label="${safeName}: ${stateLabel}">
                 <span class="card-state">${stateLabel}</span>
                 <img src="sprites/${encodeURIComponent(sprite.id)}.png" alt="" loading="lazy" decoding="async">
                 <span class="rarity-tag">${escapeHtml(sprite.rarity)}</span>
+                ${seasonTag}
             </div>`
         : `<button type="button" class="sprite-art" aria-pressed="${owned}"
                 aria-label="${owned ? 'Remove' : 'Add'} ${safeName} ${owned ? 'from' : 'to'} collection">
                 <span class="card-state">${stateLabel}</span>
                 <img src="sprites/${encodeURIComponent(sprite.id)}.png" alt="" loading="lazy" decoding="async">
                 <span class="rarity-tag">${escapeHtml(sprite.rarity)}</span>
+                ${seasonTag}
             </button>`;
 
     return `
@@ -164,6 +175,7 @@ function renderControls() {
     const { filters, settings } = store.state;
     dom.searchInput.value = filters.search;
     dom.themeFilter.value = filters.theme;
+    if (dom.seasonFilter) dom.seasonFilter.value = filters.season;
     dom.groupOrder.value = settings.group;
     dom.hideMastered.checked = settings.hideMastered;
     dom.showUnreleased.checked = settings.showUnreleased;
@@ -190,21 +202,28 @@ function renderControls() {
 function groupMarkup(sprites, idPrefix) {
     const groups = groupSprites(sprites, store.state.settings.group, catalog);
     const showGroupLabels = store.state.settings.group !== 'name';
+    const isSeasonGroup = store.state.settings.group === 'season';
 
-    return groups.map((group, index) => `
+    return groups.map((group, index) => {
+        const seasonInfo = isSeasonGroup ? seasonBadgeInfo(group.key) : null;
+        return `
         <section class="sprite-group" ${showGroupLabels
             ? `aria-labelledby="${idPrefix}-group-${index}"`
             : `aria-label="${escapeHtml(group.label)}"`}>
             ${showGroupLabels ? `
                 <div class="group-heading">
-                    <h2 id="${idPrefix}-group-${index}">${escapeHtml(group.label)}</h2>
+                    <h2 id="${idPrefix}-group-${index}">
+                        ${seasonInfo ? `<img class="group-season-badge" src="${seasonInfo.src}" alt="" width="28" height="28" onerror="this.onerror=null;this.src='${seasonInfo.fallbackSrc}';">` : ''}
+                        ${escapeHtml(group.label)}
+                    </h2>
                     <span>${group.sprites.length}</span>
                 </div>` : ''}
             <div class="sprite-grid">
                 ${group.sprites.map(cardMarkup).join('')}
             </div>
         </section>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function comparisonMarkup(sorted) {
@@ -255,10 +274,33 @@ function renderCollection() {
         : groupMarkup(sorted, 'sprite');
 }
 
+function updateSharedBanner() {
+    if (!dom.sharedBanner || dom.sharedBanner.hidden || dom.sharedBanner.classList.contains('is-error')) return;
+    const comparing = Boolean(comparison?.active);
+    const season = store.state.filters.season;
+    const seasonText = season !== 'all' ? ` (${escapeHtml(season)} Season)` : '';
+
+    const summarySpan = dom.sharedBanner.querySelector('.shared-summary > span');
+    if (!summarySpan) return;
+
+    if (comparing) {
+        const visible = filteredSprites();
+        const yourMatches = visible.filter(s => comparison.yours.has(s.id)).length;
+        const theirMatches = visible.filter(s => comparison.theirs.has(s.id)).length;
+        summarySpan.innerHTML = `Comparing trades${seasonText} &bull; <strong>You can offer ${yourMatches}</strong> &bull; <strong>They can offer ${theirMatches}</strong>`;
+    } else {
+        const total = catalog.released.length;
+        const ownedCount = catalog.released.filter(sprite => store.isOwned(sprite.id)).length;
+        const masteredCount = catalog.released.filter(sprite => store.isMastered(sprite.id)).length;
+        summarySpan.innerHTML = `Viewing shared collection${seasonText} &bull; <strong>${ownedCount}/${total}</strong> collected &bull; <strong>${masteredCount}</strong> mastered`;
+    }
+}
+
 function render() {
     renderProgress();
     renderControls();
     renderCollection();
+    updateSharedBanner();
 }
 
 function patchCollectionCard(change) {
@@ -298,6 +340,38 @@ function populateThemes() {
     if (![...dom.themeFilter.options].some(option => option.value === current)) {
         store.state.filters.theme = 'all';
     }
+}
+
+function populateSeasons() {
+    if (!dom.seasonFilter) return;
+    const current = store.state.filters.season;
+    dom.seasonFilter.replaceChildren(
+        new Option('All seasons', 'all'),
+        ...activeSeasons(catalog.sprites).map(season => new Option(`Season: ${season}`, season)),
+    );
+    if (![...dom.seasonFilter.options].some(option => option.value === current)) {
+        store.state.filters.season = 'all';
+    }
+}
+
+function populateExportSeasons() {
+    if (!dom.exportSeasonPicker) return;
+    const seasons = activeSeasons(catalog.sprites);
+    dom.exportSeasonPicker.replaceChildren(
+        ...seasons.map(season => {
+            const label = document.createElement('label');
+            label.className = 'menu-toggle';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.value = season;
+            input.checked = store.isExportSeasonSelected(season, seasons);
+            const span = document.createElement('span');
+            span.textContent = season;
+            label.appendChild(input);
+            label.appendChild(span);
+            return label;
+        }),
+    );
 }
 
 function closeMenus({ except = null, restoreFocus = false } = {}) {
@@ -375,6 +449,9 @@ function bindControlEvents() {
         searchTimer = setTimeout(() => store.setFilter('search', value), 80);
     });
     dom.themeFilter.addEventListener('change', () => store.setFilter('theme', dom.themeFilter.value));
+    if (dom.seasonFilter) {
+        dom.seasonFilter.addEventListener('change', () => store.setFilter('season', dom.seasonFilter.value));
+    }
     dom.groupOrder.addEventListener('change', () => {
         if (GROUP_METHODS.includes(dom.groupOrder.value)) store.setSetting('group', dom.groupOrder.value);
     });
@@ -392,6 +469,31 @@ function bindControlEvents() {
         event.stopPropagation();
         toggleMenu(dom.exportMenu, dom.exportToggle);
     });
+    if (dom.exportSeasonPicker) {
+        dom.exportSeasonPicker.addEventListener('change', event => {
+            const input = event.target.closest('input[type="checkbox"]');
+            if (input) {
+                store.toggleExportSeason(input.value, input.checked, activeSeasons(catalog.sprites));
+            }
+        });
+        dom.exportSeasonPicker.addEventListener('click', event => {
+            event.stopPropagation();
+        });
+    }
+    if (dom.selectAllExportSeasons) {
+        dom.selectAllExportSeasons.addEventListener('click', event => {
+            event.stopPropagation();
+            store.selectAllExportSeasons(activeSeasons(catalog.sprites));
+            populateExportSeasons();
+        });
+    }
+    if (dom.clearExportSeasons) {
+        dom.clearExportSeasons.addEventListener('click', event => {
+            event.stopPropagation();
+            store.clearExportSeasons();
+            populateExportSeasons();
+        });
+    }
     dom.moreToggle.addEventListener('click', event => {
         event.stopPropagation();
         toggleMenu(dom.moreMenu, dom.moreToggle);
@@ -407,10 +509,14 @@ function bindControlEvents() {
     });
 
     dom.shareButton.addEventListener('click', () => {
+        closeMenus({ restoreFocus: true });
         const code = encodeShare(store.snapshot(), catalog.sprites, store.state.filters.status);
         const url = new URL(location.href);
         url.search = '';
         url.searchParams.set('s', code);
+        if (store.state.filters.season !== 'all') {
+            url.searchParams.set('season', store.state.filters.season);
+        }
         copyText(url.toString(), 'Share link copied.');
     });
     dom.copyGridButton.addEventListener('click', () => {
@@ -508,19 +614,19 @@ function readSharedCollection() {
         theirs: new Set(matches.theyCanOffer),
     };
 
-    store.state.filters = { search: '', theme: 'all', status: shared.status ?? 'all' };
+    const initialSeason = params.get('season') || 'all';
+    const validSeasons = activeSeasons(catalog.sprites);
+    const seasonFilter = validSeasons.includes(initialSeason) ? initialSeason : 'all';
+
+    store.state.filters = { search: '', theme: 'all', season: seasonFilter, status: shared.status ?? 'all' };
     store.state.settings.hideMastered = false;
     store.state.settings.showUnreleased = false;
     store.replaceCollection(shared.owned, shared.mastered, { viewOnly: true });
 
-    const total = catalog.released.length;
-    const ownedCount = catalog.released.filter(sprite => store.isOwned(sprite.id)).length;
-    const masteredCount = catalog.released.filter(sprite => store.isMastered(sprite.id)).length;
-
     dom.sharedBanner.hidden = false;
     dom.sharedBanner.innerHTML = `
         <div class="shared-summary">
-            <span>Viewing shared collection &bull; <strong>${ownedCount}/${total}</strong> collected &bull; <strong>${masteredCount}</strong> mastered</span>
+            <span>Viewing shared collection</span>
             <span class="compare-hint" id="compareHint" role="status" hidden>Your tracker is empty. Add your sprites first, then reopen this link.</span>
         </div>
         <div class="shared-actions">
@@ -528,6 +634,7 @@ function readSharedCollection() {
             <a href="./">Open my tracker</a>
         </div>
     `;
+    updateSharedBanner();
 }
 
 function showStartupError(error) {
@@ -548,6 +655,8 @@ function start() {
         store = new TrackerStore(catalog.ids);
         installIcons();
         populateThemes();
+        populateSeasons();
+        populateExportSeasons();
         readSharedCollection();
         store.subscribe(handleStoreChange);
         bindCollectionEvents();

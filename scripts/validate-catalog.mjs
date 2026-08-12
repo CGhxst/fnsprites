@@ -26,6 +26,7 @@ for (const [index, sprite] of sprites.entries()) {
     assert.ok(typeof sprite.theme === 'string' && sprite.theme.trim(), `missing theme: ${sprite.id}`);
     assert.ok(typeof sprite.rarity === 'string' && sprite.rarity.trim(), `missing rarity: ${sprite.id}`);
     assert.equal(typeof sprite.unreleased, 'boolean', `unreleased must be boolean: ${sprite.id}`);
+    assert.ok(typeof sprite.season === 'string' && sprite.season.trim(), `missing season: ${sprite.id}`);
     ids.add(sprite.id);
 }
 

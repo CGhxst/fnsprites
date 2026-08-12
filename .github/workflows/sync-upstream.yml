@@ -37,7 +37,9 @@ jobs:
           git fetch --no-tags upstream main
 
       - name: Import data and sprite images only
-        run: git checkout upstream/main -- sprites-data.js sprites
+        run: |
+          git checkout upstream/main -- sprites-data.js sprites siteimages
+          rm -f siteimages/staticsprite.png siteimages/rickpfpeak.png
 
       - name: Generate application data module
         run: node scripts/build-catalog-module.mjs
@@ -47,9 +49,9 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add sprites-data.js sprites src/generated/sprites.js
+          git add sprites-data.js sprites siteimages src/generated/sprites.js
 
-          if git diff --cached --quiet -- sprites-data.js sprites src/generated/sprites.js; then
+          if git diff --cached --quiet -- sprites-data.js sprites siteimages src/generated/sprites.js; then
             echo "Sprite dataset is already current."
             exit 0
           fi
