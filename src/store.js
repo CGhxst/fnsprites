@@ -238,4 +238,32 @@ export class TrackerStore {
         write(STORAGE_KEYS.owned, [...this.state.owned]);
         write(STORAGE_KEYS.mastered, [...this.state.mastered]);
     }
+
+    resetAll() {
+        if (this.viewOnly) return;
+        this.state.owned.clear();
+        this.state.mastered.clear();
+        this.state.filters = {
+            search: '',
+            theme: 'all',
+            season: null,
+            status: 'all',
+        };
+        this.state.settings = {
+            hideMastered: false,
+            showUnreleased: false,
+            lowFidelity: false,
+            group: 'season',
+        };
+
+        for (const key of Object.values(STORAGE_KEYS)) {
+            try {
+                localStorage.removeItem(key);
+            } catch {
+                // Ignore storage clearing failures
+            }
+        }
+
+        this.notify({ type: 'all' });
+    }
 }

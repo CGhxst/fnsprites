@@ -13,6 +13,10 @@ class MemoryStorage {
     setItem(key, value) {
         this.values.set(key, String(value));
     }
+
+    removeItem(key) {
+        this.values.delete(key);
+    }
 }
 
 globalThis.localStorage = new MemoryStorage();
@@ -123,4 +127,25 @@ test('store restores saved season selections across reloads', () => {
     const clearedStore = new TrackerStore(new Set(['air_basic']));
     assert.equal(clearedStore.isSeasonSelected('Runners'), false);
     assert.equal(clearedStore.isSeasonSelected('Override'), false);
+});
+
+test('store resets all collection data, filters, settings, and storage', () => {
+    globalThis.localStorage = new MemoryStorage();
+    const store = new TrackerStore(new Set(['air_basic', 'water_basic']));
+    store.toggleOwned('air_basic');
+    store.toggleMastered('air_basic');
+    store.setFilter('status', 'owned');
+    store.setSetting('group', 'rarity');
+
+    assert.equal(store.isOwned('air_basic'), true);
+    assert.equal(store.isMastered('air_basic'), true);
+    assert.equal(store.state.filters.status, 'owned');
+
+    store.resetAll();
+
+    assert.equal(store.isOwned('air_basic'), false);
+    assert.equal(store.isMastered('air_basic'), false);
+    assert.equal(store.state.filters.status, 'all');
+    assert.equal(store.state.settings.group, 'season');
+    assert.equal(globalThis.localStorage.getItem('fn_obtained_sprites'), null);
 });

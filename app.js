@@ -42,6 +42,7 @@ const dom = {
     backupButton: document.querySelector('#backupButton'),
     importButton: document.querySelector('#importButton'),
     importInput: document.querySelector('#importInput'),
+    resetButton: document.querySelector('#resetButton'),
     collectionTitle: document.querySelector('#collectionTitle'),
     resultCount: document.querySelector('#resultCount'),
     spriteGroups: document.querySelector('#spriteGroups'),
@@ -574,6 +575,21 @@ function bindControlEvents() {
             dom.importInput.value = '';
         }
     });
+
+    if (dom.resetButton) {
+        dom.resetButton.addEventListener('click', () => {
+            closeMenus({ restoreFocus: true });
+            if (store.viewOnly) {
+                toast('Open your tracker before resetting data.', 'error');
+                return;
+            }
+            if (window.confirm('Reset all collected sprites, mastery state, and filter settings? This cannot be undone.')) {
+                store.resetAll();
+                populateSeasons();
+                toast('All tracker data has been reset.', 'success');
+            }
+        });
+    }
 
     dom.sharedBanner.addEventListener('click', event => {
         if (!event.target.closest('#compareButton') || !comparison) return;

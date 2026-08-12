@@ -637,6 +637,16 @@ a {
     color: var(--text);
 }
 
+.menu-popover > button.is-danger {
+    color: #ff6b6b;
+}
+
+.menu-popover > button.is-danger:hover,
+.menu-popover > button.is-danger:focus-visible {
+    background: rgba(255, 107, 107, 0.14);
+    color: #ff9999;
+}
+
 .menu-divider {
     height: 1px;
     margin: 5px 3px;
