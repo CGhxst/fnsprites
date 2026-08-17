@@ -170,14 +170,6 @@ export const sprites = [
         "season": "Runners"
     },
     {
-        "id": "fire_gem",
-        "name": "Gem Fire",
-        "theme": "Gem",
-        "rarity": "Special",
-        "unreleased": true,
-        "season": "Unknown"
-    },
-    {
         "id": "duck_basic",
         "name": "Duck",
         "theme": "Basic",
@@ -258,14 +250,6 @@ export const sprites = [
         "season": "Runners"
     },
     {
-        "id": "ghost_gem",
-        "name": "Gem Ghost",
-        "theme": "Gem",
-        "rarity": "Special",
-        "unreleased": true,
-        "season": "Unknown"
-    },
-    {
         "id": "dream_basic",
         "name": "Dream",
         "theme": "Basic",
@@ -304,14 +288,6 @@ export const sprites = [
         "rarity": "Special",
         "unreleased": false,
         "season": "Runners"
-    },
-    {
-        "id": "dream_gem",
-        "name": "Gem Dream",
-        "theme": "Gem",
-        "rarity": "Special",
-        "unreleased": true,
-        "season": "Unknown"
     },
     {
         "id": "demon_basic",
@@ -664,14 +640,6 @@ export const sprites = [
         "rarity": "Special",
         "unreleased": false,
         "season": "Runners"
-    },
-    {
-        "id": "boss_gem",
-        "name": "Gem Boss",
-        "theme": "Gem",
-        "rarity": "Special",
-        "unreleased": true,
-        "season": "Unknown"
     },
     {
         "id": "boss_rift",
