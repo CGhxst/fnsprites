@@ -25,10 +25,12 @@ const mimeTypes = {
 
 function resolveRequestPath(url) {
     const pathname = decodeURIComponent(new URL(url, `http://${host}`).pathname);
-    const relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+    let relativePath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+    if (relativePath === 'codes') relativePath = 'codes.html';
     const resolved = path.resolve(root, relativePath);
     return resolved === root || resolved.startsWith(`${root}${path.sep}`) ? resolved : null;
 }
+
 
 const server = http.createServer(async (request, response) => {
     if (request.method !== 'GET' && request.method !== 'HEAD') {

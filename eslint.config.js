@@ -4,6 +4,7 @@ import globals from 'globals';
 export default [
     {
         ignores: [
+            'codes-data.js',
             'node_modules/',
             'playwright-report/',
             'sprites-data.js',
@@ -13,7 +14,7 @@ export default [
     },
     js.configs.recommended,
     {
-        files: ['app.js', 'src/**/*.js'],
+        files: ['app.js', 'codes-app.js', 'src/**/*.js'],
         languageOptions: {
             ecmaVersion: 'latest',
             sourceType: 'module',

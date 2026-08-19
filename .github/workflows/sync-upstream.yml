@@ -38,7 +38,7 @@ jobs:
 
       - name: Import data and sprite images only
         run: |
-          git checkout upstream/main -- sprites-data.js sprites siteimages
+          git checkout upstream/main -- sprites-data.js codes-data.js sprites siteimages
           rm -f siteimages/staticsprite.png siteimages/rickpfpeak.png
 
       - name: Generate application data module
@@ -49,14 +49,15 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add sprites-data.js sprites siteimages src/generated/sprites.js
+          git add sprites-data.js codes-data.js sprites siteimages src/generated/sprites.js src/generated/codes.js
 
-          if git diff --cached --quiet -- sprites-data.js sprites siteimages src/generated/sprites.js; then
-            echo "Sprite dataset is already current."
+          if git diff --cached --quiet -- sprites-data.js codes-data.js sprites siteimages src/generated/sprites.js src/generated/codes.js; then
+            echo "Sprite and code dataset is already current."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "data: sync upstream sprites"
+          git commit -m "data: sync upstream sprites and codes"
           git push origin HEAD:main
+

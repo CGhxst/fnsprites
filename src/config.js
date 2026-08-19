@@ -110,4 +110,9 @@ export const ICONS = Object.freeze({
         <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>`,
+    code: `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`,
 });
+

@@ -1504,6 +1504,201 @@ a {
     }
 }
 
+/* Codes button & notification badge */
+.codes-button {
+    position: relative;
+}
+
+.notification-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: var(--pink);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--pink);
+}
+
+/* Codes page header and toolbar */
+.codes-header {
+    grid-template-columns: 1fr auto;
+}
+
+.codes-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.codes-controls .primary-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.codes-table-container {
+    margin-top: 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.codes-table-header,
+.code-row {
+    display: grid;
+    grid-template-columns: minmax(140px, 1.2fr) minmax(180px, 2fr) minmax(150px, 1.5fr) minmax(180px, 1.2fr);
+    align-items: center;
+    gap: 16px;
+    padding: 12px 18px;
+}
+
+.codes-table-header {
+    background: var(--panel-raised);
+    border-bottom: 1px solid var(--line);
+    color: var(--text-soft);
+    font-family: Oswald, Impact, sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.codes-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.code-row {
+    border-bottom: 1px solid var(--line);
+    transition: background var(--transition), opacity var(--transition);
+}
+
+.code-row:last-child {
+    border-bottom: none;
+}
+
+.code-row:hover {
+    background: var(--panel-hover);
+}
+
+.code-row.is-redeemed {
+    opacity: 0.45;
+}
+
+.code-row.is-redeemed:hover {
+    opacity: 0.75;
+}
+
+.code-copy-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--panel-raised);
+    border: 1px solid var(--line-strong);
+    border-radius: 4px;
+    color: var(--mint);
+    cursor: pointer;
+    transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.code-copy-pill:hover,
+.code-copy-pill:focus-visible {
+    background: var(--panel-hover);
+    border-color: var(--mint);
+    transform: translateY(-1px);
+}
+
+.code-copy-pill code {
+    font-family: Oswald, monospace, sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    user-select: all;
+}
+
+.reward-tag {
+    display: inline-block;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.code-source-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--blue);
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--transition);
+}
+
+.code-source-link:hover,
+.code-source-link:focus-visible {
+    color: color-mix(in srgb, var(--blue) 80%, white);
+}
+
+.code-source-text {
+    color: var(--text-soft);
+    font-size: 13px;
+}
+
+.code-actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.code-action-copy {
+    min-width: 64px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.action-redeemed {
+    min-width: 90px;
+    height: 32px;
+    padding: 0 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--line-strong);
+    color: var(--text-soft);
+    font-size: 12px;
+}
+
+.action-redeemed:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text);
+}
+
+.code-actions-cell .action-primary {
+    min-width: 100px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .codes-table-header {
+        display: none;
+    }
+
+    .code-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 14px;
+    }
+
+    .code-actions-cell {
+        justify-content: flex-start;
+        margin-top: 4px;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -1516,3 +1711,4 @@ a {
         transform: none;
     }
 }
+

@@ -2,16 +2,18 @@ import assert from 'node:assert/strict';
 import { open, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readSourceCatalog } from './read-source-catalog.mjs';
+import { readSourceCatalog, readSourceCodes } from './read-source-catalog.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const maxImageDimension = 8192;
 const maxImageBytes = 8 * 1024 * 1024;
 const dataPath = path.join(root, 'sprites-data.js');
+const codesDataPath = path.join(root, 'codes-data.js');
 const spritesPath = path.join(root, 'sprites');
 const sprites = await readSourceCatalog(dataPath);
 const generatedPath = path.join(root, 'src', 'generated', 'sprites.js');
+const generatedCodesPath = path.join(root, 'src', 'generated', 'codes.js');
 const generated = await import(`${pathToFileURL(generatedPath).href}?validation=${Date.now()}`);
 assert.ok(Array.isArray(sprites), 'sprites-data.js must define baseSprites as an array');
 assert.ok(sprites.length > 0, 'baseSprites must not be empty');
@@ -73,3 +75,25 @@ if (orphanedImages.length) {
 }
 
 console.log(`Catalog valid: ${sprites.length} entries and ${imageFiles.length} images.`);
+
+try {
+    const codes = await readSourceCodes(codesDataPath);
+    const generatedCodes = await import(`${pathToFileURL(generatedCodesPath).href}?validation=${Date.now()}`);
+    assert.ok(Array.isArray(codes), 'codes-data.js must define baseCodes as an array');
+    assert.deepEqual(generatedCodes.codes, codes, 'generated codes module is out of date; run npm run build:data');
+
+    const codeSet = new Set();
+    for (const [index, item] of codes.entries()) {
+        assert.equal(typeof item, 'object', `code ${index} must be an object`);
+        assert.ok(typeof item.code === 'string' && item.code.trim(), `missing code string: index ${index}`);
+        assert.ok(!codeSet.has(item.code), `duplicate code: ${item.code}`);
+        assert.ok(typeof item.reward === 'string', `missing reward: ${item.code}`);
+        assert.ok(typeof item.source === 'string', `missing source: ${item.code}`);
+        assert.equal(typeof item.active, 'boolean', `active must be boolean: ${item.code}`);
+        codeSet.add(item.code);
+    }
+    console.log(`Codes valid: ${codes.length} entries.`);
+} catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+}
+

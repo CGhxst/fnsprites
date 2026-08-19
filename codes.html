@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Active Fortnite Sprites Lobby Hacks and secret redeem codes.">
+    <meta name="theme-color" content="#090c10">
+    <title>Fortnite Sprites - Lobby Hacks</title>
+    <link rel="icon" type="image/png" href="sprites/air_basic.png">
+    <link rel="preload" href="fonts/Oswald-Variable.ttf" as="font" type="font/ttf" crossorigin>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="codes-app.js"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <header class="site-header codes-header">
+            <a class="brand" href="./" aria-label="Sprites Tracker home">
+                <img src="sprites/air_basic.png" alt="" width="52" height="52">
+                <span class="brand-name">LOBBY <strong>HACKS</strong></span>
+            </a>
+
+            <div class="codes-header-actions">
+                <a href="./" class="action-button action-primary" id="returnButton">Return to Tracker</a>
+            </div>
+        </header>
+
+        <nav class="tracker-controls codes-controls" aria-label="Lobby hack controls">
+            <div class="primary-controls">
+                <label class="search-field" for="searchCodes">
+                    <span class="control-icon" id="searchIcon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+                            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="m20 20-4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span class="sr-only">Search codes</span>
+                    <input type="search" id="searchCodes" placeholder="Search codes, rewards, sources..." autocomplete="off" spellcheck="false">
+                </label>
+
+                <div class="quick-filters">
+                    <label class="switch">
+                        <input type="checkbox" id="hideRedeemedToggle">
+                        <span aria-hidden="true"></span>
+                        Hide redeemed
+                    </label>
+                </div>
+            </div>
+
+            <div class="secondary-controls">
+                <div class="actions">
+                    <button type="button" id="redeemAllBtn" class="action-button action-primary">Redeem All</button>
+                    <button type="button" id="unredeemAllBtn" class="action-button">Unredeem All</button>
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            <div class="collection-heading">
+                <h1>Current Lobby Codes</h1>
+                <span id="codesCount" aria-live="polite">0 active</span>
+            </div>
+
+            <div class="codes-table-container">
+                <div class="codes-table-header">
+                    <span>Code</span>
+                    <span>Reward</span>
+                    <span>Source</span>
+                    <span class="text-right">Actions</span>
+                </div>
+                <div class="codes-list" id="codesList">
+                    <!-- Codes rendered by codes-app.js -->
+                </div>
+            </div>
+
+            <div class="empty-state" id="codesEmptyState" hidden>
+                <strong>No codes to display</strong>
+                <span>Try clearing your search or toggling "Hide redeemed".</span>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

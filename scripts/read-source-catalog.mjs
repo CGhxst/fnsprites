@@ -58,3 +58,22 @@ export function parseSourceCatalog(source) {
 export async function readSourceCatalog(dataPath) {
     return parseSourceCatalog(await readFile(dataPath, 'utf8'));
 }
+
+export function parseSourceCodes(source) {
+    const program = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+
+    for (const statement of program.body) {
+        if (statement.type !== 'VariableDeclaration') continue;
+        const declaration = statement.declarations.find(item =>
+            item.id.type === 'Identifier' && item.id.name === 'baseCodes',
+        );
+        if (declaration) return readLiteral(declaration.init, 'baseCodes');
+    }
+
+    throw new TypeError('codes-data.js must declare baseCodes.');
+}
+
+export async function readSourceCodes(dataPath) {
+    return parseSourceCodes(await readFile(dataPath, 'utf8'));
+}
+

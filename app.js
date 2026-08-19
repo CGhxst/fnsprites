@@ -6,6 +6,8 @@ import { downloadBackup, exportBoard, tradeGrid } from './src/export-board.js';
 import { decodeLegacyJsonShare, decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
 import { TrackerStore } from './src/store.js';
 import { sprites as rawSprites } from './src/generated/sprites.js';
+import { codes as rawCodes } from './src/generated/codes.js';
+import { hasUnredeemedCodes } from './src/codes-store.js';
 
 let catalog;
 let store;
@@ -69,11 +71,23 @@ function installIcons() {
         tradeIcon: ICONS.trade,
         tradeChevron: ICONS.chevron,
         shareIcon: ICONS.share,
+        codesIcon: ICONS.code,
         moreIcon: ICONS.more,
     };
     for (const [id, svg] of Object.entries(icons)) {
         const element = document.getElementById(id);
         if (element) element.innerHTML = svg;
+    }
+}
+
+function updateCodesNotification() {
+    const notifDot = document.getElementById('codesNotification');
+    if (!notifDot) return;
+    try {
+        const hasUnredeemed = hasUnredeemedCodes(rawCodes);
+        notifDot.hidden = !hasUnredeemed;
+    } catch {
+        notifDot.hidden = true;
     }
 }
 
@@ -851,6 +865,11 @@ function start() {
         store.subscribe(handleStoreChange);
         bindCollectionEvents();
         bindControlEvents();
+        updateCodesNotification();
+        window.addEventListener('storage', updateCodesNotification);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') updateCodesNotification();
+        });
         render();
     } catch (error) {
         showStartupError(error);
