@@ -9,6 +9,9 @@ export const STORAGE_KEYS = Object.freeze({
     sort: 'fn_state_sort_order',
     showUnreleased: 'fn_state_unreleased',
     lowFidelity: 'fn_state_low_fidelity',
+    redeemedCodes: 'fn_redeemed_codes',
+    hideRedeemedCodes: 'fn_hide_redeemed_codes',
+    alertNewCodes: 'fn_alert_new_codes',
 });
 
 export const THEME_ORDER = Object.freeze([

@@ -14,11 +14,10 @@ test.describe('Lobby Hacks (Codes)', () => {
         await expect(page).toHaveURL(/codes(\.html)?/);
         await expect(page.locator('h1')).toHaveText('Current Lobby Codes');
 
-        // Uncheck hide redeemed first so we can verify button state in place
+        // Verify hide redeemed is NOT checked by default
         const hideRedeemed = page.locator('#hideRedeemedToggle');
-        await expect(hideRedeemed).toBeChecked();
-        await hideRedeemed.setChecked(false, { force: true });
         await expect(hideRedeemed).not.toBeChecked();
+
 
         // Check codes list rendered
         const rows = page.locator('.code-row');

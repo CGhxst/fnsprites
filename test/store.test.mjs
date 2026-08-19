@@ -130,7 +130,10 @@ test('store restores saved season selections across reloads', () => {
 });
 
 test('store resets all collection data, filters, settings, and storage', () => {
-    globalThis.localStorage = new MemoryStorage();
+    globalThis.localStorage = new MemoryStorage({
+        fn_redeemed_codes: JSON.stringify(['TEST']),
+        fn_hide_redeemed_codes: 'true',
+    });
     const store = new TrackerStore(new Set(['air_basic', 'water_basic']));
     store.toggleOwned('air_basic');
     store.toggleMastered('air_basic');
@@ -148,4 +151,7 @@ test('store resets all collection data, filters, settings, and storage', () => {
     assert.equal(store.state.filters.status, 'all');
     assert.equal(store.state.settings.group, 'season');
     assert.equal(globalThis.localStorage.getItem('fn_obtained_sprites'), null);
+    assert.equal(globalThis.localStorage.getItem('fn_redeemed_codes'), null);
+    assert.equal(globalThis.localStorage.getItem('fn_hide_redeemed_codes'), null);
 });
+

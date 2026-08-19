@@ -160,7 +160,14 @@ function init() {
     }
 
     store.subscribe(() => {
+        if (hideRedeemedToggle) {
+            hideRedeemedToggle.checked = store.hideRedeemed;
+        }
         renderCodes();
+    });
+
+    window.addEventListener('storage', () => {
+        store.reload();
     });
 
     renderCodes();

@@ -1,6 +1,8 @@
-const REDEEMED_KEY = 'fn_redeemed_codes';
-const HIDE_REDEEMED_KEY = 'fn_hide_redeemed_codes';
-const ALERT_SETTING_KEY = 'fn_alert_new_codes';
+import { STORAGE_KEYS } from './config.js';
+
+const REDEEMED_KEY = STORAGE_KEYS.redeemedCodes || 'fn_redeemed_codes';
+const HIDE_REDEEMED_KEY = STORAGE_KEYS.hideRedeemedCodes || 'fn_hide_redeemed_codes';
+const ALERT_SETTING_KEY = STORAGE_KEYS.alertNewCodes || 'fn_alert_new_codes';
 
 let warnedAboutReadFailure = false;
 let warnedAboutWriteFailure = false;
@@ -26,7 +28,7 @@ function readArray(key) {
     }
 }
 
-function readBoolean(key, defaultValue = true) {
+function readBoolean(key, defaultValue = false) {
     const val = readString(key);
     if (val === null) return defaultValue;
     return val === 'true';
@@ -48,7 +50,7 @@ export class CodesStore {
         this.listeners = new Set();
         const redeemedList = readArray(REDEEMED_KEY);
         this.redeemed = new Set(redeemedList.filter(c => typeof c === 'string' && c.trim()));
-        this.hideRedeemed = readBoolean(HIDE_REDEEMED_KEY, true);
+        this.hideRedeemed = readBoolean(HIDE_REDEEMED_KEY, false);
         this.alertNewCodes = readBoolean(ALERT_SETTING_KEY, true);
     }
 
@@ -61,6 +63,28 @@ export class CodesStore {
         for (const listener of this.listeners) {
             listener(this, change);
         }
+    }
+
+    reload() {
+        const redeemedList = readArray(REDEEMED_KEY);
+        this.redeemed = new Set(redeemedList.filter(c => typeof c === 'string' && c.trim()));
+        this.hideRedeemed = readBoolean(HIDE_REDEEMED_KEY, false);
+        this.alertNewCodes = readBoolean(ALERT_SETTING_KEY, true);
+        this.notify({ type: 'reload' });
+    }
+
+    resetAll() {
+        this.redeemed.clear();
+        this.hideRedeemed = false;
+        this.alertNewCodes = true;
+        for (const key of [REDEEMED_KEY, HIDE_REDEEMED_KEY, ALERT_SETTING_KEY]) {
+            try {
+                localStorage.removeItem(key);
+            } catch {
+                // Ignore storage clearing failures
+            }
+        }
+        this.notify({ type: 'reset-all' });
     }
 
     isRedeemed(code) {
@@ -118,3 +142,4 @@ export function hasUnredeemedCodes(codesList) {
     const store = new CodesStore();
     return store.hasUnredeemed(codesList);
 }
+

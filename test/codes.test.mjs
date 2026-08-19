@@ -48,6 +48,7 @@ test('parseSourceCodes throws on missing declaration', () => {
 test('CodesStore toggles code redemption state and persists to storage', () => {
     globalThis.localStorage = new MemoryStorage();
     const store = new CodesStore();
+    assert.equal(store.hideRedeemed, false);
     assert.equal(store.isRedeemed('CODE1'), false);
 
     store.toggleRedeem('CODE1');
@@ -96,3 +97,20 @@ test('CodesStore detects unredeemed active codes', () => {
     });
     assert.equal(hasUnredeemedCodes(sampleCodes), false);
 });
+
+test('CodesStore resets all codes data and preferences', () => {
+    globalThis.localStorage = new MemoryStorage({
+        fn_redeemed_codes: JSON.stringify(['A', 'B']),
+        fn_hide_redeemed_codes: 'true',
+    });
+    const store = new CodesStore();
+    assert.equal(store.isRedeemed('A'), true);
+    assert.equal(store.hideRedeemed, true);
+
+    store.resetAll();
+    assert.equal(store.isRedeemed('A'), false);
+    assert.equal(store.hideRedeemed, false);
+    assert.equal(globalThis.localStorage.getItem('fn_redeemed_codes'), null);
+    assert.equal(globalThis.localStorage.getItem('fn_hide_redeemed_codes'), null);
+});
+
