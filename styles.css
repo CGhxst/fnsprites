@@ -26,6 +26,18 @@
     --pink: #ff4f87;
     --yellow: #ffd43b;
     --blue: #70c7ff;
+    --rare: #004A8E;
+    --rare-text: #00FFFB;
+    --epic: #511D7F;
+    --epic-text: #ED2BFF;
+    --legendary: #8E4122;
+    --legendary-text: #FBC568;
+    --mythic: #80622A;
+    --mythic-text: #FFF1A9;
+    --uncommon: #288E28;
+    --uncommon-text: #A7FFA7;
+    --common: #5A5A5A;
+    --common-text: #E0E0E0;
     --radius: 6px;
     --page-gutter: clamp(12px, 2.2vw, 30px);
     --transition: 140ms ease;
@@ -1090,6 +1102,37 @@ a {
     text-transform: uppercase;
 }
 
+.rarity-Rare .rarity-tag {
+    background: var(--rare);
+    color: var(--rare-text);
+}
+
+.rarity-Epic .rarity-tag {
+    background: var(--epic);
+    color: var(--epic-text);
+}
+
+.rarity-Legendary .rarity-tag {
+    background: var(--legendary);
+    color: var(--legendary-text);
+}
+
+.rarity-Mythic .rarity-tag {
+    background: var(--mythic);
+    color: var(--mythic-text);
+}
+
+.rarity-Uncommon .rarity-tag {
+    background: var(--uncommon);
+    color: var(--uncommon-text);
+}
+
+.rarity-Common .rarity-tag {
+    background: var(--common);
+    color: var(--common-text);
+}
+
+.rarity-Special .rarity-tag,
 .is-special-rarity .rarity-tag {
     background: linear-gradient(90deg, var(--mint), var(--pink));
     color: #09100e;

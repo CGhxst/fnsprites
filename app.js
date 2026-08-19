@@ -136,6 +136,7 @@ function cardMarkup(sprite) {
     const [cardTop, cardBottom] = spritePalette(sprite);
     const classes = [
         'sprite-card',
+        sprite.rarity ? `rarity-${sprite.rarity}` : '',
         sprite.rarity === 'Special' ? 'is-special-rarity' : '',
         owned ? 'is-owned' : 'is-missing',
         mastered ? 'is-mastered' : '',
