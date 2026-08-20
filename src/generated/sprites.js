@@ -290,6 +290,14 @@ export const sprites = [
         "season": "Runners"
     },
     {
+        "id": "duck_rift",
+        "name": "Cube Duck",
+        "theme": "Cube",
+        "rarity": "Special",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "ghost_basic",
         "name": "Ghost",
         "theme": "Basic",
@@ -370,6 +378,22 @@ export const sprites = [
         "season": "Runners"
     },
     {
+        "id": "demon_rift",
+        "name": "Cube Demon",
+        "theme": "Cube",
+        "rarity": "Special",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "demon_holofoil",
+        "name": "Holofoil Demon",
+        "theme": "Holofoil",
+        "rarity": "Special",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "king_basic",
         "name": "King",
         "theme": "Basic",
@@ -408,6 +432,22 @@ export const sprites = [
         "rarity": "Special",
         "unreleased": false,
         "season": "Runners"
+    },
+    {
+        "id": "king_rift",
+        "name": "Cube King",
+        "theme": "Cube",
+        "rarity": "Special",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "king_gem",
+        "name": "Gem King",
+        "theme": "Gem",
+        "rarity": "Special",
+        "unreleased": true,
+        "season": "Override"
     },
     {
         "id": "striker_basic",
@@ -567,7 +607,7 @@ export const sprites = [
         "theme": "Gem",
         "rarity": "Special",
         "unreleased": true,
-        "season": "Unknown"
+        "season": "Override"
     },
     {
         "id": "punk_rift",
@@ -576,6 +616,14 @@ export const sprites = [
         "rarity": "Special",
         "unreleased": false,
         "season": "Runners"
+    },
+    {
+        "id": "punk_holofoil",
+        "name": "Holofoil Punk",
+        "theme": "Holofoil",
+        "rarity": "Special",
+        "unreleased": true,
+        "season": "Override"
     },
     {
         "id": "boss_basic",
