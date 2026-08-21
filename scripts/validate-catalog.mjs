@@ -77,7 +77,8 @@ if (orphanedImages.length) {
 console.log(`Catalog valid: ${sprites.length} entries and ${imageFiles.length} images.`);
 
 try {
-    const codes = await readSourceCodes(codesDataPath);
+    const codesData = await readSourceCodes(codesDataPath);
+    const codes = codesData.codes;
     const generatedCodes = await import(`${pathToFileURL(generatedCodesPath).href}?validation=${Date.now()}`);
     assert.ok(Array.isArray(codes), 'codes-data.js must define baseCodes as an array');
     assert.deepEqual(generatedCodes.codes, codes, 'generated codes module is out of date; run npm run build:data');
@@ -88,7 +89,18 @@ try {
         assert.ok(typeof item.code === 'string' && item.code.trim(), `missing code string: index ${index}`);
         assert.ok(!codeSet.has(item.code), `duplicate code: ${item.code}`);
         assert.ok(typeof item.reward === 'string', `missing reward: ${item.code}`);
-        assert.ok(typeof item.source === 'string', `missing source: ${item.code}`);
+        if (item.source !== undefined && item.source !== null) {
+            assert.equal(typeof item.source, 'string', `source must be string if provided: ${item.code}`);
+        }
+        if (item.link !== undefined && item.link !== null) {
+            assert.equal(typeof item.link, 'string', `link must be string if provided: ${item.code}`);
+        }
+        if (item.category !== undefined && item.category !== null) {
+            assert.equal(typeof item.category, 'string', `category must be string if provided: ${item.code}`);
+        }
+        if (item.internalreward !== undefined && item.internalreward !== null) {
+            assert.equal(typeof item.internalreward, 'string', `internalreward must be string if provided: ${item.code}`);
+        }
         assert.equal(typeof item.active, 'boolean', `active must be boolean: ${item.code}`);
         codeSet.add(item.code);
     }
@@ -96,4 +108,5 @@ try {
 } catch (error) {
     if (error.code !== 'ENOENT') throw error;
 }
+
 

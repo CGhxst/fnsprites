@@ -1,5 +1,5 @@
 import { CodesStore } from './src/codes-store.js';
-import { codes } from './src/generated/codes.js';
+import { codeCategories, codes } from './src/generated/codes.js';
 
 const store = new CodesStore();
 let searchQuery = '';
@@ -54,7 +54,8 @@ function renderCodes() {
             return false;
         }
         if (query) {
-            const haystack = `${item.code} ${item.reward || ''} ${item.source || ''}`.toLowerCase();
+            const categoryName = item.category ? (codeCategories[item.category] || item.category) : '';
+            const haystack = `${item.code} ${item.reward || ''} ${item.source || ''} ${categoryName}`.toLowerCase();
             if (!haystack.includes(query)) return false;
         }
         return true;
@@ -81,12 +82,20 @@ function renderCodes() {
         row.className = `code-row ${isRedeemed ? 'is-redeemed' : ''}`;
         row.dataset.code = item.code;
 
-        const sourceContent = item.link && item.link.trim()
-            ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="code-source-link">
-                    ${escapeHtml(item.source || 'Source')}
+        const categoryName = item.category ? (codeCategories[item.category] || item.category) : null;
+        let sourceContent;
+        if (item.link && item.link.trim()) {
+            sourceContent = `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="code-source-link">
+                    ${escapeHtml(item.source || categoryName || 'Source')}
                     <svg viewBox="0 0 24 24" aria-hidden="true" width="12" height="12"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6m4-3h6v6m-11 5L21 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-               </a>`
-            : `<span class="code-source-text">${escapeHtml(item.source || '—')}</span>`;
+               </a>`;
+        } else if (item.source && item.source.trim()) {
+            sourceContent = `<span class="code-source-text">${escapeHtml(item.source)}</span>`;
+        } else if (categoryName) {
+            sourceContent = `<span class="code-category-badge">${escapeHtml(categoryName)}</span>`;
+        } else {
+            sourceContent = `<span class="code-source-text">—</span>`;
+        }
 
         row.innerHTML = `
             <div class="code-value-cell">

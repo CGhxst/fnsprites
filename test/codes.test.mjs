@@ -31,14 +31,14 @@ test('parseSourceCodes extracts literal code declarations', () => {
         ];
     `;
     const result = parseSourceCodes(sample);
-    assert.equal(result.length, 2);
-    assert.equal(result[0].code, 'TEST1');
-    assert.equal(result[0].reward, 'Special Sprite');
-    assert.equal(result[0].source, 'Twitter');
-    assert.equal(result[0].link, 'https://x.com');
-    assert.equal(result[0].active, true);
-    assert.equal(result[1].code, 'TEST2');
-    assert.equal(result[1].active, false);
+    assert.equal(result.codes.length, 2);
+    assert.equal(result.codes[0].code, 'TEST1');
+    assert.equal(result.codes[0].reward, 'Special Sprite');
+    assert.equal(result.codes[0].source, 'Twitter');
+    assert.equal(result.codes[0].link, 'https://x.com');
+    assert.equal(result.codes[0].active, true);
+    assert.equal(result.codes[1].code, 'TEST2');
+    assert.equal(result.codes[1].active, false);
 });
 
 test('parseSourceCodes throws on missing declaration', () => {

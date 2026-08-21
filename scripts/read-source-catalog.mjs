@@ -61,19 +61,38 @@ export async function readSourceCatalog(dataPath) {
 
 export function parseSourceCodes(source) {
     const program = parse(source, { ecmaVersion: 'latest', sourceType: 'script' });
+    let baseCodes = null;
+    let codeCategories = null;
+    let categoryOrder = null;
 
     for (const statement of program.body) {
         if (statement.type !== 'VariableDeclaration') continue;
-        const declaration = statement.declarations.find(item =>
-            item.id.type === 'Identifier' && item.id.name === 'baseCodes',
-        );
-        if (declaration) return readLiteral(declaration.init, 'baseCodes');
+        for (const declaration of statement.declarations) {
+            if (declaration.id.type === 'Identifier') {
+                if (declaration.id.name === 'baseCodes') {
+                    baseCodes = readLiteral(declaration.init, 'baseCodes');
+                } else if (declaration.id.name === 'codeCategories') {
+                    codeCategories = readLiteral(declaration.init, 'codeCategories');
+                } else if (declaration.id.name === 'CATEGORY_ORDER') {
+                    categoryOrder = readLiteral(declaration.init, 'CATEGORY_ORDER');
+                }
+            }
+        }
     }
 
-    throw new TypeError('codes-data.js must declare baseCodes.');
+    if (!baseCodes) {
+        throw new TypeError('codes-data.js must declare baseCodes.');
+    }
+
+    return {
+        codes: baseCodes,
+        codeCategories: codeCategories || {},
+        categoryOrder: categoryOrder || [],
+    };
 }
 
 export async function readSourceCodes(dataPath) {
     return parseSourceCodes(await readFile(dataPath, 'utf8'));
 }
+
 

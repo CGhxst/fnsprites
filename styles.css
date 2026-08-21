@@ -1646,6 +1646,17 @@ a {
     font-size: 13px;
 }
 
+.code-category-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--text-soft);
+    font-size: 12px;
+    font-weight: 500;
+}
+
 .code-actions-cell {
     display: flex;
     align-items: center;

@@ -38,8 +38,7 @@ jobs:
 
       - name: Import data and sprite images only
         run: |
-          git checkout upstream/main -- sprites-data.js codes-data.js sprites siteimages
-          rm -f siteimages/staticsprite.png siteimages/rickpfpeak.png
+          git checkout upstream/main -- sprites-data.js codes-data.js sprites
 
       - name: Generate application data module
         run: node scripts/build-catalog-module.mjs
@@ -49,9 +48,9 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add sprites-data.js codes-data.js sprites siteimages src/generated/sprites.js src/generated/codes.js
+          git add sprites-data.js codes-data.js sprites src/generated/sprites.js src/generated/codes.js
 
-          if git diff --cached --quiet -- sprites-data.js codes-data.js sprites siteimages src/generated/sprites.js src/generated/codes.js; then
+          if git diff --cached --quiet -- sprites-data.js codes-data.js sprites src/generated/sprites.js src/generated/codes.js; then
             echo "Sprite and code dataset is already current."
             exit 0
           fi
