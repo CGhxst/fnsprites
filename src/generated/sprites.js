@@ -1006,7 +1006,7 @@ export const sprites = [
         "name": "Gold Bush",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1030,7 +1030,7 @@ export const sprites = [
         "name": "Gold Jonesy",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1054,7 +1054,7 @@ export const sprites = [
         "name": "Gold Adventure",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1078,7 +1078,7 @@ export const sprites = [
         "name": "Gold 8-Bit",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1126,7 +1126,7 @@ export const sprites = [
         "name": "Gold Killswitch",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1150,7 +1150,7 @@ export const sprites = [
         "name": "Gold Sonic",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1174,7 +1174,7 @@ export const sprites = [
         "name": "Gold Tails",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1198,7 +1198,7 @@ export const sprites = [
         "name": "Gold Shadow",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1222,7 +1222,7 @@ export const sprites = [
         "name": "Gold Jackrabbit",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1246,7 +1246,7 @@ export const sprites = [
         "name": "Gold Klombo",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1270,7 +1270,7 @@ export const sprites = [
         "name": "Gold Crown",
         "theme": "Gold",
         "rarity": "Special",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
