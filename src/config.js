@@ -9,6 +9,7 @@ export const STORAGE_KEYS = Object.freeze({
     sort: 'fn_state_sort_order',
     showUnreleased: 'fn_state_unreleased',
     lowFidelity: 'fn_state_low_fidelity',
+    openExports: 'fn_state_open_exports',
     redeemedCodes: 'fn_redeemed_codes',
     hideRedeemedCodes: 'fn_hide_redeemed_codes',
     alertNewCodes: 'fn_alert_new_codes',
@@ -24,6 +25,7 @@ export const THEME_ORDER = Object.freeze([
     'Quack',
     'Cube',
     'Rift',
+    'Cheat',
 ]);
 
 export const SEASON_ORDER = Object.freeze([
@@ -37,21 +39,26 @@ export const RARITY_ORDER = Object.freeze([
     'Legendary',
     'Epic',
     'Rare',
+    'Uncommon',
+    'Common',
     'Special',
 ]);
 
 export const STATUS_FILTERS = Object.freeze(['all', 'owned', 'missing']);
-export const GROUP_METHODS = Object.freeze(['sprite', 'theme', 'season', 'rarity', 'name']);
+export const SORT_METHODS = Object.freeze(['theme', 'sprite', 'season', 'name', 'rarity']);
+export const GROUP_METHODS = Object.freeze(['theme', 'sprite', 'season', 'name', 'rarity']);
 export const TRACKER_URL = 'https://cghxst.github.io/fnsprites/';
 
 export const THEME_LABELS = Object.freeze({
     Basic: 'Base',
     Candy: 'Gummy',
+    Cheat: 'Cheat Master',
 });
 
 export const EXPORT_THEME_LABELS = Object.freeze({
     Basic: 'BASE',
     Candy: 'GUMMY',
+    Cheat: 'CHEAT',
 });
 
 const palette = (top, bottom) => Object.freeze([top, bottom]);
@@ -61,6 +68,8 @@ const RARITY_PALETTES = Object.freeze({
     Epic: palette('#71308d', '#271132'),
     Legendary: palette('#925728', '#3b2109'),
     Mythic: palette('#9d782c', '#3d2d09'),
+    Uncommon: palette('#23753b', '#0a2914'),
+    Common: palette('#4a5568', '#1a202c'),
 });
 
 const THEME_PALETTES = Object.freeze({
@@ -73,6 +82,7 @@ const THEME_PALETTES = Object.freeze({
     Quack: palette('#788f35', '#202a0d'),
     Cube: palette('#6434a3', '#210f3d'),
     Rift: palette('#246f82', '#092731'),
+    Cheat: palette('#1e6b38', '#072613'),
 });
 
 export function spritePalette(sprite) {

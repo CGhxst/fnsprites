@@ -92,27 +92,29 @@ export class TrackerStore {
                 hideMastered: readBoolean(STORAGE_KEYS.hideMastered),
                 showUnreleased: readBoolean(STORAGE_KEYS.showUnreleased),
                 lowFidelity: readBoolean(STORAGE_KEYS.lowFidelity),
+                openExports: readBoolean(STORAGE_KEYS.openExports),
                 group: GROUP_METHODS.includes(savedSort) ? savedSort : 'season',
             },
         };
     }
 
     isSeasonSelected(season) {
-        if (!this.state.filters.season || this.state.filters.season === 'all') return true;
-        if (this.state.filters.season instanceof Set) {
-            return this.state.filters.season.has(season);
-        }
-        return true;
+        if (!season) return true;
+        if (this.state.filters.season === null) return true;
+        return this.state.filters.season.has(season);
     }
 
-    toggleSeason(season, active, allSeasons = []) {
+    toggleSeason(season, selected, allSeasons = []) {
         if (this.state.filters.season === null) {
             this.state.filters.season = new Set(allSeasons);
         }
-        if (active) {
+        if (selected) {
             this.state.filters.season.add(season);
         } else {
             this.state.filters.season.delete(season);
+        }
+        if (allSeasons.length > 0 && this.state.filters.season.size === allSeasons.length) {
+            this.state.filters.season = null;
         }
         this.persistSeasonFilter();
         this.notify({ type: 'filter', name: 'season' });
@@ -144,8 +146,14 @@ export class TrackerStore {
         return () => this.listeners.delete(listener);
     }
 
-    notify(change = { type: 'all' }) {
-        for (const listener of this.listeners) listener(this.state, change);
+    notify(change) {
+        for (const listener of this.listeners) {
+            try {
+                listener(this.state, change);
+            } catch (error) {
+                console.error('Tracker listener failed.', error);
+            }
+        }
     }
 
     isOwned(id) {
@@ -158,22 +166,25 @@ export class TrackerStore {
 
     toggleOwned(id) {
         if (this.viewOnly || !this.validIds.has(id)) return;
-        if (this.state.owned.has(id)) {
+        const owned = !this.state.owned.has(id);
+        if (owned) {
+            this.state.owned.add(id);
+        } else {
             this.state.owned.delete(id);
             this.state.mastered.delete(id);
-        } else {
-            this.state.owned.add(id);
         }
         this.persistCollection();
-        this.notify({ type: 'collection', id, field: 'owned' });
+        this.notify({ type: 'collection', id, field: 'owned', owned, mastered: this.state.mastered.has(id) });
     }
 
     toggleMastered(id) {
-        if (this.viewOnly || !this.state.owned.has(id)) return;
-        if (this.state.mastered.has(id)) this.state.mastered.delete(id);
-        else this.state.mastered.add(id);
+        if (this.viewOnly || !this.validIds.has(id)) return;
+        if (!this.state.owned.has(id)) return;
+        const mastered = !this.state.mastered.has(id);
+        if (mastered) this.state.mastered.add(id);
+        else this.state.mastered.delete(id);
         this.persistCollection();
-        this.notify({ type: 'collection', id, field: 'mastered' });
+        this.notify({ type: 'collection', id, field: 'mastered', owned: true, mastered });
     }
 
     setFilter(name, value) {
@@ -207,9 +218,10 @@ export class TrackerStore {
             hideMastered: STORAGE_KEYS.hideMastered,
             showUnreleased: STORAGE_KEYS.showUnreleased,
             lowFidelity: STORAGE_KEYS.lowFidelity,
+            openExports: STORAGE_KEYS.openExports,
             group: STORAGE_KEYS.sort,
         }[name];
-        if (!this.viewOnly) write(key, value);
+        if (!this.viewOnly && key) write(key, value);
         this.notify({ type: 'setting', name });
     }
 
@@ -253,6 +265,7 @@ export class TrackerStore {
             hideMastered: false,
             showUnreleased: false,
             lowFidelity: false,
+            openExports: false,
             group: 'season',
         };
 

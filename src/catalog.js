@@ -133,7 +133,8 @@ export function sortSprites(sprites, method) {
 
 export function groupSprites(sprites, method, catalog) {
     if (method === 'name') {
-        return sprites.length ? [{ key: 'all', label: 'All sprites', sprites }] : [];
+        const sorted = sortSprites(sprites, 'name');
+        return sorted.length ? [{ key: 'all', label: 'All Sprites (A–Z)', sprites: sorted }] : [];
     }
 
     const groups = new Map();
@@ -143,17 +144,36 @@ export function groupSprites(sprites, method, catalog) {
 
         if (method === 'sprite') {
             key = familyKey(sprite);
-            label = catalog.familyName(key);
+            label = catalog ? catalog.familyName(key) : key;
         } else if (method === 'season') {
             key = sprite.season || 'Unknown';
-            label = `Season: ${key}`;
+            if (key === 'Runners') label = 'Season: Runners (C7S3)';
+            else if (key === 'Override') label = 'Season: Override (C7S4)';
+            else label = `Season: ${key}`;
         } else if (method === 'rarity') {
             key = sprite.rarity;
-            label = sprite.rarity;
+            label = `${sprite.rarity}`;
         }
 
         if (!groups.has(key)) groups.set(key, { key, label, sprites: [] });
         groups.get(key).sprites.push(sprite);
     }
-    return [...groups.values()];
+
+    const groupList = [...groups.values()];
+    if (method === 'theme') {
+        groupList.sort((a, b) => orderedIndex(THEME_ORDER, a.key) - orderedIndex(THEME_ORDER, b.key) || a.label.localeCompare(b.label));
+    } else if (method === 'season') {
+        groupList.sort((a, b) => orderedIndex(SEASON_ORDER, a.key) - orderedIndex(SEASON_ORDER, b.key) || a.label.localeCompare(b.label));
+    } else if (method === 'rarity') {
+        groupList.sort((a, b) => orderedIndex(RARITY_ORDER, a.key) - orderedIndex(RARITY_ORDER, b.key) || a.label.localeCompare(b.label));
+    } else if (method === 'sprite') {
+        groupList.sort((a, b) => a.label.localeCompare(b.label));
+    }
+
+    for (const group of groupList) {
+        group.sprites = sortSprites(group.sprites, method);
+    }
+
+    return groupList;
 }
+

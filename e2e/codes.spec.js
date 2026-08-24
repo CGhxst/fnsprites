@@ -57,6 +57,19 @@ test.describe('Lobby Hacks (Codes)', () => {
         await redeemAllBtn.click();
         await expect(page.locator('.code-row.is-redeemed')).toHaveCount(codes.length);
 
+        // Test category filter pills
+        const categoryPills = page.locator('.category-pill');
+        await expect(categoryPills.first()).toBeVisible();
+        const spritesPill = categoryPills.filter({ hasText: 'Sprites' });
+        if (await spritesPill.count() > 0) {
+            await spritesPill.click();
+            await expect(spritesPill).toHaveClass(/is-active/);
+            const visibleRows = await page.locator('.code-row').count();
+            expect(visibleRows).toBeGreaterThan(0);
+            expect(visibleRows).toBeLessThanOrEqual(codes.length);
+            await categoryPills.first().click(); // Return to All
+        }
+
         // Return to tracker
         const returnBtn = page.locator('#returnButton');
         await returnBtn.click();

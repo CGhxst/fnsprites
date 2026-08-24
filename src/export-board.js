@@ -327,7 +327,22 @@ function downloadCanvas(canvas, filename) {
     });
 }
 
-export async function exportBoard(mode, catalog, store, toast) {
+export async function exportBoard(arg1, arg2, arg3, arg4 = () => {}, arg5 = {}) {
+    let mode, catalog, store, toast, openInTab;
+    if (typeof arg1 === 'string') {
+        mode = arg1;
+        catalog = arg2;
+        store = arg3;
+        toast = typeof arg4 === 'function' ? arg4 : () => {};
+        openInTab = Boolean(arg5?.openInTab || (typeof arg4 === 'object' && arg4?.openInTab));
+    } else {
+        catalog = arg1;
+        store = arg2;
+        mode = arg3;
+        toast = typeof arg4 === 'function' ? arg4 : typeof arg4?.toast === 'function' ? arg4.toast : () => {};
+        openInTab = Boolean(arg4?.openInTab || arg5?.openInTab);
+    }
+
     const config = MODE_CONFIG[mode];
     if (!config) return;
 
@@ -545,9 +560,22 @@ export async function exportBoard(mode, catalog, store, toast) {
     } else if (selectedSeasons.length < availableSeasons.length) {
         seasonSuffix = `-custom`;
     }
+
+    if (openInTab) {
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        if (blob) {
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
+            toast('Opened export in new tab.', 'success');
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+            return;
+        }
+    }
+
     await downloadCanvas(canvas, `${config.filename}${seasonSuffix}`);
     toast('Image ready.', 'success');
 }
+
 
 export function tradeGrid(catalog, store) {
     const availableSeasons = activeSeasons(catalog.sprites);
@@ -605,3 +633,4 @@ export function downloadBackup(store) {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+

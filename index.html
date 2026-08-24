@@ -51,18 +51,18 @@
                 <label class="search-field" for="searchInput">
                     <span class="control-icon" id="searchIcon" aria-hidden="true"></span>
                     <span class="sr-only">Search sprites</span>
-                    <input type="search" id="searchInput" placeholder="Find a sprite" autocomplete="off" spellcheck="false">
+                    <input type="search" id="searchInput" placeholder="Find a sprite..." autocomplete="off" spellcheck="false">
                 </label>
 
                 <label class="select-field">
                     <span class="sr-only">Filter by theme</span>
-                    <select id="themeFilter">
+                    <select id="themeFilter" aria-label="Filter by theme">
                         <option value="all">All themes</option>
                     </select>
                 </label>
 
                 <div class="menu" id="seasonMenu">
-                    <button type="button" class="select-button" id="seasonToggle" aria-label="Filter by season" aria-expanded="false" aria-controls="seasonPopover">
+                    <button type="button" class="select-button" id="seasonToggle" aria-label="Filter by season" aria-haspopup="true" aria-expanded="false" aria-controls="seasonPopover">
                         <span class="button-label" id="seasonLabel">All seasons</span>
                         <span class="chevron" id="seasonChevron" aria-hidden="true"></span>
                     </button>
@@ -79,31 +79,31 @@
                 </div>
 
                 <label class="select-field">
-                    <span class="sr-only">Group sprites</span>
-                    <select id="groupOrder">
-                        <option value="season" selected>Group by season</option>
-                        <option value="sprite">Group by sprite</option>
-                        <option value="theme">Group by theme</option>
-                        <option value="rarity">Group by rarity</option>
-                        <option value="name">Alphabetical</option>
+                    <span class="sr-only">Group and sort sprites</span>
+                    <select id="groupOrder" aria-label="Sort and group sprites">
+                        <option value="theme" selected>Group by Theme</option>
+                        <option value="sprite">Group by Sprite</option>
+                        <option value="season">Group by Season</option>
+                        <option value="name">Alphabetical (A-Z)</option>
+                        <option value="rarity">Sort by Rarity</option>
                     </select>
                 </label>
 
                 <div class="status-tabs" id="statusTabs" aria-label="Collection status">
-                    <button type="button" data-status="all">All</button>
-                    <button type="button" data-status="owned">Owned</button>
-                    <button type="button" data-status="missing">Missing</button>
+                    <button type="button" class="status-tab is-active" data-status="all">All</button>
+                    <button type="button" class="status-tab" data-status="owned">Owned</button>
+                    <button type="button" class="status-tab" data-status="missing">Missing</button>
                 </div>
             </div>
 
             <div class="secondary-controls">
                 <div class="quick-filters" id="quickFilters">
-                    <label class="switch">
+                    <label class="switch" title="Hide sprites that are mastered">
                         <input type="checkbox" id="hideMastered">
                         <span aria-hidden="true"></span>
                         Hide mastered
                     </label>
-                    <label class="switch">
+                    <label class="switch" title="Show unreleased/datamined sprites">
                         <input type="checkbox" id="showUnreleased">
                         <span aria-hidden="true"></span>
                         Unreleased
@@ -112,24 +112,23 @@
 
                 <div class="actions">
                     <div class="menu" id="exportMenu">
-                        <button type="button" class="action-button" id="exportToggle" aria-label="Export image boards" aria-expanded="false" aria-controls="exportPopover">
+                        <button type="button" class="action-button" id="exportToggle" aria-label="Export collection image" aria-haspopup="true" aria-expanded="false" aria-controls="exportPopover">
                             <span class="button-icon" id="exportIcon" aria-hidden="true"></span>
                             <span class="button-label">Export</span>
                             <span class="chevron" id="exportChevron" aria-hidden="true"></span>
                         </button>
-                        <div class="menu-popover" id="exportPopover" aria-label="Export image boards">
-                            <p class="menu-label">Image boards</p>
-                            <button type="button" data-export="trade">Trade board</button>
-                            <div class="menu-divider"></div>
-                            <button type="button" data-export="collected">Collection</button>
-                            <button type="button" data-export="missing">Missing</button>
-                            <button type="button" data-export="unmastered">To master</button>
-                            <button type="button" data-export="mastered">Mastered</button>
+                        <div class="menu-popover dropdown-menu" id="exportPopover" aria-label="Export options">
+                            <p class="menu-label">Image Boards</p>
+                            <button type="button" data-export="collected"><span class="dot dot-collected" aria-hidden="true"></span>Collection Image</button>
+                            <button type="button" data-export="missing"><span class="dot dot-missing" aria-hidden="true"></span>Missing Sprites</button>
+                            <button type="button" data-export="unmastered"><span class="dot dot-unmastered" aria-hidden="true"></span>Unmastered Sprites</button>
+                            <button type="button" data-export="mastered"><span class="dot dot-mastered" aria-hidden="true"></span>Mastered Sprites</button>
+                            <button type="button" data-export="trade"><span class="dot dot-trade" aria-hidden="true"></span>Trade Card Image</button>
                         </div>
                     </div>
 
                     <div class="menu" id="tradeMenu">
-                        <button type="button" class="action-button action-primary" id="tradeToggle" aria-label="Trade sprites" aria-expanded="false" aria-controls="tradePopover">
+                        <button type="button" class="action-button action-primary" id="tradeToggle" aria-label="Trade sprites and compare lockers" aria-haspopup="true" aria-expanded="false" aria-controls="tradePopover">
                             <span class="button-icon" id="tradeIcon" aria-hidden="true"></span>
                             <span class="button-label">Trade</span>
                             <span class="chevron" id="tradeChevron" aria-hidden="true"></span>
@@ -146,6 +145,9 @@
                                 <input type="text" id="friendTradeInput" placeholder="Paste trade code or link..." aria-label="Friend's trade code or link">
                                 <button type="button" id="compareTradeButton" class="action-button">Compare</button>
                             </div>
+                            <div class="menu-divider"></div>
+                            <p class="menu-label">Export Trade List</p>
+                            <button type="button" id="copyGridButton"><span class="dot dot-trade" aria-hidden="true"></span>Copy Trade Grid (Emoji)</button>
                         </div>
                     </div>
 
@@ -156,24 +158,27 @@
 
                     <a href="codes.html" class="action-button codes-button" id="codesButton" aria-label="Lobby Hacks and redeem codes">
                         <span class="button-icon" id="codesIcon" aria-hidden="true"></span>
-                        <span class="button-label">Codes</span>
+                        <span class="button-label">Lobby Hacks</span>
                         <span class="notification-dot" id="codesNotification" hidden></span>
                     </a>
 
                     <div class="menu" id="moreMenu">
-                        <button type="button" class="icon-button" id="moreToggle" aria-label="More tracker tools" aria-expanded="false" aria-controls="morePopover">
+                        <button type="button" class="icon-button" id="moreToggle" aria-label="More tracker tools" aria-haspopup="true" aria-expanded="false" aria-controls="morePopover">
                             <span id="moreIcon" aria-hidden="true"></span>
                         </button>
                         <div class="menu-popover" id="morePopover" aria-label="More tracker tools">
-                            <p class="menu-label">More tools</p>
-                            <button type="button" id="copyGridButton">Copy trade grid</button>
+                            <p class="menu-label">Backup &amp; Restore</p>
+                            <button type="button" id="backupButton">Download Backup File</button>
+                            <button type="button" id="importButton">Import Backup File</button>
                             <div class="menu-divider"></div>
-                            <p class="menu-label">Backup & Restore</p>
-                            <button type="button" id="copyCodeButton">Copy locker code</button>
-                            <button type="button" id="loadCodeButton">Load backup code</button>
-                            <button type="button" id="backupButton">Download backup file</button>
-                            <button type="button" id="importButton">Import backup file</button>
+                            <p class="menu-label">Collection Code</p>
+                            <button type="button" id="copyCodeButton">Copy Collection Code</button>
+                            <button type="button" id="loadCodeButton">Load Collection Code</button>
                             <div class="menu-divider"></div>
+                            <label class="menu-toggle">
+                                <input type="checkbox" id="openExports">
+                                <span>Open exports in new tab</span>
+                            </label>
                             <label class="menu-toggle">
                                 <input type="checkbox" id="lowFidelity">
                                 <span>Reduce visual effects</span>

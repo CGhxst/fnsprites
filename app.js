@@ -7,7 +7,6 @@ import { decodeLegacyJsonShare, decodeLegacyShare, decodeShare, encodeShare } fr
 import { TrackerStore } from './src/store.js';
 import { sprites as rawSprites } from './src/generated/sprites.js';
 import { codes as rawCodes } from './src/generated/codes.js';
-import { hasUnredeemedCodes } from './src/codes-store.js';
 
 let catalog;
 let store;
@@ -21,6 +20,7 @@ const dom = {
     masteryFill: document.querySelector('#masteryFill'),
     searchInput: document.querySelector('#searchInput'),
     themeFilter: document.querySelector('#themeFilter'),
+    seasonFilter: document.querySelector('#seasonFilter'),
     seasonMenu: document.querySelector('#seasonMenu'),
     seasonToggle: document.querySelector('#seasonToggle'),
     seasonLabel: document.querySelector('#seasonLabel'),
@@ -35,19 +35,22 @@ const dom = {
     hideMastered: document.querySelector('#hideMastered'),
     showUnreleased: document.querySelector('#showUnreleased'),
     lowFidelity: document.querySelector('#lowFidelity'),
+    openExports: document.querySelector('#openExports'),
     exportMenu: document.querySelector('#exportMenu'),
     exportToggle: document.querySelector('#exportToggle'),
+    shareButton: document.querySelector('#shareButton'),
+    copyGridButton: document.querySelector('#copyGridButton'),
+    copyCodeButton: document.querySelector('#copyCodeButton'),
+    codesButton: document.querySelector('#codesButton'),
+    codesNotification: document.querySelector('#codesNotification'),
     tradeMenu: document.querySelector('#tradeMenu'),
     tradeToggle: document.querySelector('#tradeToggle'),
     myTradeCode: document.querySelector('#myTradeCode'),
     copyTradeCodeButton: document.querySelector('#copyTradeCodeButton'),
     friendTradeInput: document.querySelector('#friendTradeInput'),
     compareTradeButton: document.querySelector('#compareTradeButton'),
-    shareButton: document.querySelector('#shareButton'),
     moreMenu: document.querySelector('#moreMenu'),
     moreToggle: document.querySelector('#moreToggle'),
-    copyGridButton: document.querySelector('#copyGridButton'),
-    copyCodeButton: document.querySelector('#copyCodeButton'),
     loadCodeButton: document.querySelector('#loadCodeButton'),
     backupButton: document.querySelector('#backupButton'),
     importButton: document.querySelector('#importButton'),
@@ -81,14 +84,46 @@ function installIcons() {
 }
 
 function updateCodesNotification() {
-    const notifDot = document.getElementById('codesNotification');
-    if (!notifDot) return;
+    const notifDot = dom.codesNotification || document.getElementById('codesNotification');
+    const codesBtn = dom.codesButton || document.getElementById('codesButton');
+    if (!codesBtn || typeof rawCodes === 'undefined') return;
+
+    let showAlerts = true;
     try {
-        const hasUnredeemed = hasUnredeemedCodes(rawCodes);
-        notifDot.hidden = !hasUnredeemed;
+        const storedSetting = localStorage.getItem('fn_alert_new_codes');
+        if (storedSetting !== null) {
+            showAlerts = JSON.parse(storedSetting);
+        }
     } catch {
-        notifDot.hidden = true;
+        showAlerts = true;
     }
+
+    let redeemed = [];
+    try {
+        redeemed = JSON.parse(localStorage.getItem('fn_redeemed_codes')) || [];
+    } catch {
+        redeemed = [];
+    }
+
+    if (!showAlerts) {
+        if (notifDot) notifDot.hidden = true;
+        codesBtn.classList.remove('btn-hack-active');
+        return;
+    }
+
+    const hasUnredeemed = rawCodes.some(c => c.active && !redeemed.includes(c.code));
+    if (notifDot) notifDot.hidden = !hasUnredeemed;
+
+    const hasUncollectedReward = rawCodes.some(c =>
+        c.active &&
+        !redeemed.includes(c.code) &&
+        c.internalreward &&
+        catalog &&
+        store &&
+        !store.isOwned(c.internalreward)
+    );
+
+    codesBtn.classList.toggle('btn-hack-active', hasUncollectedReward);
 }
 
 function escapeHtml(value) {
@@ -139,6 +174,20 @@ function spriteMatchesFilters(sprite) {
     return true;
 }
 
+function hackableRewards() {
+    let redeemed = [];
+    try {
+        redeemed = JSON.parse(localStorage.getItem('fn_redeemed_codes')) || [];
+    } catch {
+        redeemed = [];
+    }
+    return new Set(
+        rawCodes
+            .filter(c => c.active && !redeemed.includes(c.code) && c.internalreward)
+            .map(c => c.internalreward),
+    );
+}
+
 function cardMarkup(sprite) {
     const tradeSide = comparison?.active
         ? comparison.theirs.has(sprite.id) ? 'theirs' : comparison.yours.has(sprite.id) ? 'yours' : null
@@ -146,6 +195,7 @@ function cardMarkup(sprite) {
     const comparing = Boolean(tradeSide);
     const owned = comparing || store.isOwned(sprite.id);
     const mastered = !comparing && store.isMastered(sprite.id);
+    const hasHack = !owned && !comparing && hackableRewards().has(sprite.id);
     const safeName = escapeHtml(sprite.name);
     const [cardTop, cardBottom] = spritePalette(sprite);
     const classes = [
@@ -154,6 +204,7 @@ function cardMarkup(sprite) {
         sprite.rarity === 'Special' ? 'is-special-rarity' : '',
         owned ? 'is-owned' : 'is-missing',
         mastered ? 'is-mastered' : '',
+        hasHack ? 'hack-available' : '',
         tradeSide ? `trade-${tradeSide}` : '',
         sprite.unreleased ? 'is-unreleased' : '',
     ].filter(Boolean).join(' ');
@@ -182,9 +233,14 @@ function cardMarkup(sprite) {
                 ${seasonTag}
             </button>`;
 
+    const hackBadge = hasHack
+        ? `<div class="hack-badge">Hack Available</div>`
+        : '';
+
     return `
         <article class="${classes}" data-id="${escapeHtml(sprite.id)}"
                 style="--card-top: ${cardTop}; --card-bottom: ${cardBottom}">
+            ${hackBadge}
             ${art}
             ${masteryButton}
             <div class="sprite-name">
@@ -206,12 +262,20 @@ function renderControls() {
     const { filters, settings } = store.state;
     dom.searchInput.value = filters.search;
     dom.themeFilter.value = filters.theme;
+    if (dom.seasonFilter) {
+        if (filters.season === null) dom.seasonFilter.value = 'all';
+        else if (filters.season.size === 1) dom.seasonFilter.value = [...filters.season][0];
+        else dom.seasonFilter.value = 'all';
+    }
     updateSeasonLabel();
     updateTradeCode();
     dom.groupOrder.value = settings.group;
     dom.hideMastered.checked = settings.hideMastered;
     dom.showUnreleased.checked = settings.showUnreleased;
     dom.lowFidelity.checked = settings.lowFidelity;
+    if (dom.openExports) {
+        dom.openExports.checked = settings.openExports;
+    }
     document.body.classList.toggle('low-fidelity', settings.lowFidelity);
 
     dom.statusTabs.querySelectorAll('button').forEach(button => {
@@ -229,6 +293,7 @@ function renderControls() {
         compareButton.textContent = comparing ? 'Hide trade matches' : 'Compare trades';
         compareButton.setAttribute('aria-pressed', String(comparing));
     }
+    updateCodesNotification();
 }
 
 function groupMarkup(sprites, idPrefix) {
@@ -388,23 +453,31 @@ function populateThemes() {
 }
 
 function populateSeasons() {
-    if (!dom.seasonPicker) return;
-    const seasons = activeSeasons(catalog.sprites);
-    dom.seasonPicker.replaceChildren(
-        ...seasons.map(season => {
-            const label = document.createElement('label');
-            label.className = 'menu-toggle';
-            const input = document.createElement('input');
-            input.type = 'checkbox';
-            input.value = season;
-            input.checked = store.isSeasonSelected(season);
-            const span = document.createElement('span');
-            span.textContent = season;
-            label.appendChild(input);
-            label.appendChild(span);
-            return label;
-        }),
-    );
+    if (dom.seasonFilter) {
+        const seasons = activeSeasons(catalog.sprites);
+        dom.seasonFilter.replaceChildren(
+            new Option('All seasons', 'all'),
+            ...seasons.map(s => new Option(s === 'Runners' ? 'Runners (C7S3)' : s === 'Override' ? 'Override (C7S4)' : s, s)),
+        );
+    }
+    if (dom.seasonPicker) {
+        const seasons = activeSeasons(catalog.sprites);
+        dom.seasonPicker.replaceChildren(
+            ...seasons.map(season => {
+                const label = document.createElement('label');
+                label.className = 'menu-toggle';
+                const input = document.createElement('input');
+                input.type = 'checkbox';
+                input.value = season;
+                input.checked = store.isSeasonSelected(season);
+                const span = document.createElement('span');
+                span.textContent = season;
+                label.appendChild(input);
+                label.appendChild(span);
+                return label;
+            }),
+        );
+    }
     updateSeasonLabel();
 }
 
@@ -482,6 +555,30 @@ async function copyText(text, successMessage) {
     }
 }
 
+function bind3DCardEffects() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    dom.spriteGroups.addEventListener('mousemove', event => {
+        if (store.state.settings.lowFidelity) return;
+        const card = event.target.closest('.sprite-card');
+        if (!card) return;
+        const rect = card.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -8;
+        const rotateY = ((x - centerX) / centerX) * 8;
+        card.style.transform = `perspective(600px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-3px) scale3d(1.02, 1.02, 1.02)`;
+    });
+
+    dom.spriteGroups.addEventListener('mouseleave', event => {
+        const card = event.target.closest('.sprite-card');
+        if (card) {
+            card.style.transform = '';
+        }
+    }, true);
+}
+
 function bindCollectionEvents() {
     dom.spriteGroups.addEventListener('click', event => {
         if (store.viewOnly) return;
@@ -506,6 +603,12 @@ function bindControlEvents() {
         searchTimer = setTimeout(() => store.setFilter('search', value), 80);
     });
     dom.themeFilter.addEventListener('change', () => store.setFilter('theme', dom.themeFilter.value));
+    if (dom.seasonFilter) {
+        dom.seasonFilter.addEventListener('change', () => {
+            const val = dom.seasonFilter.value;
+            store.setFilter('season', val === 'all' ? null : val);
+        });
+    }
     if (dom.seasonToggle) {
         dom.seasonToggle.addEventListener('click', event => {
             event.stopPropagation();
@@ -550,11 +653,18 @@ function bindControlEvents() {
     dom.hideMastered.addEventListener('change', () => store.setSetting('hideMastered', dom.hideMastered.checked));
     dom.showUnreleased.addEventListener('change', () => store.setSetting('showUnreleased', dom.showUnreleased.checked));
     dom.lowFidelity.addEventListener('change', () => store.setSetting('lowFidelity', dom.lowFidelity.checked));
+    if (dom.openExports) {
+        dom.openExports.addEventListener('change', () => {
+            store.setSetting('openExports', dom.openExports.checked);
+        });
+    }
 
     dom.exportToggle.addEventListener('click', event => {
         event.stopPropagation();
         toggleMenu(dom.exportMenu, dom.exportToggle);
     });
+
+
     if (dom.tradeToggle) {
         dom.tradeToggle.addEventListener('click', event => {
             event.stopPropagation();
@@ -568,12 +678,16 @@ function bindControlEvents() {
     });
     dom.exportMenu.addEventListener('click', event => {
         const button = event.target.closest('[data-export]');
-        if (!button) return;
-        closeMenus({ restoreFocus: true });
-        exportBoard(button.dataset.export, catalog, store, toast).catch(error => {
-            console.error(error);
-            toast('Could not create that image.', 'error');
-        });
+        if (button) {
+            closeMenus({ restoreFocus: true });
+            exportBoard(catalog, store, button.dataset.export, {
+                toast,
+                openInTab: store.state.settings.openExports,
+            }).catch(error => {
+                console.error(error);
+                toast('Could not create that image.', 'error');
+            });
+        }
     });
 
     dom.shareButton.addEventListener('click', () => {
@@ -676,19 +790,21 @@ function bindControlEvents() {
             }
         });
     }
-    dom.copyGridButton.addEventListener('click', () => {
-        closeMenus({ restoreFocus: true });
-        copyText(tradeGrid(catalog, store), 'Trade grid copied.');
-    });
+    if (dom.copyGridButton) {
+        dom.copyGridButton.addEventListener('click', () => {
+            closeMenus({ restoreFocus: true });
+            copyText(tradeGrid(catalog, store), 'Trade grid copied.');
+        });
+    }
     if (dom.copyCodeButton) {
         dom.copyCodeButton.addEventListener('click', () => {
             closeMenus({ restoreFocus: true });
             const code = encodeShare(store.snapshot(), catalog.sprites, 'all');
             if (!code) {
-                toast('Collect at least one sprite to get a locker code.', 'error');
+                toast('Collect at least one sprite to get a collection code.', 'error');
                 return;
             }
-            copyText(code, 'Locker code copied.');
+            copyText(code, 'Collection code copied.');
         });
     }
     if (dom.loadCodeButton) {
@@ -698,44 +814,50 @@ function bindControlEvents() {
                 toast('Open your tracker before importing.', 'error');
                 return;
             }
-            const input = window.prompt('Paste a backup trade code or share link to restore your collection:');
+            const input = window.prompt('Paste a collection code or share link to restore your collection:');
             if (input === null) return;
             try {
                 const data = parseBackup(input, catalog.sprites);
                 store.replaceCollection(data.owned, data.mastered);
                 toast('Collection restored from code.', 'success');
             } catch {
-                toast('That backup code or link is not valid.', 'error');
+                toast('That collection code or link is not valid.', 'error');
             }
         });
     }
-    dom.backupButton.addEventListener('click', () => {
-        closeMenus({ restoreFocus: true });
-        downloadBackup(store);
-        toast('Backup downloaded.', 'success');
-    });
-    dom.importButton.addEventListener('click', () => {
-        closeMenus({ restoreFocus: true });
-        if (store.viewOnly) {
-            toast('Open your tracker before importing.', 'error');
-            return;
-        }
-        dom.importInput.click();
-    });
-    dom.importInput.addEventListener('change', async () => {
-        const [file] = dom.importInput.files;
-        if (!file) return;
-        try {
-            if (file.size > 1_000_000) throw new TypeError('Backup file is too large.');
-            const data = parseBackup(await file.text(), catalog.sprites);
-            store.replaceCollection(data.owned, data.mastered);
-            toast('Collection imported.', 'success');
-        } catch {
-            toast('That backup file is not valid.', 'error');
-        } finally {
-            dom.importInput.value = '';
-        }
-    });
+    if (dom.backupButton) {
+        dom.backupButton.addEventListener('click', () => {
+            closeMenus({ restoreFocus: true });
+            downloadBackup(store);
+            toast('Backup downloaded.', 'success');
+        });
+    }
+    if (dom.importButton) {
+        dom.importButton.addEventListener('click', () => {
+            closeMenus({ restoreFocus: true });
+            if (store.viewOnly) {
+                toast('Open your tracker before importing.', 'error');
+                return;
+            }
+            dom.importInput.click();
+        });
+    }
+    if (dom.importInput) {
+        dom.importInput.addEventListener('change', async () => {
+            const [file] = dom.importInput.files;
+            if (!file) return;
+            try {
+                if (file.size > 1_000_000) throw new TypeError('Backup file is too large.');
+                const data = parseBackup(await file.text(), catalog.sprites);
+                store.replaceCollection(data.owned, data.mastered);
+                toast('Collection imported.', 'success');
+            } catch {
+                toast('That backup file is not valid.', 'error');
+            } finally {
+                dom.importInput.value = '';
+            }
+        });
+    }
 
     if (dom.resetButton) {
         dom.resetButton.addEventListener('click', () => {
@@ -864,6 +986,7 @@ function start() {
         readSharedCollection();
         store.subscribe(handleStoreChange);
         bindCollectionEvents();
+        bind3DCardEffects();
         bindControlEvents();
         updateCodesNotification();
         window.addEventListener('storage', updateCodesNotification);
@@ -877,3 +1000,4 @@ function start() {
 }
 
 start();
+

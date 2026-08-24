@@ -1,8 +1,9 @@
 import { CodesStore } from './src/codes-store.js';
-import { codeCategories, codes } from './src/generated/codes.js';
+import { categoryOrder, codeCategories, codes } from './src/generated/codes.js';
 
 const store = new CodesStore();
 let searchQuery = '';
+let selectedCategory = 'all';
 
 function showToast(message) {
     const region = document.getElementById('toastRegion');
@@ -18,9 +19,22 @@ function showToast(message) {
     }, 2000);
 }
 
-function copyToClipboard(text, anchorElement, codeName) {
+function spawnFloatingText(text, x, y) {
+    const el = document.createElement('div');
+    el.className = 'floating-copy-text';
+    el.textContent = `COPIED ${text}!`;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1200);
+}
+
+function copyToClipboard(text, anchorElement, codeName, event) {
     navigator.clipboard.writeText(text).then(() => {
         showToast(`Copied "${codeName || text}" to clipboard!`);
+        if (event && event.clientX && event.clientY) {
+            spawnFloatingText(codeName || text, event.clientX, event.clientY);
+        }
         if (anchorElement) {
             const original = anchorElement.textContent;
             anchorElement.textContent = 'Copied!';
@@ -42,6 +56,42 @@ function escapeHtml(text) {
         .replace(/'/g, '&#39;');
 }
 
+function renderCategoryPills() {
+    const container = document.getElementById('categoryPills');
+    if (!container) return;
+
+    container.innerHTML = '';
+    const allBtn = document.createElement('button');
+    allBtn.type = 'button';
+    allBtn.className = `category-pill ${selectedCategory === 'all' ? 'is-active' : ''}`;
+    allBtn.textContent = 'All Categories';
+    allBtn.addEventListener('click', () => {
+        selectedCategory = 'all';
+        renderCategoryPills();
+        renderCodes();
+    });
+    container.appendChild(allBtn);
+
+    const categoriesInUse = categoryOrder || Object.keys(codeCategories);
+    for (const catKey of categoriesInUse) {
+        const catName = codeCategories[catKey];
+        if (!catName) continue;
+        const count = codes.filter(c => c.category === catKey).length;
+        if (count === 0) continue;
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `category-pill ${selectedCategory === catKey ? 'is-active' : ''}`;
+        btn.textContent = `${catName} (${count})`;
+        btn.addEventListener('click', () => {
+            selectedCategory = catKey;
+            renderCategoryPills();
+            renderCodes();
+        });
+        container.appendChild(btn);
+    }
+}
+
 function renderCodes() {
     const list = document.getElementById('codesList');
     const emptyState = document.getElementById('codesEmptyState');
@@ -50,6 +100,9 @@ function renderCodes() {
 
     const query = searchQuery.trim().toLowerCase();
     const filteredCodes = codes.filter(item => {
+        if (selectedCategory !== 'all' && item.category !== selectedCategory) {
+            return false;
+        }
         if (store.hideRedeemed && store.isRedeemed(item.code)) {
             return false;
         }
@@ -120,10 +173,10 @@ function renderCodes() {
         `;
 
         const codePill = row.querySelector('.code-copy-pill');
-        codePill.addEventListener('click', () => copyToClipboard(item.code, codePill.querySelector('code'), item.code));
+        codePill.addEventListener('click', e => copyToClipboard(item.code, codePill.querySelector('code'), item.code, e));
 
         const copyBtn = row.querySelector('.code-action-copy');
-        copyBtn.addEventListener('click', () => copyToClipboard(item.code, copyBtn, item.code));
+        copyBtn.addEventListener('click', e => copyToClipboard(item.code, copyBtn, item.code, e));
 
         const redeemBtn = row.querySelectorAll('.code-actions-cell button')[1];
         redeemBtn.addEventListener('click', () => {
@@ -179,6 +232,7 @@ function init() {
         store.reload();
     });
 
+    renderCategoryPills();
     renderCodes();
 }
 
@@ -187,3 +241,4 @@ if (document.readyState === 'loading') {
 } else {
     init();
 }
+

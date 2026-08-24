@@ -87,7 +87,7 @@ test('search is responsive and popovers restore keyboard focus', async ({ page }
     await expect(page.locator('.sprite-card')).toHaveCount(batmanCount);
 
     await page.locator('#moreToggle').click();
-    await expect(page.locator('#copyGridButton')).toBeFocused();
+    await expect(page.locator('#backupButton')).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.locator('#moreToggle')).toBeFocused();
     await expect(page.locator('#moreToggle')).toHaveAttribute('aria-expanded', 'false');
@@ -133,7 +133,8 @@ test('copies the formatted trade grid and stable share links', async ({ page, co
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await page.locator('[data-id="air_basic"] .sprite-art').click();
 
-    await page.locator('#moreToggle').click();
+    // Trade Grid is inside the Trade dropdown
+    await page.locator('#tradeToggle').click();
     await page.locator('#copyGridButton').click();
     const tradeGrid = await page.evaluate(() => navigator.clipboard.readText());
     expect(tradeGrid).toContain('✅ Owned  👑 Mastered  ❌ Missing  ⬛ Variant does not exist');
@@ -141,6 +142,8 @@ test('copies the formatted trade grid and stable share links', async ({ page, co
     expect(tradeGrid.startsWith('```')).toBe(true);
     expect(tradeGrid.endsWith('```')).toBe(true);
 
+
+    // Copy collection code is inside the More menu
     await page.locator('#moreToggle').click();
     await page.locator('#copyCodeButton').click();
     const codeText = await page.evaluate(() => navigator.clipboard.readText());
@@ -149,6 +152,16 @@ test('copies the formatted trade grid and stable share links', async ({ page, co
         mastered: [],
     });
 
+    // Check Hack Available badge on uncollected sprites with active lobby hack codes
+    const adventureCard = page.locator('[data-id="adventure_cheat"]');
+    await expect(adventureCard).toHaveClass(/hack-available/);
+    await expect(adventureCard.locator('.hack-badge')).toHaveText('Hack Available');
+
+    // Test sort order selector
+    await page.locator('#groupOrder').selectOption('rarity');
+    await expect(page.locator('#groupOrder')).toHaveValue('rarity');
+
+    // Copy Share Link is a direct button
     await page.getByRole('button', { name: 'Missing', exact: true }).click();
     await page.locator('#shareButton').click();
     const shareText = await page.evaluate(() => navigator.clipboard.readText());
@@ -299,7 +312,7 @@ test('has no horizontal overflow at a 390px viewport', async ({ page }) => {
     }));
     expect(dimensions).toEqual({ viewport: 390, page: 390, body: 390 });
 
-    for (const selector of ['#exportToggle', '#shareButton', '#moreToggle']) {
+    for (const selector of ['#exportToggle', '#tradeToggle', '#shareButton', '#moreToggle']) {
         const centers = await page.locator(selector).evaluate(button => {
             const buttonBox = button.getBoundingClientRect();
             const iconBox = button.querySelector('svg').getBoundingClientRect();
