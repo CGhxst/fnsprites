@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   sync:
-    name: Import upstream sprite data
+    name: Sync live sprite data
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
