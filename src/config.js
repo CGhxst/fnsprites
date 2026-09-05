@@ -29,12 +29,6 @@ export const THEME_ORDER = Object.freeze([
     'Hacker',
 ]);
 
-export const SEASON_ORDER = Object.freeze([
-    'Runners',
-    'Override',
-    'Unknown',
-]);
-
 export const RARITY_ORDER = Object.freeze([
     'Mythic',
     'Legendary',

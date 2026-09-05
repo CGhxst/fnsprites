@@ -97,7 +97,7 @@ test('store manages season filter selection, select all, and clear', () => {
 
     assert.equal(store.isSeasonSelected('Runners'), true);
 
-    store.toggleSeason('Override', false, ['Runners', 'Override']);
+    store.toggleSeason('Override', false, ['Override', 'Runners']);
     assert.equal(store.isSeasonSelected('Runners'), true);
     assert.equal(store.isSeasonSelected('Override'), false);
 

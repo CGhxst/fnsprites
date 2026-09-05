@@ -1,4 +1,4 @@
-import { createCatalog, activeSeasons, activeThemes, displayTheme, groupSprites, seasonBadgeInfo, sortSprites } from './src/catalog.js';
+import { createCatalog, activeSeasons, activeThemes, displaySeason, displayTheme, groupSprites, seasonBadgeInfo, sortSprites } from './src/catalog.js';
 import { parseBackup } from './src/backup.js';
 import { compareCollections } from './src/compare.js';
 import { GROUP_METHODS, ICONS, STATUS_FILTERS, spritePalette } from './src/config.js';
@@ -344,7 +344,7 @@ function comparisonMarkup(sorted) {
 }
 
 function renderCollection() {
-    const sorted = sortSprites(filteredSprites(), store.state.settings.group);
+    const sorted = sortSprites(filteredSprites(), store.state.settings.group, catalog);
 
     dom.collectionTitle.textContent = comparison?.active
         ? 'Trade matches'
@@ -457,7 +457,7 @@ function populateSeasons() {
         const seasons = activeSeasons(catalog.sprites);
         dom.seasonFilter.replaceChildren(
             new Option('All seasons', 'all'),
-            ...seasons.map(s => new Option(s === 'Runners' ? 'Runners (C7S3)' : s === 'Override' ? 'Override (C7S4)' : s, s)),
+            ...seasons.map(s => new Option(displaySeason(s), s)),
         );
     }
     if (dom.seasonPicker) {

@@ -1,4 +1,4 @@
-import { EXPORT_THEME_LABELS, RARITY_ORDER, SEASON_ORDER, THEME_LABELS, THEME_ORDER } from './config.js';
+import { EXPORT_THEME_LABELS, RARITY_ORDER, THEME_LABELS, THEME_ORDER } from './config.js';
 
 const REQUIRED_FIELDS = ['id', 'name', 'theme', 'rarity', 'unreleased'];
 
@@ -78,6 +78,23 @@ export function exportTheme(theme) {
     return EXPORT_THEME_LABELS[theme] || theme.toUpperCase();
 }
 
+export function displaySeason(season) {
+    if (!season || season === 'Unknown') return 'Unknown';
+    return String(season).trim();
+}
+
+export function seasonRank(season, catalogSprites = []) {
+    if (!season || season === 'Unknown') return Number.MAX_SAFE_INTEGER;
+    if (Array.isArray(catalogSprites) && catalogSprites.length > 0) {
+        for (let i = catalogSprites.length - 1; i >= 0; i--) {
+            if (catalogSprites[i]?.season === season) {
+                return -(i + 1);
+            }
+        }
+    }
+    return Number.MAX_SAFE_INTEGER - 1;
+}
+
 export function activeThemes(sprites) {
     return [...new Set(sprites.map(sprite => sprite.theme))]
         .sort((a, b) => orderedIndex(THEME_ORDER, a) - orderedIndex(THEME_ORDER, b) || a.localeCompare(b));
@@ -85,7 +102,7 @@ export function activeThemes(sprites) {
 
 export function activeSeasons(sprites) {
     return [...new Set(sprites.map(sprite => sprite.season || 'Unknown'))]
-        .sort((a, b) => orderedIndex(SEASON_ORDER, a) - orderedIndex(SEASON_ORDER, b) || a.localeCompare(b));
+        .sort((a, b) => seasonRank(a, sprites) - seasonRank(b, sprites) || a.localeCompare(b));
 }
 
 export function seasonBadgeInfo(season) {
@@ -108,14 +125,15 @@ export function familyMap(sprites) {
     return map;
 }
 
-export function sortSprites(sprites, method) {
+export function sortSprites(sprites, method, catalog) {
+    const catalogSprites = catalog?.sprites || sprites;
     return [...sprites].sort((a, b) => {
         if (method === 'theme') {
             return orderedIndex(THEME_ORDER, a.theme) - orderedIndex(THEME_ORDER, b.theme)
                 || a.name.localeCompare(b.name);
         }
         if (method === 'season') {
-            return orderedIndex(SEASON_ORDER, a.season) - orderedIndex(SEASON_ORDER, b.season)
+            return seasonRank(a.season, catalogSprites) - seasonRank(b.season, catalogSprites)
                 || orderedIndex(THEME_ORDER, a.theme) - orderedIndex(THEME_ORDER, b.theme)
                 || a.name.localeCompare(b.name);
         }
@@ -147,9 +165,7 @@ export function groupSprites(sprites, method, catalog) {
             label = catalog ? catalog.familyName(key) : key;
         } else if (method === 'season') {
             key = sprite.season || 'Unknown';
-            if (key === 'Runners') label = 'Season: Runners (C7S3)';
-            else if (key === 'Override') label = 'Season: Override (C7S4)';
-            else label = `Season: ${key}`;
+            label = `Season: ${displaySeason(key)}`;
         } else if (method === 'rarity') {
             key = sprite.rarity;
             label = `${sprite.rarity}`;
@@ -163,7 +179,8 @@ export function groupSprites(sprites, method, catalog) {
     if (method === 'theme') {
         groupList.sort((a, b) => orderedIndex(THEME_ORDER, a.key) - orderedIndex(THEME_ORDER, b.key) || a.label.localeCompare(b.label));
     } else if (method === 'season') {
-        groupList.sort((a, b) => orderedIndex(SEASON_ORDER, a.key) - orderedIndex(SEASON_ORDER, b.key) || a.label.localeCompare(b.label));
+        const catalogSprites = catalog?.sprites || sprites;
+        groupList.sort((a, b) => seasonRank(a.key, catalogSprites) - seasonRank(b.key, catalogSprites) || a.label.localeCompare(b.label));
     } else if (method === 'rarity') {
         groupList.sort((a, b) => orderedIndex(RARITY_ORDER, a.key) - orderedIndex(RARITY_ORDER, b.key) || a.label.localeCompare(b.label));
     } else if (method === 'sprite') {
@@ -171,7 +188,7 @@ export function groupSprites(sprites, method, catalog) {
     }
 
     for (const group of groupList) {
-        group.sprites = sortSprites(group.sprites, method);
+        group.sprites = sortSprites(group.sprites, method, catalog);
     }
 
     return groupList;

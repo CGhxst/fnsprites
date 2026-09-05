@@ -33,6 +33,7 @@ test('renders the released catalog with valid interactive structure', async ({ p
     await expect(page).toHaveTitle('Fortnite Sprites Tracker');
     await expect(page.locator('.sprite-card')).toHaveCount(releasedCount);
     await expect(page.locator('.sprite-group')).toHaveCount(seasonCount);
+    await expect(page.locator('.sprite-group .group-heading h2').first()).toContainText('Override');
     await expect(page.locator('button button')).toHaveCount(0);
     await expect(page.locator('[role="menu"], [role="menuitem"]')).toHaveCount(0);
     await expect(page.locator('#groupOrder')).toHaveValue('season');

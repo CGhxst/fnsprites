@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { activeSeasons, createCatalog, familyKey, groupSprites, sortSprites } from '../src/catalog.js';
+import { activeSeasons, createCatalog, displaySeason, familyKey, groupSprites, sortSprites } from '../src/catalog.js';
 import { THEME_ORDER, spritePalette } from '../src/config.js';
 
 const sample = [
@@ -30,12 +30,28 @@ test('sprite grouping keeps each family together in theme order', () => {
     assert.deepEqual(groups[0].sprites.map(sprite => sprite.theme), ['Basic', 'Gold']);
 });
 
-test('sprite grouping by season groups items correctly', () => {
+test('sprite grouping by season groups items correctly with newer seasons first', () => {
     const catalog = createCatalog(sample);
     const sorted = sortSprites(catalog.sprites, 'season');
     const groups = groupSprites(sorted, 'season', catalog);
-    assert.deepEqual(groups.map(group => group.key), ['Runners', 'Override']);
-    assert.equal(activeSeasons(catalog.sprites).length, 2);
+    assert.deepEqual(groups.map(group => group.key), ['Override', 'Runners']);
+    assert.deepEqual(activeSeasons(catalog.sprites), ['Override', 'Runners']);
+});
+
+test('unlisted newer seasons dynamically rank at the top', () => {
+    const extendedSample = [
+        ...sample,
+        { id: 'future_basic', name: 'Future', theme: 'Basic', rarity: 'Rare', unreleased: false, season: 'NewNexus' },
+    ];
+    const catalog = createCatalog(extendedSample);
+    const seasons = activeSeasons(catalog.sprites);
+    assert.equal(seasons[0], 'NewNexus');
+    assert.deepEqual(seasons, ['NewNexus', 'Override', 'Runners']);
+
+    const sorted = sortSprites(catalog.sprites, 'season');
+    const groups = groupSprites(sorted, 'season', catalog);
+    assert.deepEqual(groups.map(group => group.key), ['NewNexus', 'Override', 'Runners']);
+    assert.equal(groups[0].label, 'Season: NewNexus');
 });
 
 test('catalog rejects duplicate ids', () => {
@@ -55,4 +71,12 @@ test('new and unknown themes keep stable ordering, naming, and palettes', () => 
         spritePalette({ theme: 'Future', rarity: 'Special' }),
         spritePalette({ theme: 'Basic', rarity: 'Special' }),
     );
+});
+
+test('displaySeason formats season names dynamically without hardcoded dictionaries', () => {
+    assert.equal(displaySeason('Override'), 'Override');
+    assert.equal(displaySeason('Runners'), 'Runners');
+    assert.equal(displaySeason('Showdown'), 'Showdown');
+    assert.equal(displaySeason(null), 'Unknown');
+    assert.equal(displaySeason(''), 'Unknown');
 });
