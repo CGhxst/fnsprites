@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeSourceCatalog, parseSourceCatalog, parseSourceCodes } from './read-source-catalog.mjs';
@@ -8,6 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PNG_SIGNATURE = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_IMAGE_DIMENSION = 8192;
+const IMAGE_CONCURRENCY = 16;
 
 export function validatePngBuffer(buffer, filename = 'image') {
     if (!Buffer.isBuffer(buffer)) {
@@ -34,6 +35,72 @@ export function validatePngBuffer(buffer, filename = 'image') {
         throw new Error(`${filename} dimensions exceed limit of ${MAX_IMAGE_DIMENSION}px.`);
     }
     return { width, height, size: buffer.length };
+}
+
+export async function syncSpriteImages({
+    sprites,
+    spritesDir,
+    baseUrl,
+    concurrency = IMAGE_CONCURRENCY,
+}) {
+    let downloadedCount = 0;
+    let updatedCount = 0;
+    let unchangedCount = 0;
+
+    let index = 0;
+    async function worker() {
+        while (index < sprites.length) {
+            const sprite = sprites[index++];
+            const fileName = `${sprite.id}.png`;
+            const filePath = path.join(spritesDir, fileName);
+            const imageUrl = `${baseUrl}/sprites/${encodeURIComponent(sprite.id)}.png`;
+
+            let localBuffer = null;
+            try {
+                localBuffer = await readFile(filePath);
+            } catch (err) {
+                if (err.code !== 'ENOENT') throw err;
+            }
+
+            let imgRes;
+            try {
+                imgRes = await fetch(imageUrl);
+            } catch (err) {
+                if (!localBuffer) {
+                    throw new Error(`Failed to fetch missing sprite ${fileName}: ${err.message}`, { cause: err });
+                }
+                console.warn(`Warning: Network error fetching ${fileName}, keeping local copy: ${err.message}`);
+                continue;
+            }
+
+            if (!imgRes.ok) {
+                if (!localBuffer) {
+                    throw new Error(`Failed to download missing sprite ${fileName}: HTTP ${imgRes.status} ${imgRes.statusText}`);
+                }
+                console.warn(`Warning: Remote returned HTTP ${imgRes.status} for existing sprite ${fileName}, keeping local copy.`);
+                continue;
+            }
+
+            const remoteBuffer = Buffer.from(await imgRes.arrayBuffer());
+            if (!localBuffer) {
+                validatePngBuffer(remoteBuffer, fileName);
+                await writeFile(filePath, remoteBuffer);
+                downloadedCount++;
+            } else if (!localBuffer.equals(remoteBuffer)) {
+                validatePngBuffer(remoteBuffer, fileName);
+                await writeFile(filePath, remoteBuffer);
+                updatedCount++;
+                console.log(`Updated sprite image: ${fileName}`);
+            } else {
+                unchangedCount++;
+            }
+        }
+    }
+
+    const workerCount = Math.min(concurrency, Math.max(sprites.length, 1));
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+    return { downloadedCount, updatedCount, unchangedCount };
 }
 
 export async function syncData({
@@ -77,35 +144,16 @@ export async function syncData({
     }
     console.log(`Retrieved ${codesData.codes.length} codes across ${Object.keys(codesData.codeCategories).length} categories.`);
 
-    // 3. Download any missing sprite PNG images
-    const localEntries = await readdir(spritesDir);
-    const localIds = new Set(
-        localEntries
-            .filter(file => file.toLowerCase().endsWith('.png'))
-            .map(file => path.basename(file, path.extname(file))),
+    // 3. Download missing sprite PNG images and update any modified images
+    console.log(`Checking and syncing ${sprites.length} sprite images from ${baseUrl}...`);
+    const { downloadedCount, updatedCount, unchangedCount } = await syncSpriteImages({
+        sprites,
+        spritesDir,
+        baseUrl,
+    });
+    console.log(
+        `Sprite images synced: ${downloadedCount} new, ${updatedCount} updated, ${unchangedCount} unchanged.`
     );
-
-    const missingSprites = sprites.filter(sprite => !localIds.has(sprite.id));
-    let downloadedCount = 0;
-
-    if (missingSprites.length > 0) {
-        console.log(`Found ${missingSprites.length} missing sprite images to download.`);
-        for (const sprite of missingSprites) {
-            const imageUrl = `${baseUrl}/sprites/${sprite.id}.png`;
-            console.log(`Downloading sprite: ${sprite.id}.png from ${imageUrl}...`);
-            const imgRes = await fetch(imageUrl);
-            if (!imgRes.ok) {
-                throw new Error(`Failed to download sprite image ${sprite.id}.png: HTTP ${imgRes.status} ${imgRes.statusText}`);
-            }
-            const buffer = Buffer.from(await imgRes.arrayBuffer());
-            validatePngBuffer(buffer, `${sprite.id}.png`);
-            await writeFile(path.join(spritesDir, `${sprite.id}.png`), buffer);
-            downloadedCount++;
-        }
-        console.log(`Successfully downloaded ${downloadedCount} new sprite images.`);
-    } else {
-        console.log('All sprite images are already present locally.');
-    }
 
     // 4. Write directly to src/data/
     const spritesOutput = [
@@ -132,10 +180,13 @@ export async function syncData({
         stdio: 'inherit',
     });
 
-    console.log(`\nSync completed: ${sprites.length} sprites (${downloadedCount} new images), ${codesData.codes.length} codes.\n`);
+    console.log(
+        `\nSync completed: ${sprites.length} sprites (${downloadedCount} new images, ${updatedCount} updated images), ${codesData.codes.length} codes.\n`
+    );
     return {
         spritesCount: sprites.length,
         downloadedImagesCount: downloadedCount,
+        updatedImagesCount: updatedCount,
         codesCount: codesData.codes.length,
     };
 }
