@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:data": "node scripts/build-catalog-module.mjs",
+    "sync": "node scripts/sync.mjs",
     "dev": "node scripts/serve.mjs",
     "lint": "eslint .",
     "validate": "node scripts/validate-catalog.mjs",

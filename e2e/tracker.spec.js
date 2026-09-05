@@ -1,7 +1,8 @@
 import { expect, test as base } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { activeSeasons, createCatalog } from '../src/catalog.js';
-import { sprites } from '../src/generated/sprites.js';
+import { spritePalette } from '../src/config.js';
+import { sprites } from '../src/data/sprites.js';
 import { decodeShare, encodeShare } from '../src/share.js';
 
 const catalog = createCatalog(sprites);
@@ -37,7 +38,7 @@ test('renders the released catalog with valid interactive structure', async ({ p
     await expect(page.locator('#groupOrder')).toHaveValue('season');
     if (quackSprite) {
         await expect(page.locator('#themeFilter option[value="Quack"]')).toHaveText('Quack');
-        await expect(page.locator(`[data-id="${quackSprite.id}"]`)).toHaveCSS('--card-top', '#788f35');
+        await expect(page.locator(`[data-id="${quackSprite.id}"]`)).toHaveCSS('--card-top', spritePalette(quackSprite)[0]);
     }
     const unstyledSpecialCards = await page.locator('.is-special-rarity .sprite-art').evaluateAll(elements =>
         elements

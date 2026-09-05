@@ -23,13 +23,12 @@ npm run check
 
 - `app.js` owns DOM rendering and browser interaction.
 - `src/` contains catalog, storage, sharing, backup, and export modules.
-- `src/generated/sprites.js` is generated from the synchronized data sheet.
-- `scripts/` contains the safe data parser, validator, generator, and local server.
+- `src/data/sprites.js` and `src/data/codes.js` contain the synchronized datasets.
+- `scripts/` contains the data synchronization, validation, and local server tooling.
 - `test/` and `e2e/` cover pure logic and real browser workflows.
 
-The scheduled sync imports `sprites-data.js` and `sprites/` from upstream,
-parses the data without executing it, regenerates the application module, and
-validates data and image integrity.
+`npm run sync` fetches live datasets from rickventure.com, downloads missing
+sprite images, and validates data and image integrity.
 
 The bundled Oswald font is distributed under the SIL Open Font License in
 `fonts/OFL.txt`.

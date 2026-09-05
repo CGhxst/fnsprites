@@ -4,11 +4,9 @@ import globals from 'globals';
 export default [
     {
         ignores: [
-            'codes-data.js',
             'node_modules/',
             'playwright-report/',
-            'sprites-data.js',
-            'src/generated/',
+            'src/data/',
             'test-results/',
         ],
     },

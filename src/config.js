@@ -26,6 +26,7 @@ export const THEME_ORDER = Object.freeze([
     'Cube',
     'Rift',
     'Cheat',
+    'Hacker',
 ]);
 
 export const SEASON_ORDER = Object.freeze([
@@ -53,12 +54,14 @@ export const THEME_LABELS = Object.freeze({
     Basic: 'Base',
     Candy: 'Gummy',
     Cheat: 'Cheat Master',
+    Hacker: 'Hacker',
 });
 
 export const EXPORT_THEME_LABELS = Object.freeze({
     Basic: 'BASE',
     Candy: 'GUMMY',
     Cheat: 'CHEAT',
+    Hacker: 'HACKER',
 });
 
 const palette = (top, bottom) => Object.freeze([top, bottom]);
@@ -83,6 +86,7 @@ const THEME_PALETTES = Object.freeze({
     Cube: palette('#6434a3', '#210f3d'),
     Rift: palette('#246f82', '#092731'),
     Cheat: palette('#1e6b38', '#072613'),
+    Hacker: palette('#8b2fc9', '#2a0845'),
 });
 
 export function spritePalette(sprite) {

@@ -31,32 +31,20 @@ jobs:
       - name: Install data tooling
         run: npm ci
 
-      - name: Fetch upstream dataset
-        run: |
-          git remote add upstream https://github.com/staticvacant/fnsprites.git
-          git fetch --no-tags upstream main
-
-      - name: Import data and sprite images only
-        run: |
-          git checkout upstream/main -- sprites-data.js codes-data.js sprites
-
-      - name: Generate application data module
-        run: node scripts/build-catalog-module.mjs
-
-      - name: Validate imported dataset
-        run: node scripts/validate-catalog.mjs
+      - name: Sync dataset and sprites
+        run: npm run sync
 
       - name: Commit changes
         run: |
-          git add sprites-data.js codes-data.js sprites src/generated/sprites.js src/generated/codes.js
+          git add sprites src/data/sprites.js src/data/codes.js
 
-          if git diff --cached --quiet -- sprites-data.js codes-data.js sprites src/generated/sprites.js src/generated/codes.js; then
+          if git diff --cached --quiet -- sprites src/data/sprites.js src/data/codes.js; then
             echo "Sprite and code dataset is already current."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "data: sync upstream sprites and codes"
+          git commit -m "data: sync live sprites and codes"
           git push origin HEAD:main
 

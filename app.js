@@ -5,8 +5,8 @@ import { GROUP_METHODS, ICONS, STATUS_FILTERS, spritePalette } from './src/confi
 import { downloadBackup, exportBoard, tradeGrid } from './src/export-board.js';
 import { decodeLegacyJsonShare, decodeLegacyShare, decodeShare, encodeShare } from './src/share.js';
 import { TrackerStore } from './src/store.js';
-import { sprites as rawSprites } from './src/generated/sprites.js';
-import { codes as rawCodes } from './src/generated/codes.js';
+import { sprites as rawSprites } from './src/data/sprites.js';
+import { codes as rawCodes } from './src/data/codes.js';
 
 let catalog;
 let store;

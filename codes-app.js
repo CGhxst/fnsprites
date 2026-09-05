@@ -1,5 +1,5 @@
 import { CodesStore } from './src/codes-store.js';
-import { categoryOrder, codeCategories, codes } from './src/generated/codes.js';
+import { categoryOrder, codeCategories, codes } from './src/data/codes.js';
 
 const store = new CodesStore();
 let searchQuery = '';

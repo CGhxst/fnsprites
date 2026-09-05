@@ -2,22 +2,18 @@ import assert from 'node:assert/strict';
 import { open, readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readSourceCatalog, readSourceCodes } from './read-source-catalog.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const maxImageDimension = 8192;
 const maxImageBytes = 8 * 1024 * 1024;
-const dataPath = path.join(root, 'sprites-data.js');
-const codesDataPath = path.join(root, 'codes-data.js');
+const spritesDataPath = path.join(root, 'src', 'data', 'sprites.js');
+const codesDataPath = path.join(root, 'src', 'data', 'codes.js');
 const spritesPath = path.join(root, 'sprites');
-const sprites = await readSourceCatalog(dataPath);
-const generatedPath = path.join(root, 'src', 'generated', 'sprites.js');
-const generatedCodesPath = path.join(root, 'src', 'generated', 'codes.js');
-const generated = await import(`${pathToFileURL(generatedPath).href}?validation=${Date.now()}`);
-assert.ok(Array.isArray(sprites), 'sprites-data.js must define baseSprites as an array');
-assert.ok(sprites.length > 0, 'baseSprites must not be empty');
-assert.deepEqual(generated.sprites, sprites, 'generated sprite module is out of date; run npm run build:data');
+
+const { sprites } = await import(`${pathToFileURL(spritesDataPath).href}?v=${Date.now()}`);
+assert.ok(Array.isArray(sprites), 'sprites must be exported as an array');
+assert.ok(sprites.length > 0, 'sprites array must not be empty');
 
 const ids = new Set();
 for (const [index, sprite] of sprites.entries()) {
@@ -77,11 +73,10 @@ if (orphanedImages.length) {
 console.log(`Catalog valid: ${sprites.length} entries and ${imageFiles.length} images.`);
 
 try {
-    const codesData = await readSourceCodes(codesDataPath);
-    const codes = codesData.codes;
-    const generatedCodes = await import(`${pathToFileURL(generatedCodesPath).href}?validation=${Date.now()}`);
-    assert.ok(Array.isArray(codes), 'codes-data.js must define baseCodes as an array');
-    assert.deepEqual(generatedCodes.codes, codes, 'generated codes module is out of date; run npm run build:data');
+    const { codes, codeCategories, categoryOrder } = await import(`${pathToFileURL(codesDataPath).href}?v=${Date.now()}`);
+    assert.ok(Array.isArray(codes), 'codes must be exported as an array');
+    assert.ok(typeof codeCategories === 'object' && codeCategories !== null, 'codeCategories must be an object');
+    assert.ok(Array.isArray(categoryOrder), 'categoryOrder must be an array');
 
     const codeSet = new Set();
     for (const [index, item] of codes.entries()) {
@@ -108,5 +103,3 @@ try {
 } catch (error) {
     if (error.code !== 'ENOENT') throw error;
 }
-
-

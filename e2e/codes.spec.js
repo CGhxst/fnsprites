@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { codes } from '../src/generated/codes.js';
+import { codes } from '../src/data/codes.js';
 
 test.describe('Lobby Hacks (Codes)', () => {
     test('renders lobby codes and supports redemption and copy workflows', async ({ page }) => {
