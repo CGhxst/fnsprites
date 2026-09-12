@@ -1021,7 +1021,7 @@ export const sprites = [
         "name": "Bush",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1054,7 +1054,7 @@ export const sprites = [
         "name": "Jonesy",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1086,7 +1086,7 @@ export const sprites = [
         "name": "Adventure",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1118,7 +1118,7 @@ export const sprites = [
         "name": "8-Bit",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1151,7 +1151,7 @@ export const sprites = [
         "name": "Overshield",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1184,7 +1184,7 @@ export const sprites = [
         "name": "Onigiri",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1225,40 +1225,7 @@ export const sprites = [
         "name": "Storm Scout",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
-        "season": "Override"
-    },
-    {
-        "id": "killswitch_basic",
-        "name": "Killswitch",
-        "theme": "Basic",
-        "rarity": "Epic",
         "unreleased": false,
-        "season": "Override"
-    },
-    {
-        "id": "killswitch_gold",
-        "name": "Killswitch",
-        "theme": "Gold",
-        "rarity": "Epic",
-        "unreleased": false,
-        "season": "Override"
-    },
-    {
-        "id": "killswitch_cheat",
-        "name": "Killswitch",
-        "theme": "Cheat",
-        "rarity": "Epic",
-        "unreleased": false,
-        "season": "Override",
-        "codeLocked": false
-    },
-    {
-        "id": "killswitch_hacker",
-        "name": "Killswitch",
-        "theme": "Hacker",
-        "rarity": "Epic",
-        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1290,7 +1257,7 @@ export const sprites = [
         "name": "Sonic",
         "theme": "Hacker",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1322,7 +1289,7 @@ export const sprites = [
         "name": "Tails",
         "theme": "Hacker",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1355,7 +1322,40 @@ export const sprites = [
         "name": "Shadow",
         "theme": "Hacker",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "killswitch_basic",
+        "name": "Killswitch",
+        "theme": "Basic",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "killswitch_gold",
+        "name": "Killswitch",
+        "theme": "Gold",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "killswitch_cheat",
+        "name": "Killswitch",
+        "theme": "Cheat",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override",
+        "codeLocked": false
+    },
+    {
+        "id": "killswitch_hacker",
+        "name": "Killswitch",
+        "theme": "Hacker",
+        "rarity": "Legendary",
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1388,7 +1388,7 @@ export const sprites = [
         "name": "Jackrabbit",
         "theme": "Hacker",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1421,7 +1421,7 @@ export const sprites = [
         "name": "X-Ray",
         "theme": "Hacker",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1454,7 +1454,7 @@ export const sprites = [
         "name": "Klombo",
         "theme": "Hacker",
         "rarity": "Mythic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
