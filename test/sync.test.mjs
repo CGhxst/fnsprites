@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validatePngBuffer } from '../scripts/sync.mjs';
+import { deduplicateCodes, deduplicateSprites, validatePngBuffer } from '../scripts/sync.mjs';
 
 test('validatePngBuffer accepts valid PNG buffer', () => {
     // 24-byte minimal valid PNG header: 8 bytes signature + 4 bytes length + 4 bytes 'IHDR' + 4 bytes width + 4 bytes height
@@ -182,5 +182,30 @@ test('syncSpriteImages preserves existing local copy when remote update fails', 
         globalThis.fetch = originalFetch;
         await rm(tempDir, { recursive: true, force: true });
     }
+});
+
+test('deduplicateCodes removes duplicate code entries preserving the first', () => {
+    const raw = [
+        { code: 'Alpha', reward: 'Reward 1', active: true },
+        { code: 'Beta', reward: 'Reward 2', active: true },
+        { code: 'Alpha', reward: 'Duplicate Alpha', active: false },
+        { code: '  Beta  ', reward: 'Duplicate Beta with spaces', active: true },
+        { code: 'Gamma', reward: 'Reward 3', active: true },
+    ];
+    const result = deduplicateCodes(raw);
+    assert.equal(result.length, 3);
+    assert.deepEqual(result.map(c => c.code), ['Alpha', 'Beta', 'Gamma']);
+    assert.equal(result[0].reward, 'Reward 1');
+});
+
+test('deduplicateSprites removes duplicate sprite entries preserving the first', () => {
+    const raw = [
+        { id: 'water_basic', name: 'Water' },
+        { id: 'fire_basic', name: 'Fire' },
+        { id: 'water_basic', name: 'Duplicate Water' },
+    ];
+    const result = deduplicateSprites(raw);
+    assert.equal(result.length, 2);
+    assert.deepEqual(result.map(s => s.id), ['water_basic', 'fire_basic']);
 });
 

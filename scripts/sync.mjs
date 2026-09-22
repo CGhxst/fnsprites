@@ -37,6 +37,42 @@ export function validatePngBuffer(buffer, filename = 'image') {
     return { width, height, size: buffer.length };
 }
 
+export function deduplicateCodes(codes) {
+    if (!Array.isArray(codes)) return [];
+    const seen = new Set();
+    const deduplicated = [];
+    for (const item of codes) {
+        if (!item || typeof item !== 'object' || typeof item.code !== 'string') continue;
+        const normalized = item.code.trim();
+        if (!normalized) continue;
+        if (seen.has(normalized)) {
+            console.warn(`Warning: Duplicate code "${normalized}" in remote catalog, skipping duplicate.`);
+            continue;
+        }
+        seen.add(normalized);
+        deduplicated.push(item);
+    }
+    return deduplicated;
+}
+
+export function deduplicateSprites(sprites) {
+    if (!Array.isArray(sprites)) return [];
+    const seen = new Set();
+    const deduplicated = [];
+    for (const sprite of sprites) {
+        if (!sprite || typeof sprite !== 'object' || typeof sprite.id !== 'string') continue;
+        const id = sprite.id.trim();
+        if (!id) continue;
+        if (seen.has(id)) {
+            console.warn(`Warning: Duplicate sprite id "${id}" in remote catalog, skipping duplicate.`);
+            continue;
+        }
+        seen.add(id);
+        deduplicated.push(sprite);
+    }
+    return deduplicated;
+}
+
 export async function syncSpriteImages({
     sprites,
     spritesDir,
@@ -124,10 +160,11 @@ export async function syncData({
     }
     const spritesSource = await spritesRes.text();
     const normalizedSprites = normalizeSourceCatalog(spritesSource);
-    const sprites = parseSourceCatalog(normalizedSprites);
-    if (!Array.isArray(sprites) || sprites.length === 0) {
+    const rawSprites = parseSourceCatalog(normalizedSprites);
+    if (!Array.isArray(rawSprites) || rawSprites.length === 0) {
         throw new Error('Fetched sprites data is empty or invalid.');
     }
+    const sprites = deduplicateSprites(rawSprites);
     console.log(`Retrieved ${sprites.length} sprites from remote catalog.`);
 
     // 2. Fetch and validate remote codes-data.js
@@ -142,7 +179,8 @@ export async function syncData({
     if (!Array.isArray(codesData.codes) || codesData.codes.length === 0) {
         throw new Error('Fetched codes data is empty or invalid.');
     }
-    console.log(`Retrieved ${codesData.codes.length} codes across ${Object.keys(codesData.codeCategories).length} categories.`);
+    const codes = deduplicateCodes(codesData.codes);
+    console.log(`Retrieved ${codes.length} unique codes across ${Object.keys(codesData.codeCategories).length} categories.`);
 
     // 3. Download missing sprite PNG images and update any modified images
     console.log(`Checking and syncing ${sprites.length} sprite images from ${baseUrl}...`);
@@ -166,13 +204,13 @@ export async function syncData({
 
     const codesOutput = [
         '// Synchronized dataset. Do not edit by hand.',
-        `export const codes = ${JSON.stringify(codesData.codes, null, 4)};`,
+        `export const codes = ${JSON.stringify(codes, null, 4)};`,
         `export const codeCategories = ${JSON.stringify(codesData.codeCategories, null, 4)};`,
         `export const categoryOrder = ${JSON.stringify(codesData.categoryOrder, null, 4)};`,
         '',
     ].join('\n');
     await writeFile(codesOutputPath, codesOutput, 'utf8');
-    console.log(`Saved ${path.relative(rootDir, codesOutputPath)} (${codesData.codes.length} codes).`);
+    console.log(`Saved ${path.relative(rootDir, codesOutputPath)} (${codes.length} codes).`);
 
     // 5. Run validation
     console.log('Running scripts/validate-catalog.mjs...');
@@ -181,13 +219,13 @@ export async function syncData({
     });
 
     console.log(
-        `\nSync completed: ${sprites.length} sprites (${downloadedCount} new images, ${updatedCount} updated images), ${codesData.codes.length} codes.\n`
+        `\nSync completed: ${sprites.length} sprites (${downloadedCount} new images, ${updatedCount} updated images), ${codes.length} codes.\n`
     );
     return {
         spritesCount: sprites.length,
         downloadedImagesCount: downloadedCount,
         updatedImagesCount: updatedCount,
-        codesCount: codesData.codes.length,
+        codesCount: codes.length,
     };
 }
 

@@ -289,14 +289,6 @@ export const sprites = [
         "season": "Runners"
     },
     {
-        "id": "duck_rift",
-        "name": "Duck",
-        "theme": "Cube",
-        "rarity": "Epic",
-        "unreleased": true,
-        "season": "Override"
-    },
-    {
         "id": "ghost_basic",
         "name": "Ghost",
         "theme": "Basic",
@@ -377,22 +369,6 @@ export const sprites = [
         "season": "Runners"
     },
     {
-        "id": "demon_rift",
-        "name": "Demon",
-        "theme": "Cube",
-        "rarity": "Epic",
-        "unreleased": true,
-        "season": "Override"
-    },
-    {
-        "id": "demon_holofoil",
-        "name": "Demon",
-        "theme": "Holofoil",
-        "rarity": "Epic",
-        "unreleased": true,
-        "season": "Override"
-    },
-    {
         "id": "king_basic",
         "name": "King",
         "theme": "Basic",
@@ -431,22 +407,6 @@ export const sprites = [
         "rarity": "Epic",
         "unreleased": false,
         "season": "Runners"
-    },
-    {
-        "id": "king_rift",
-        "name": "King",
-        "theme": "Cube",
-        "rarity": "Epic",
-        "unreleased": true,
-        "season": "Override"
-    },
-    {
-        "id": "king_gem",
-        "name": "King",
-        "theme": "Gem",
-        "rarity": "Epic",
-        "unreleased": true,
-        "season": "Override"
     },
     {
         "id": "striker_basic",
@@ -601,28 +561,12 @@ export const sprites = [
         "season": "Runners"
     },
     {
-        "id": "punk_gem",
-        "name": "Punk",
-        "theme": "Gem",
-        "rarity": "Legendary",
-        "unreleased": true,
-        "season": "Override"
-    },
-    {
         "id": "punk_rift",
         "name": "Punk",
         "theme": "Cube",
         "rarity": "Legendary",
         "unreleased": false,
         "season": "Runners"
-    },
-    {
-        "id": "punk_holofoil",
-        "name": "Punk",
-        "theme": "Holofoil",
-        "rarity": "Legendary",
-        "unreleased": true,
-        "season": "Override"
     },
     {
         "id": "boss_basic",
@@ -1025,6 +969,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "bush_bounty",
+        "name": "Bush",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "jonesy_basic",
         "name": "Jonesy",
         "theme": "Basic",
@@ -1055,6 +1007,14 @@ export const sprites = [
         "theme": "Hacker",
         "rarity": "Rare",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "jonesy_bounty",
+        "name": "Jonesy",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1090,6 +1050,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "adventure_bounty",
+        "name": "Adventure",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "8bit_basic",
         "name": "8-Bit",
         "theme": "Basic",
@@ -1119,6 +1087,14 @@ export const sprites = [
         "theme": "Hacker",
         "rarity": "Rare",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "8bit_bounty",
+        "name": "8-Bit",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1155,6 +1131,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "overshield_bounty",
+        "name": "Overshield",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "onigiri_basic",
         "name": "Onigiri",
         "theme": "Basic",
@@ -1185,6 +1169,14 @@ export const sprites = [
         "theme": "Hacker",
         "rarity": "Rare",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "onigiri_bounty",
+        "name": "Onigiri",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1229,6 +1221,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "stormking_bounty",
+        "name": "Storm Scout",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "sonic_basic",
         "name": "Sonic",
         "theme": "Basic",
@@ -1261,6 +1261,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "sonic_bounty",
+        "name": "Sonic",
+        "theme": "Bounty",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "tails_basic",
         "name": "Tails",
         "theme": "Basic",
@@ -1290,6 +1298,14 @@ export const sprites = [
         "theme": "Hacker",
         "rarity": "Epic",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "tails_bounty",
+        "name": "Tails",
+        "theme": "Bounty",
+        "rarity": "Epic",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1326,6 +1342,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "shadow_bounty",
+        "name": "Shadow",
+        "theme": "Bounty",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "killswitch_basic",
         "name": "Killswitch",
         "theme": "Basic",
@@ -1356,6 +1380,14 @@ export const sprites = [
         "theme": "Hacker",
         "rarity": "Legendary",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "killswitch_bounty",
+        "name": "Killswitch",
+        "theme": "Bounty",
+        "rarity": "Legendary",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1392,6 +1424,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "jackrabbit_bounty",
+        "name": "Jackrabbit",
+        "theme": "Bounty",
+        "rarity": "Legendary",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "xray_basic",
         "name": "X-Ray",
         "theme": "Basic",
@@ -1422,6 +1462,14 @@ export const sprites = [
         "theme": "Hacker",
         "rarity": "Legendary",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "xray_bounty",
+        "name": "X-Ray",
+        "theme": "Bounty",
+        "rarity": "Legendary",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1458,6 +1506,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "klombo_bounty",
+        "name": "Klombo",
+        "theme": "Bounty",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "crown_basic",
         "name": "Crown",
         "theme": "Basic",
@@ -1491,34 +1547,215 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "crown_bounty",
+        "name": "Crown",
+        "theme": "Bounty",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "birthday_basic",
+        "name": "Birthday",
+        "theme": "Basic",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "birthday_gold",
+        "name": "Birthday",
+        "theme": "Gold",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "birthday_cheat",
+        "name": "Birthday",
+        "theme": "Cheat",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override",
+        "cheatCodeExempt": true
+    },
+    {
+        "id": "birthday_hacker",
+        "name": "Birthday",
+        "theme": "Hacker",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "birthday_bounty",
+        "name": "Birthday",
+        "theme": "Bounty",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "pond_basic",
         "name": "Pond",
         "theme": "Basic",
-        "rarity": "Rare",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "pond_gold",
+        "name": "Pond",
+        "theme": "Gold",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "pond_cheat",
+        "name": "Pond",
+        "theme": "Cheat",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override",
+        "cheatCodeExempt": true
+    },
+    {
+        "id": "pond_hacker",
+        "name": "Pond\t",
+        "theme": "Hacker",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "pond_bounty",
+        "name": "Pond",
+        "theme": "Bounty",
+        "rarity": "Epic",
         "unreleased": true,
         "season": "Override"
     },
     {
-        "id": "honey_basic",
-        "name": "Honey",
+        "id": "crash_basic",
+        "name": "Crash Bandicoot",
         "theme": "Basic",
-        "rarity": "Rare",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "crash_gold",
+        "name": "Crash Bandicoot",
+        "theme": "Gold",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "crash_cheat",
+        "name": "Crash Bandicoot",
+        "theme": "Cheat",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override",
+        "cheatCodeExempt": true
+    },
+    {
+        "id": "crash_hacker",
+        "name": "Crash Bandicoot",
+        "theme": "Hacker",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "crash_bounty",
+        "name": "Crash Bandicoot",
+        "theme": "Bounty",
+        "rarity": "Legendary",
         "unreleased": true,
         "season": "Override"
     },
     {
-        "id": "dumpster_basic",
-        "name": "Dumpster Dive",
+        "id": "blinky_basic",
+        "name": "Blinky",
         "theme": "Basic",
-        "rarity": "Rare",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "blinky_gold",
+        "name": "Blinky",
+        "theme": "Gold",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "blinky_cheat",
+        "name": "Blinky",
+        "theme": "Cheat",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override",
+        "cheatCodeExempt": true
+    },
+    {
+        "id": "blinky_hacker",
+        "name": "Blinky",
+        "theme": "Hacker",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "blinky_bounty",
+        "name": "Blinky",
+        "theme": "Bounty",
+        "rarity": "Legendary",
         "unreleased": true,
         "season": "Override"
     },
     {
-        "id": "bullet_basic",
-        "name": "Bullet",
+        "id": "morgana_basic",
+        "name": "Morgana",
         "theme": "Basic",
-        "rarity": "Rare",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "morgana_gold",
+        "name": "Morgana",
+        "theme": "Gold",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "morgana_cheat",
+        "name": "Morgana",
+        "theme": "Cheat",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override",
+        "cheatCodeExempt": true
+    },
+    {
+        "id": "morgana_hacker",
+        "name": "Morgana",
+        "theme": "Hacker",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "morgana_bounty",
+        "name": "Morgana",
+        "theme": "Bounty",
+        "rarity": "Epic",
         "unreleased": true,
         "season": "Override"
     }

@@ -71,6 +71,13 @@ export const codes = [
         "active": true
     },
     {
+        "code": "SAYH12WR1X3L",
+        "reward": "Wrixel's Hero Portrait Spray",
+        "internalreward": null,
+        "category": "cat2",
+        "active": true
+    },
+    {
         "code": "OverrideXP",
         "reward": "40,000 XP",
         "internalreward": null,
@@ -156,6 +163,69 @@ export const codes = [
     },
     {
         "code": "InvalidCheat",
+        "reward": "2 Cheat Code Locators",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "BLINKYINKYPINKYCLYDE",
+        "reward": "5,000 Sprite Dust",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "PLAYTOLEVELUP",
+        "reward": "2,000 Sprite Dust",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "BeamMeUp",
+        "reward": "2 Extraction Accelerators",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "DESTINYAWAITS",
+        "reward": "2 Llama Supply Drops",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "NOCTURNEOP55N1",
+        "reward": "2 Extraction Accelerators",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "DustInTheWind",
+        "reward": "5,000 Sprite Dust",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "NOPROLLAMA",
+        "reward": "1 Llama Supply Drop",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "WhereIsTheDustyTree",
+        "reward": "5,000 Sprite Dust",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "INVALIDCHEAT",
         "reward": "2 Cheat Code Locators",
         "internalreward": null,
         "category": "cat3",
