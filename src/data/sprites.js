@@ -973,7 +973,7 @@ export const sprites = [
         "name": "Bush",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1014,7 +1014,7 @@ export const sprites = [
         "name": "Jonesy",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1054,7 +1054,7 @@ export const sprites = [
         "name": "Adventure",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1094,7 +1094,7 @@ export const sprites = [
         "name": "8-Bit",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1135,7 +1135,7 @@ export const sprites = [
         "name": "Overshield",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1176,7 +1176,7 @@ export const sprites = [
         "name": "Onigiri",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1225,7 +1225,7 @@ export const sprites = [
         "name": "Storm Scout",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1265,7 +1265,7 @@ export const sprites = [
         "name": "Sonic",
         "theme": "Bounty",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1305,7 +1305,7 @@ export const sprites = [
         "name": "Tails",
         "theme": "Bounty",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1346,7 +1346,7 @@ export const sprites = [
         "name": "Shadow",
         "theme": "Bounty",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1387,7 +1387,7 @@ export const sprites = [
         "name": "Killswitch",
         "theme": "Bounty",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1428,7 +1428,7 @@ export const sprites = [
         "name": "Jackrabbit",
         "theme": "Bounty",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1469,7 +1469,7 @@ export const sprites = [
         "name": "X-Ray",
         "theme": "Bounty",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1510,7 +1510,7 @@ export const sprites = [
         "name": "Klombo",
         "theme": "Bounty",
         "rarity": "Mythic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1559,7 +1559,7 @@ export const sprites = [
         "name": "Birthday",
         "theme": "Basic",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1567,7 +1567,7 @@ export const sprites = [
         "name": "Birthday",
         "theme": "Gold",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1575,7 +1575,7 @@ export const sprites = [
         "name": "Birthday",
         "theme": "Cheat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override",
         "cheatCodeExempt": true
     },
@@ -1584,7 +1584,7 @@ export const sprites = [
         "name": "Birthday",
         "theme": "Hacker",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1592,7 +1592,7 @@ export const sprites = [
         "name": "Birthday",
         "theme": "Bounty",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1633,7 +1633,7 @@ export const sprites = [
         "name": "Pond",
         "theme": "Bounty",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1674,7 +1674,7 @@ export const sprites = [
         "name": "Crash Bandicoot",
         "theme": "Bounty",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1715,7 +1715,7 @@ export const sprites = [
         "name": "Blinky",
         "theme": "Bounty",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1723,7 +1723,7 @@ export const sprites = [
         "name": "Morgana",
         "theme": "Basic",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1731,7 +1731,7 @@ export const sprites = [
         "name": "Morgana",
         "theme": "Gold",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1739,7 +1739,7 @@ export const sprites = [
         "name": "Morgana",
         "theme": "Cheat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override",
         "cheatCodeExempt": true
     },
@@ -1748,7 +1748,7 @@ export const sprites = [
         "name": "Morgana",
         "theme": "Hacker",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1756,7 +1756,7 @@ export const sprites = [
         "name": "Morgana",
         "theme": "Bounty",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     }
 ];
