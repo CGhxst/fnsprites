@@ -50,6 +50,20 @@ export const codes = [
         "active": true
     },
     {
+        "code": "9Years",
+        "reward": "9th Birthday Sprite Spray",
+        "internalreward": null,
+        "category": "cat2",
+        "active": true
+    },
+    {
+        "code": "WeAreTheWorldChampionsToday",
+        "reward": "FNCS Sentry BackBling",
+        "internalreward": null,
+        "category": "cat2",
+        "active": true
+    },
+    {
         "code": "YourThoughtsAreMine",
         "reward": "Void Master Geno Style & 5,000 Sprite Dust (Requires Quest Completion)",
         "internalreward": null,
@@ -225,10 +239,45 @@ export const codes = [
         "active": true
     },
     {
-        "code": "INVALIDCHEAT",
+        "code": "BoneRattler",
+        "reward": "4 Spicy Tacos",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "WhoCrackedTheCode",
+        "reward": "40,000 XP",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "DustySprites",
+        "reward": "5,000 Sprite Dust",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "AlmostScaringSeason",
         "reward": "2 Cheat Code Locators",
         "internalreward": null,
         "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "ChatFindMeAnotherCode",
+        "reward": "2 Cheat Code Locators",
+        "internalreward": null,
+        "category": "cat3",
+        "active": true
+    },
+    {
+        "code": "PowerOut",
+        "reward": "FNAF Freddy Jumpscare",
+        "internalreward": null,
+        "category": "cat4",
         "active": true
     },
     {
