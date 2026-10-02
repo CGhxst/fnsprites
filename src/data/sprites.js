@@ -977,6 +977,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "bush_treat",
+        "name": "Bush",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "jonesy_basic",
         "name": "Jonesy",
         "theme": "Basic",
@@ -1015,6 +1023,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Rare",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "jonesy_treat",
+        "name": "Jonesy",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1058,6 +1074,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "adventure_treat",
+        "name": "Adventure",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "8bit_basic",
         "name": "8-Bit",
         "theme": "Basic",
@@ -1095,6 +1119,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Rare",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "8bit_treat",
+        "name": "8-Bit",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1139,6 +1171,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "overshield_treat",
+        "name": "Overshield",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "onigiri_basic",
         "name": "Onigiri",
         "theme": "Basic",
@@ -1177,6 +1217,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Rare",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "onigiri_treat",
+        "name": "Onigiri",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1229,6 +1277,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "stormking_treat",
+        "name": "Storm Scout",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "sonic_basic",
         "name": "Sonic",
         "theme": "Basic",
@@ -1269,6 +1325,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "sonic_treat",
+        "name": "Sonic",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "tails_basic",
         "name": "Tails",
         "theme": "Basic",
@@ -1306,6 +1370,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Epic",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "tails_treat",
+        "name": "Tails",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1350,6 +1422,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "shadow_treat",
+        "name": "Shadow",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "killswitch_basic",
         "name": "Killswitch",
         "theme": "Basic",
@@ -1388,6 +1468,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Legendary",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "killswitch_treat",
+        "name": "Killswitch",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1432,6 +1520,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "jackrabbit_treat",
+        "name": "Jackrabbit",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "xray_basic",
         "name": "X-Ray",
         "theme": "Basic",
@@ -1470,6 +1566,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Legendary",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "xray_treat",
+        "name": "X-Ray",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1514,6 +1618,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "klombo_treat",
+        "name": "Klombo",
+        "theme": "Tricktreat",
+        "rarity": "Mythic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "crown_basic",
         "name": "Crown",
         "theme": "Basic",
@@ -1550,6 +1662,14 @@ export const sprites = [
         "id": "crown_bounty",
         "name": "Crown",
         "theme": "Bounty",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "crown_treat",
+        "name": "Crown",
+        "theme": "Tricktreat",
         "rarity": "Mythic",
         "unreleased": false,
         "season": "Override"
@@ -1596,6 +1716,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "birthday_treat",
+        "name": "Birthday",
+        "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "pond_basic",
         "name": "Pond",
         "theme": "Basic",
@@ -1622,7 +1750,7 @@ export const sprites = [
     },
     {
         "id": "pond_hacker",
-        "name": "Pond\t",
+        "name": "Pond",
         "theme": "Hacker",
         "rarity": "Epic",
         "unreleased": false,
@@ -1634,6 +1762,14 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Epic",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "pond_treat",
+        "name": "Pond",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": true,
         "season": "Override"
     },
     {
@@ -1678,6 +1814,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "crash_treat",
+        "name": "Crash Bandicoot",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "blinky_basic",
         "name": "Blinky",
         "theme": "Basic",
@@ -1719,6 +1863,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "blinky_treat",
+        "name": "Blinky",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
         "id": "morgana_basic",
         "name": "Morgana",
         "theme": "Basic",
@@ -1757,6 +1909,206 @@ export const sprites = [
         "theme": "Bounty",
         "rarity": "Epic",
         "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "morgana_treat",
+        "name": "Morgana",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_basic",
+        "name": "Dumpster Dive",
+        "theme": "Basic",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_gold",
+        "name": "Dumpster Dive",
+        "theme": "Gold",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_cheat",
+        "name": "Dumpster Dive",
+        "theme": "Cheat",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_hacker",
+        "name": "Dumpster Dive",
+        "theme": "Hacker",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_bounty",
+        "name": "Dumpster Dive",
+        "theme": "Bounty",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dumpster_treat",
+        "name": "Dumpster Dive",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "vampire_basic",
+        "name": "Vampire",
+        "theme": "Basic",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "vampire_gold",
+        "name": "Vampire",
+        "theme": "Gold",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "vampire_cheat",
+        "name": "Vampire",
+        "theme": "Cheat",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "vampire_hacker",
+        "name": "Vampire",
+        "theme": "Hacker",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "vampire_bounty",
+        "name": "Vampire",
+        "theme": "Bounty",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "vampire_treat",
+        "name": "Vampire",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "deer_basic",
+        "name": "The Deer",
+        "theme": "Basic",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "deer_gold",
+        "name": "The Deer",
+        "theme": "Gold",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "deer_cheat",
+        "name": "The Deer",
+        "theme": "Cheat",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "deer_hacker",
+        "name": "The Deer",
+        "theme": "Hacker",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "deer_bounty",
+        "name": "The Deer",
+        "theme": "Bounty",
+        "rarity": "Legendary",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "deer_treat",
+        "name": "The Deer",
+        "theme": "Tricktreat",
+        "rarity": "Legendary",
+        "unreleased": true,
+        "season": "Override"
+    },
+    {
+        "id": "dash_basic",
+        "name": "Spooky Dash",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dash_gold",
+        "name": "Spooky Dash",
+        "theme": "Gold",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dash_cheat",
+        "name": "Spooky Dash",
+        "theme": "Cheat",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dash_hacker",
+        "name": "Spooky Dash",
+        "theme": "Hacker",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dash_bounty",
+        "name": "Spooky Dash",
+        "theme": "Bounty",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dash_treat",
+        "name": "Spooky Dash",
+        "theme": "Tricktreat",
+        "rarity": "Mythic",
+        "unreleased": true,
         "season": "Override"
     }
 ];
