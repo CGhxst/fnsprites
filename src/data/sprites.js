@@ -981,7 +981,7 @@ export const sprites = [
         "name": "Bush",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1030,7 +1030,7 @@ export const sprites = [
         "name": "Jonesy",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1078,7 +1078,7 @@ export const sprites = [
         "name": "Adventure",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1126,7 +1126,7 @@ export const sprites = [
         "name": "8-Bit",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1175,7 +1175,7 @@ export const sprites = [
         "name": "Overshield",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1224,7 +1224,7 @@ export const sprites = [
         "name": "Onigiri",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1281,7 +1281,7 @@ export const sprites = [
         "name": "Storm Scout",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1329,7 +1329,7 @@ export const sprites = [
         "name": "Sonic",
         "theme": "Tricktreat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1377,7 +1377,7 @@ export const sprites = [
         "name": "Tails",
         "theme": "Tricktreat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1426,7 +1426,7 @@ export const sprites = [
         "name": "Shadow",
         "theme": "Tricktreat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1475,7 +1475,7 @@ export const sprites = [
         "name": "Killswitch",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1524,7 +1524,7 @@ export const sprites = [
         "name": "Jackrabbit",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1573,7 +1573,7 @@ export const sprites = [
         "name": "X-Ray",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1622,7 +1622,7 @@ export const sprites = [
         "name": "Klombo",
         "theme": "Tricktreat",
         "rarity": "Mythic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1720,7 +1720,7 @@ export const sprites = [
         "name": "Birthday",
         "theme": "Tricktreat",
         "rarity": "Rare",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1769,7 +1769,7 @@ export const sprites = [
         "name": "Pond",
         "theme": "Tricktreat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1818,7 +1818,7 @@ export const sprites = [
         "name": "Crash Bandicoot",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1867,7 +1867,7 @@ export const sprites = [
         "name": "Blinky",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1916,7 +1916,7 @@ export const sprites = [
         "name": "Morgana",
         "theme": "Tricktreat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -1964,7 +1964,7 @@ export const sprites = [
         "name": "Dumpster Dive",
         "theme": "Tricktreat",
         "rarity": "Epic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -2012,7 +2012,7 @@ export const sprites = [
         "name": "Vampire",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -2060,7 +2060,7 @@ export const sprites = [
         "name": "The Deer",
         "theme": "Tricktreat",
         "rarity": "Legendary",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     },
     {
@@ -2108,7 +2108,7 @@ export const sprites = [
         "name": "Spooky Dash",
         "theme": "Tricktreat",
         "rarity": "Mythic",
-        "unreleased": true,
+        "unreleased": false,
         "season": "Override"
     }
 ];
