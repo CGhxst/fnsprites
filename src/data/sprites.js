@@ -1034,6 +1034,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "jonesy_quack",
+        "name": "Jonesy",
+        "theme": "Quack",
+        "rarity": "Rare",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
         "id": "adventure_basic",
         "name": "Adventure",
         "theme": "Basic",
@@ -1077,6 +1085,14 @@ export const sprites = [
         "id": "adventure_treat",
         "name": "Adventure",
         "theme": "Tricktreat",
+        "rarity": "Rare",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "adventure_quack",
+        "name": "Adventure",
+        "theme": "Quack",
         "rarity": "Rare",
         "unreleased": false,
         "season": "Override"
@@ -1626,6 +1642,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "klombo_quack",
+        "name": "Klombo",
+        "theme": "Quack",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
         "id": "crown_basic",
         "name": "Crown",
         "theme": "Basic",
@@ -1968,6 +1992,54 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "honey_basic",
+        "name": "Honey",
+        "theme": "Basic",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "honey_gold",
+        "name": "Honey",
+        "theme": "Gold",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "honey_cheat",
+        "name": "Honey",
+        "theme": "Cheat",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "honey_hacker",
+        "name": "Honey",
+        "theme": "Hacker",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "honey_bounty",
+        "name": "Honey",
+        "theme": "Bounty",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "honey_treat",
+        "name": "Honey",
+        "theme": "Tricktreat",
+        "rarity": "Epic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
         "id": "vampire_basic",
         "name": "Vampire",
         "theme": "Basic",
@@ -2106,6 +2178,62 @@ export const sprites = [
     {
         "id": "dash_treat",
         "name": "Spooky Dash",
+        "theme": "Tricktreat",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "dash_quack",
+        "name": "Spooky Dash",
+        "theme": "Quack",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "willow_basic",
+        "name": "One Wish Willow",
+        "theme": "Basic",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "willow_gold",
+        "name": "One Wish Willow",
+        "theme": "Gold",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "willow_cheat",
+        "name": "One Wish Willow",
+        "theme": "Cheat",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "willow_hacker",
+        "name": "One Wish Willow",
+        "theme": "Hacker",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "willow_bounty",
+        "name": "One Wish Willow",
+        "theme": "Bounty",
+        "rarity": "Mythic",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
+        "id": "willow_treat",
+        "name": "One Wish Willow",
         "theme": "Tricktreat",
         "rarity": "Mythic",
         "unreleased": false,
