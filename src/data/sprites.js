@@ -985,6 +985,14 @@ export const sprites = [
         "season": "Override"
     },
     {
+        "id": "bush_quack",
+        "name": "Bush",
+        "theme": "Quack",
+        "rarity": "Rare",
+        "unreleased": false,
+        "season": "Override"
+    },
+    {
         "id": "jonesy_basic",
         "name": "Jonesy",
         "theme": "Basic",
